@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bananaBody" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#FFE135"/>
+      <stop offset="50%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#E6B800"/>
+    </linearGradient>
+    <linearGradient id="bananaInner" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0%" stop-color="#FFF8DC"/>
+      <stop offset="100%" stop-color="#FFEEB0"/>
+    </linearGradient>
+    <linearGradient id="peelLeft" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFE135"/>
+      <stop offset="100%" stop-color="#DBAF00"/>
+    </linearGradient>
+    <linearGradient id="peelRight" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#C9A000"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="2" dy="4" stdDeviation="6" flood-color="#00000030"/>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#FFF3D4" stroke="#E6B800" stroke-width="8"/>
+
+  <!-- Banana body (curved shape) -->
+  <g filter="url(#shadow)">
+    <!-- Main banana curve -->
+    <path d="M 160 380
+             Q 120 320, 130 260
+             Q 140 200, 180 155
+             Q 220 110, 280 90
+             Q 340 70, 380 85
+             Q 370 95, 350 110
+             Q 300 100, 250 120
+             Q 200 145, 175 185
+             Q 150 230, 148 280
+             Q 145 330, 175 370
+             Z"
+          fill="url(#bananaBody)" stroke="#C9A000" stroke-width="3"/>
+
+    <!-- Banana highlight (lighter stripe) -->
+    <path d="M 170 365
+             Q 135 310, 145 260
+             Q 155 210, 190 170
+             Q 225 130, 275 105
+             Q 310 92, 345 95
+             Q 305 100, 270 115
+             Q 225 140, 195 175
+             Q 165 220, 158 270
+             Q 150 320, 175 360
+             Z"
+          fill="#FFE960" opacity="0.5"/>
+
+    <!-- Banana tip (brown end) -->
+    <ellipse cx="167" cy="377" rx="12" ry="8" fill="#8B6914" transform="rotate(-20, 167, 377)"/>
+
+    <!-- Banana stem -->
+    <path d="M 380 85 Q 395 75, 400 65 Q 405 55, 395 50 Q 385 48, 375 55 Q 365 65, 370 80 Z"
+          fill="#6B8E23" stroke="#556B2F" stroke-width="2"/>
+  </g>
+
+  <!-- Split line (zigzag crack down the banana) -->
+  <path d="M 260 105
+           L 250 130 L 265 145 L 248 165 L 263 185
+           L 245 210 L 260 230 L 242 255 L 258 275
+           L 238 300 L 255 320 L 235 345 L 250 360"
+        fill="none" stroke="#CC8800" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+        opacity="0.7"/>
+
+  <!-- Small split lines branching off -->
+  <path d="M 250 130 L 240 125 M 248 165 L 238 160 M 245 210 L 235 205
+           M 242 255 L 232 250 M 238 300 L 228 295 M 235 345 L 225 340"
+        fill="none" stroke="#CC8800" stroke-width="2" stroke-linecap="round"
+        opacity="0.5"/>
+
+  <!-- QR code hint (small squares in corner) -->
+  <g transform="translate(340, 320)" opacity="0.6">
+    <rect x="0" y="0" width="60" height="60" rx="4" fill="white" stroke="#C9A000" stroke-width="2"/>
+    <rect x="8" y="8" width="16" height="16" rx="2" fill="#333"/>
+    <rect x="36" y="8" width="16" height="16" rx="2" fill="#333"/>
+    <rect x="8" y="36" width="16" height="16" rx="2" fill="#333"/>
+    <rect x="28" y="28" width="8" height="8" fill="#333"/>
+    <rect x="40" y="40" width="12" height="12" rx="1" fill="#333"/>
+  </g>
+</svg>
