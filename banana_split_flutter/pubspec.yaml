@@ -65,3 +65,4 @@ flutter:
 
   assets:
     - assets/wordlist.txt
+    - assets/app_icon.png
