@@ -47,6 +47,7 @@ class _InputForm extends StatefulWidget {
 
 class _InputFormState extends State<_InputForm> {
   late final TextEditingController _shardsController;
+  late final TextEditingController _requiredController;
 
   @override
   void initState() {
@@ -54,11 +55,15 @@ class _InputFormState extends State<_InputForm> {
     _shardsController = TextEditingController(
       text: widget.notifier.totalShards.toString(),
     );
+    _requiredController = TextEditingController(
+      text: widget.notifier.requiredShards.toString(),
+    );
   }
 
   @override
   void dispose() {
     _shardsController.dispose();
+    _requiredController.dispose();
     super.dispose();
   }
 
@@ -96,24 +101,59 @@ class _InputFormState extends State<_InputForm> {
             ),
           ),
           const SizedBox(height: 16),
-          TextField(
-            controller: _shardsController,
-            keyboardType: TextInputType.number,
-            onChanged: (value) {
-              final parsed = int.tryParse(value);
-              if (parsed != null) {
-                notifier.updateTotalShards(parsed);
-              }
-            },
-            decoration: InputDecoration(
-              labelText: 'Number of shards',
-              border: const OutlineInputBorder(),
-              hintText: '3–255',
-              helperText: notifier.totalShards >= 3
-                  ? 'Requires ${notifier.requiredShards} of ${notifier.totalShards} shards to restore'
-                  : 'Minimum 3 shards',
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _shardsController,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    final parsed = int.tryParse(value);
+                    if (parsed != null) {
+                      notifier.updateTotalShards(parsed);
+                      // Update required field if it was auto-clamped
+                      final reqText = notifier.requiredShards.toString();
+                      if (_requiredController.text != reqText) {
+                        _requiredController.text = reqText;
+                      }
+                    }
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Total shards',
+                    border: OutlineInputBorder(),
+                    hintText: '3–255',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _requiredController,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    final parsed = int.tryParse(value);
+                    if (parsed != null) {
+                      notifier.updateRequiredShards(parsed);
+                    }
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Required to restore',
+                    border: const OutlineInputBorder(),
+                    hintText: '2–${notifier.totalShards}',
+                  ),
+                ),
+              ),
+            ],
           ),
+          if (notifier.totalShards >= 3 && notifier.requiredShards >= 2)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '${notifier.requiredShards} of ${notifier.totalShards} shards needed to restore',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
           const SizedBox(height: 16),
           PassphraseField(
             passphrase: notifier.passphrase,

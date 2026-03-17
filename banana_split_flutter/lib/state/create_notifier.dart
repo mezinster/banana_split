@@ -8,6 +8,7 @@ class CreateNotifier extends ChangeNotifier {
   String _title = '';
   String _secret = '';
   int _totalShards = 5;
+  int _requiredShards = 3;
   String _passphrase = '';
   List<String> _generatedShards = [];
   bool _isGenerating = false;
@@ -22,6 +23,7 @@ class CreateNotifier extends ChangeNotifier {
   String get title => _title;
   String get secret => _secret;
   int get totalShards => _totalShards;
+  int get requiredShards => _requiredShards;
   String get passphrase => _passphrase;
   List<String> get generatedShards => List.unmodifiable(_generatedShards);
   bool get isGenerating => _isGenerating;
@@ -29,7 +31,6 @@ class CreateNotifier extends ChangeNotifier {
   String? get error => _error;
   bool get useManualPassphrase => _useManualPassphrase;
 
-  int get requiredShards => _totalShards ~/ 2 + 1;
   bool get secretTooLong => _secret.length > 1024;
 
   bool get canGenerate {
@@ -39,6 +40,8 @@ class CreateNotifier extends ChangeNotifier {
         !secretTooLong &&
         _totalShards >= 3 &&
         _totalShards <= 255 &&
+        _requiredShards >= 2 &&
+        _requiredShards <= _totalShards &&
         _passphrase.isNotEmpty &&
         passphraseOk;
   }
@@ -55,6 +58,13 @@ class CreateNotifier extends ChangeNotifier {
 
   void updateTotalShards(int value) {
     _totalShards = value.clamp(3, 255);
+    // Keep requiredShards within valid range
+    _requiredShards = _requiredShards.clamp(2, _totalShards);
+    notifyListeners();
+  }
+
+  void updateRequiredShards(int value) {
+    _requiredShards = value.clamp(2, _totalShards);
     notifyListeners();
   }
 
@@ -110,6 +120,7 @@ class CreateNotifier extends ChangeNotifier {
     _title = '';
     _secret = '';
     _totalShards = 5;
+    _requiredShards = 3;
     _passphrase = _passphraseGenerator.generate(6);
     _generatedShards = [];
     _isGenerating = false;
