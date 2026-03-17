@@ -104,29 +104,12 @@ class _HomeShellState extends State<HomeShell> {
     AboutScreen(),
   ];
 
-  static const List<NavigationDestination> _destinations = [
-    NavigationDestination(
-      icon: Icon(Icons.lock_outline),
-      selectedIcon: Icon(Icons.lock),
-      label: 'Create',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.qr_code_scanner_outlined),
-      selectedIcon: Icon(Icons.qr_code_scanner),
-      label: 'Restore',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.info_outline),
-      selectedIcon: Icon(Icons.info),
-      label: 'About',
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Banana Split'),
+        title: Text(l10n.appTitle),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: IndexedStack(
@@ -140,7 +123,23 @@ class _HomeShellState extends State<HomeShell> {
             _selectedIndex = index;
           });
         },
-        destinations: _destinations,
+        destinations: [
+          NavigationDestination(
+            icon: const Icon(Icons.lock_outline),
+            selectedIcon: const Icon(Icons.lock),
+            label: l10n.tabCreate,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.qr_code_scanner_outlined),
+            selectedIcon: const Icon(Icons.qr_code_scanner),
+            label: l10n.tabRestore,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.info_outline),
+            selectedIcon: const Icon(Icons.info),
+            label: l10n.tabAbout,
+          ),
+        ],
       ),
     );
   }
