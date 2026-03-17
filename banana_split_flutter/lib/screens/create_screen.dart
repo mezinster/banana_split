@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'package:banana_split_flutter/services/export_service.dart';
@@ -13,14 +14,15 @@ class CreateScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<CreateNotifier>(
       builder: (context, notifier, _) {
+        final l10n = AppLocalizations.of(context)!;
         if (notifier.isGenerating) {
-          return const Center(
+          return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Encrypting...'),
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(l10n.createEncrypting),
               ],
             ),
           );
@@ -70,6 +72,7 @@ class _InputFormState extends State<_InputForm> {
   @override
   Widget build(BuildContext context) {
     final notifier = widget.notifier;
+    final l10n = AppLocalizations.of(context)!;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -78,10 +81,10 @@ class _InputFormState extends State<_InputForm> {
         children: [
           TextField(
             onChanged: notifier.updateTitle,
-            decoration: const InputDecoration(
-              labelText: 'Title',
-              border: OutlineInputBorder(),
-              hintText: 'e.g. My wallet seed phrase',
+            decoration: InputDecoration(
+              labelText: l10n.createTitleLabel,
+              border: const OutlineInputBorder(),
+              hintText: l10n.createTitleHint,
             ),
           ),
           const SizedBox(height: 16),
@@ -89,14 +92,14 @@ class _InputFormState extends State<_InputForm> {
             onChanged: notifier.updateSecret,
             maxLines: 5,
             decoration: InputDecoration(
-              labelText: 'Secret',
+              labelText: l10n.createSecretLabel,
               border: const OutlineInputBorder(),
-              hintText: 'Enter the secret to split',
+              hintText: l10n.createSecretHint,
               errorText: notifier.secretTooLong
-                  ? 'Secret exceeds 1024 characters'
+                  ? l10n.createSecretTooLong
                   : null,
               helperText: notifier.secret.length > 900
-                  ? '${notifier.secret.length}/1024 characters'
+                  ? l10n.createSecretCharCount(notifier.secret.length)
                   : null,
             ),
           ),
@@ -119,10 +122,10 @@ class _InputFormState extends State<_InputForm> {
                       }
                     }
                   },
-                  decoration: const InputDecoration(
-                    labelText: 'Total shards',
-                    border: OutlineInputBorder(),
-                    hintText: '3–255',
+                  decoration: InputDecoration(
+                    labelText: l10n.createTotalShardsLabel,
+                    border: const OutlineInputBorder(),
+                    hintText: l10n.createTotalShardsHint,
                   ),
                 ),
               ),
@@ -138,9 +141,9 @@ class _InputFormState extends State<_InputForm> {
                     }
                   },
                   decoration: InputDecoration(
-                    labelText: 'Required to restore',
+                    labelText: l10n.createRequiredLabel,
                     border: const OutlineInputBorder(),
-                    hintText: '2–${notifier.totalShards}',
+                    hintText: l10n.createRequiredHint(notifier.totalShards),
                   ),
                 ),
               ),
@@ -150,7 +153,7 @@ class _InputFormState extends State<_InputForm> {
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                '${notifier.requiredShards} of ${notifier.totalShards} shards needed to restore',
+                l10n.createQuorumHelper(notifier.requiredShards, notifier.totalShards),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
@@ -172,7 +175,7 @@ class _InputFormState extends State<_InputForm> {
           const SizedBox(height: 24),
           FilledButton(
             onPressed: notifier.canGenerate ? notifier.generate : null,
-            child: const Text('Generate QR Shards'),
+            child: Text(l10n.createGenerateButton),
           ),
         ],
       ),
@@ -187,6 +190,7 @@ class _ResultsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -207,7 +211,7 @@ class _ResultsView extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Save your passphrase!',
+                        l10n.createSavePassphrase,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               color: Theme.of(context)
                                   .colorScheme
@@ -229,7 +233,7 @@ class _ResultsView extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'You will need this passphrase to restore your secret.',
+                    l10n.createPassphraseNeeded,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context)
                               .colorScheme
@@ -246,12 +250,12 @@ class _ResultsView extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: notifier.backToEdit,
                 icon: const Icon(Icons.arrow_back),
-                label: const Text('Back'),
+                label: Text(l10n.createBack),
               ),
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.save_alt),
-                tooltip: 'Save all shards',
+                tooltip: l10n.createSaveAllTooltip,
                 onPressed: () async {
                   try {
                     final path = await ExportService.saveAsPdf(
@@ -261,13 +265,13 @@ class _ResultsView extends StatelessWidget {
                     );
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Saved to $path')),
+                        SnackBar(content: Text(l10n.createSavedTo(path))),
                       );
                     }
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error saving: $e')),
+                        SnackBar(content: Text(l10n.errorSaving(e.toString()))),
                       );
                     }
                   }
@@ -275,7 +279,7 @@ class _ResultsView extends StatelessWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.share),
-                tooltip: 'Share all shards',
+                tooltip: l10n.createShareAllTooltip,
                 onPressed: () async {
                   try {
                     await ExportService.shareShards(
@@ -285,7 +289,7 @@ class _ResultsView extends StatelessWidget {
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error sharing: $e')),
+                        SnackBar(content: Text(l10n.errorSharing(e.toString()))),
                       );
                     }
                   }
