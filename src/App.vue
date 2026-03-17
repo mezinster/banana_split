@@ -14,9 +14,7 @@
         <Alert />
       </nav>
 
-      <router-view v-if="secure" />
-      <SavePageInfo v-else-if="!localFile" />
-      <GoOfflineInfo v-else-if="isOnline" />
+      <router-view />
       <div class="version-footer">
         {{ gitRevision }}
       </div>
@@ -27,26 +25,14 @@
 
 <script lang="ts">
 import Alert from "./components/Alert.vue";
-import GoOfflineInfo from "./components/GoOfflineInfo.vue";
-import SavePageInfo from "./components/SavePageInfo.vue";
 import ForkMe from "./components/ForkMe.vue";
 
 import Vue from "vue";
 
 export default Vue.extend({
   name: "App",
-  components: { Alert, GoOfflineInfo, SavePageInfo, ForkMe },
+  components: { Alert, ForkMe },
   computed: {
-    localFile(): boolean {
-      return window.location.protocol === "file:";
-    },
-    secure(): boolean {
-      if (process.env.NODE_ENV === "production") {
-        return this.localFile && !this.isOnline;
-      } else {
-        return true;
-      }
-    },
     gitRevision: function() {
       return process.env.GIT_REVISION;
     }

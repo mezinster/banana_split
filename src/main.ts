@@ -11,12 +11,6 @@ Vue.use(QrcodeStream);
 import App from "./App.vue";
 import router from "./router";
 
-import OnlinePlugin from "./plugins/online";
-Vue.use(OnlinePlugin);
-
-import IpfsPlugin from "./plugins/ipfs";
-Vue.use(IpfsPlugin);
-
 Vue.config.productionTip = false;
 
 Vue.prototype.$eventHub = new Vue();
