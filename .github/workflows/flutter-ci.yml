@@ -21,8 +21,8 @@ on:
         required: false
         type: boolean
         default: true
-      build_debug_windows:
-        description: 'Build debug Windows'
+      build_windows:
+        description: 'Build Windows'
         required: false
         type: boolean
         default: true
@@ -89,10 +89,10 @@ jobs:
           path: banana_split_flutter/build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 7
 
-  build-debug-windows:
-    name: Build Debug Windows
+  build-windows:
+    name: Build Windows
     needs: analyze-and-test
-    if: github.event_name == 'workflow_dispatch' && inputs.build_debug_windows
+    if: github.event_name == 'workflow_dispatch' && inputs.build_windows
     runs-on: windows-latest
     defaults:
       run:
@@ -110,12 +110,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build debug Windows
-        run: flutter build windows --debug
+      - name: Build release Windows
+        run: flutter build windows --release
 
-      - name: Upload debug Windows build
+      - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
-          name: debug-windows
-          path: banana_split_flutter/build/windows/x64/runner/Debug/
+          name: windows-release
+          path: banana_split_flutter/build/windows/x64/runner/Release/
           retention-days: 7
