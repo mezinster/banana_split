@@ -4,7 +4,12 @@ let Webpack = require("webpack");
 
 // eslint-disable-next-line security/detect-child-process
 let childProcess = require("child_process");
-let GIT_REVISION = childProcess.execSync("git describe --long").toString();
+let GIT_REVISION;
+try {
+  GIT_REVISION = childProcess.execSync("git describe --long").toString().trim();
+} catch (_) {
+  GIT_REVISION = childProcess.execSync("git rev-parse --short HEAD").toString().trim();
+}
 
 module.exports = {
   productionSourceMap: false,
