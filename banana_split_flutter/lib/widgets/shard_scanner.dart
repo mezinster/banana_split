@@ -23,31 +23,89 @@ class ShardScanner extends StatefulWidget {
   State<ShardScanner> createState() => _ShardScannerState();
 }
 
-class _ShardScannerState extends State<ShardScanner> {
+class _ShardScannerState extends State<ShardScanner>
+    with WidgetsBindingObserver {
   MobileScannerController? _cameraController;
   bool _cameraSupported = false;
   bool _permissionDenied = false;
+  bool _disposed = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initCamera();
   }
 
+  @override
+  void dispose() {
+    _disposed = true;
+    WidgetsBinding.instance.removeObserver(this);
+    _disposeCamera();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_disposed) return;
+
+    switch (state) {
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.paused:
+        // Android reclaims camera when app goes to background
+        _disposeCamera();
+        break;
+      case AppLifecycleState.resumed:
+        // Re-init camera when app returns to foreground
+        if (_cameraSupported || (!_permissionDenied && _cameraController == null)) {
+          _initCamera();
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  void _disposeCamera() {
+    try {
+      _cameraController?.stop().catchError((_) {});
+      _cameraController?.dispose();
+    } catch (_) {
+      // Ignore errors during cleanup
+    }
+    _cameraController = null;
+    if (!_disposed && mounted) {
+      setState(() => _cameraSupported = false);
+    }
+  }
+
   Future<void> _initCamera() async {
+    if (_disposed) return;
+
     // On mobile, request permission first
     if (Platform.isAndroid || Platform.isMacOS) {
       final status = await Permission.camera.request();
+      if (_disposed) return;
       if (!status.isGranted) {
-        setState(() => _permissionDenied = true);
+        if (mounted) setState(() => _permissionDenied = true);
         return;
       }
     }
 
     // Try to start the camera on all platforms
     try {
-      _cameraController = MobileScannerController();
-      await _cameraController!.start();
+      final controller = MobileScannerController();
+      if (_disposed) {
+        controller.dispose();
+        return;
+      }
+      _cameraController = controller;
+      await controller.start();
+      if (_disposed) {
+        controller.dispose();
+        _cameraController = null;
+        return;
+      }
       if (mounted) setState(() => _cameraSupported = true);
     } catch (_) {
       // Camera not available — fall back to gallery import
@@ -56,13 +114,8 @@ class _ShardScannerState extends State<ShardScanner> {
     }
   }
 
-  @override
-  void dispose() {
-    _cameraController?.dispose();
-    super.dispose();
-  }
-
   void _onDetect(BarcodeCapture capture) {
+    if (_disposed) return;
     for (final barcode in capture.barcodes) {
       final raw = barcode.rawValue;
       if (raw != null && raw.isNotEmpty) {
@@ -74,19 +127,24 @@ class _ShardScannerState extends State<ShardScanner> {
   Future<void> _importFromGallery() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
+    if (picked == null || _disposed) return;
 
     // Try mobile_scanner's image analysis first (works best on mobile)
     if (_cameraController != null) {
-      final capture = await _cameraController!.analyzeImage(picked.path);
-      if (capture != null && capture.barcodes.isNotEmpty) {
-        _onDetect(capture);
-        return;
+      try {
+        final capture = await _cameraController!.analyzeImage(picked.path);
+        if (capture != null && capture.barcodes.isNotEmpty) {
+          _onDetect(capture);
+          return;
+        }
+      } catch (_) {
+        // analyzeImage may not be supported on all platforms
       }
     }
 
     // Fallback: decode with zxing2 (pure Dart, works on all platforms)
     final decoded = await _decodeQrWithZxing(picked.path);
+    if (_disposed) return;
     if (decoded != null) {
       widget.onScanned(decoded);
       return;
