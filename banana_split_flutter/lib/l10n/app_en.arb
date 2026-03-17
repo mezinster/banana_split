@@ -102,5 +102,15 @@
 
   "privacyPolicyTitle": "Privacy Policy",
   "privacyPolicyViewOnline": "View online",
-  "privacyPolicyBody": "Privacy Policy for Banana Split\n\nLast updated: March 2026\n\n1. Data Collection\nBanana Split does not collect, store, or transmit any personal data. All cryptographic operations are performed entirely on your device.\n\n2. Network Access\nBanana Split does not connect to any server. Your secrets, passphrases, and shards never leave your device unless you explicitly export or share them using the built-in export features.\n\n3. Camera Access\nBanana Split requests camera access solely to scan QR codes containing shards. Camera data is processed on-device and is never recorded or transmitted.\n\n4. Storage\nExported files (PNG images, PDF documents) are saved to your device's local storage. You are responsible for managing and securing these files.\n\n5. Third-Party Services\nBanana Split does not integrate with any third-party analytics, advertising, or tracking services.\n\n6. Open Source\nBanana Split is open-source software licensed under the GNU General Public License v3.0. The source code is available at https://github.com/mezinster/banana_split.\n\n7. Contact\nFor questions about this privacy policy, please open an issue on the GitHub repository."
+  "privacyPolicyBody": "Privacy Policy for Banana Split\n\nLast updated: March 2026\n\n1. Data Collection\nBanana Split does not collect, store, or transmit any personal data. All cryptographic operations are performed entirely on your device.\n\n2. Network Access\nBanana Split does not connect to any server. Your secrets, passphrases, and shards never leave your device unless you explicitly export or share them using the built-in export features.\n\n3. Camera Access\nBanana Split requests camera access solely to scan QR codes containing shards. Camera data is processed on-device and is never recorded or transmitted.\n\n4. Storage\nExported files (PNG images, PDF documents) are saved to your device's local storage. You are responsible for managing and securing these files.\n\n5. Third-Party Services\nBanana Split does not integrate with any third-party analytics, advertising, or tracking services.\n\n6. Open Source\nBanana Split is open-source software licensed under the GNU General Public License v3.0. The source code is available at https://github.com/mezinster/banana_split.\n\n7. Contact\nFor questions about this privacy policy, please open an issue on the GitHub repository.",
+  "tabFiles": "Files",
+  "filesEmpty": "No saved files.\nCreate shards and save them to see files here.",
+  "filesDeleteConfirmTitle": "Delete file?",
+  "filesDeleteConfirmBody": "This will permanently delete {filename}.",
+  "@filesDeleteConfirmBody": { "placeholders": { "filename": { "type": "String" } } },
+  "filesDeleteButton": "Delete",
+  "filesCancelButton": "Cancel",
+  "filesDeleted": "File deleted",
+  "filesShareError": "Error sharing file",
+  "filesDeleteError": "Error deleting file"
 }

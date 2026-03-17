@@ -86,5 +86,15 @@
 
   "privacyPolicyTitle": "Gizlilik Politikası",
   "privacyPolicyViewOnline": "Çevrimiçi görüntüle",
-  "privacyPolicyBody": "Banana Split Gizlilik Politikası\n\nSon güncelleme: Mart 2026\n\n1. Veri Toplama\nBanana Split hiçbir kişisel veri toplamaz, saklamaz veya iletmez. Tüm kriptografik işlemler tamamen cihazınızda gerçekleştirilir.\n\n2. Ağ Erişimi\nBanana Split hiçbir sunucuya bağlanmaz. Sırlarınız, parolalarınız ve parçalarınız, yerleşik dışa aktarma özelliklerini kullanarak açıkça dışa aktarmadığınız veya paylaşmadığınız sürece cihazınızdan asla ayrılmaz.\n\n3. Kamera Erişimi\nBanana Split, kamera erişimini yalnızca parça içeren QR kodlarını taramak için talep eder. Kamera verileri cihaz üzerinde işlenir ve asla kaydedilmez veya iletilmez.\n\n4. Depolama\nDışa aktarılan dosyalar (PNG görüntüleri, PDF belgeleri) cihazınızın yerel depolamasına kaydedilir. Bu dosyaları yönetmek ve güvence altına almak sizin sorumluluğunuzdadır.\n\n5. Üçüncü Taraf Hizmetleri\nBanana Split herhangi bir üçüncü taraf analiz, reklam veya izleme hizmetiyle entegre değildir.\n\n6. Açık Kaynak\nBanana Split, GNU Genel Kamu Lisansı v3.0 kapsamında lisanslanan açık kaynaklı bir yazılımdır. Kaynak kodu https://github.com/mezinster/banana_split adresinde mevcuttur.\n\n7. İletişim\nBu gizlilik politikasıyla ilgili sorularınız için lütfen GitHub deposunda bir issue açın."
+  "privacyPolicyBody": "Banana Split Gizlilik Politikası\n\nSon güncelleme: Mart 2026\n\n1. Veri Toplama\nBanana Split hiçbir kişisel veri toplamaz, saklamaz veya iletmez. Tüm kriptografik işlemler tamamen cihazınızda gerçekleştirilir.\n\n2. Ağ Erişimi\nBanana Split hiçbir sunucuya bağlanmaz. Sırlarınız, parolalarınız ve parçalarınız, yerleşik dışa aktarma özelliklerini kullanarak açıkça dışa aktarmadığınız veya paylaşmadığınız sürece cihazınızdan asla ayrılmaz.\n\n3. Kamera Erişimi\nBanana Split, kamera erişimini yalnızca parça içeren QR kodlarını taramak için talep eder. Kamera verileri cihaz üzerinde işlenir ve asla kaydedilmez veya iletilmez.\n\n4. Depolama\nDışa aktarılan dosyalar (PNG görüntüleri, PDF belgeleri) cihazınızın yerel depolamasına kaydedilir. Bu dosyaları yönetmek ve güvence altına almak sizin sorumluluğunuzdadır.\n\n5. Üçüncü Taraf Hizmetleri\nBanana Split herhangi bir üçüncü taraf analiz, reklam veya izleme hizmetiyle entegre değildir.\n\n6. Açık Kaynak\nBanana Split, GNU Genel Kamu Lisansı v3.0 kapsamında lisanslanan açık kaynaklı bir yazılımdır. Kaynak kodu https://github.com/mezinster/banana_split adresinde mevcuttur.\n\n7. İletişim\nBu gizlilik politikasıyla ilgili sorularınız için lütfen GitHub deposunda bir issue açın.",
+  "tabFiles": "Dosyalar",
+  "filesEmpty": "Kayıtlı dosya yok.\nParçalar oluşturup kaydedin.",
+  "filesDeleteConfirmTitle": "Dosya silinsin mi?",
+  "filesDeleteConfirmBody": "{filename} kalıcı olarak silinecek.",
+  "@filesDeleteConfirmBody": { "placeholders": { "filename": { "type": "String" } } },
+  "filesDeleteButton": "Sil",
+  "filesCancelButton": "İptal",
+  "filesDeleted": "Dosya silindi",
+  "filesShareError": "Dosya paylaşılırken hata oluştu",
+  "filesDeleteError": "Dosya silinirken hata oluştu"
 }
