@@ -1,8 +1,11 @@
-import 'dart:io' show Platform;
+import 'dart:io' show File, Platform;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:zxing2/qrcode.dart';
 
 class ShardScanner extends StatefulWidget {
   final void Function(String rawData) onScanned;
@@ -70,26 +73,59 @@ class _ShardScannerState extends State<ShardScanner> {
 
   Future<void> _importFromGallery() async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery);
-    if (image == null) return;
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
 
-    // Try using mobile_scanner's image analysis if available
+    // Try mobile_scanner's image analysis first (works best on mobile)
     if (_cameraController != null) {
-      final capture = await _cameraController!.analyzeImage(image.path);
+      final capture = await _cameraController!.analyzeImage(picked.path);
       if (capture != null && capture.barcodes.isNotEmpty) {
         _onDetect(capture);
         return;
       }
     }
 
-    // Fallback: show message that QR code wasn't found
-    // Note: zxing2 integration for desktop would go here but requires
-    // significant image processing setup. For now, on platforms with
-    // camera, the camera controller handles analysis.
+    // Fallback: decode with zxing2 (pure Dart, works on all platforms)
+    final decoded = await _decodeQrWithZxing(picked.path);
+    if (decoded != null) {
+      widget.onScanned(decoded);
+      return;
+    }
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No QR code found in image')),
       );
+    }
+  }
+
+  Future<String?> _decodeQrWithZxing(String path) async {
+    try {
+      final bytes = await File(path).readAsBytes();
+      final decoded = img.decodeImage(bytes);
+      if (decoded == null) return null;
+
+      // Convert to luminance source for zxing2
+      final width = decoded.width;
+      final height = decoded.height;
+      final pixels = Int32List(width * height);
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          final pixel = decoded.getPixel(x, y);
+          pixels[y * width + x] =
+              (pixel.a.toInt() << 24) |
+              (pixel.r.toInt() << 16) |
+              (pixel.g.toInt() << 8) |
+              pixel.b.toInt();
+        }
+      }
+
+      final source = RGBLuminanceSource(width, height, pixels);
+      final bitmap = BinaryBitmap(HybridBinarizer(source));
+      final result = QRCodeReader().decode(bitmap);
+      return result.text;
+    } catch (_) {
+      return null;
     }
   }
 
