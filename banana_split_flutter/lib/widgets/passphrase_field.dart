@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class PassphraseField extends StatelessWidget {
   final String passphrase;
@@ -18,16 +19,17 @@ class PassphraseField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text('Passphrase', style: Theme.of(context).textTheme.titleSmall),
+            Text(l10n.passphraseTitle, style: Theme.of(context).textTheme.titleSmall),
             const Spacer(),
             TextButton(
               onPressed: onToggleMode,
-              child: Text(isManual ? 'Auto-generate' : 'Enter manually'),
+              child: Text(isManual ? l10n.passphraseAutoGenerate : l10n.passphraseEnterManually),
             ),
           ],
         ),
@@ -35,9 +37,9 @@ class PassphraseField extends StatelessWidget {
         if (isManual)
           TextField(
             onChanged: onChanged,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              hintText: 'Enter your passphrase (min 8 characters)',
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              hintText: l10n.passphraseManualHint,
             ),
           )
         else
@@ -63,7 +65,7 @@ class PassphraseField extends StatelessWidget {
               IconButton(
                 onPressed: onRegenerate,
                 icon: const Icon(Icons.refresh),
-                tooltip: 'Generate new passphrase',
+                tooltip: l10n.passphraseRegenerateTooltip,
               ),
             ],
           ),
