@@ -11,6 +11,7 @@ import 'package:banana_split_flutter/state/restore_notifier.dart';
 import 'package:banana_split_flutter/screens/create_screen.dart';
 import 'package:banana_split_flutter/screens/restore_screen.dart';
 import 'package:banana_split_flutter/screens/about_screen.dart';
+import 'package:banana_split_flutter/screens/files_screen.dart';
 import 'package:banana_split_flutter/state/locale_notifier.dart';
 import 'package:banana_split_flutter/widgets/language_selector.dart';
 
@@ -110,6 +111,7 @@ class _HomeShellState extends State<HomeShell> {
   static const List<Widget> _screens = [
     CreateScreen(),
     RestoreScreen(),
+    FilesScreen(),
     AboutScreen(),
   ];
 
@@ -143,6 +145,11 @@ class _HomeShellState extends State<HomeShell> {
             icon: const Icon(Icons.qr_code_scanner_outlined),
             selectedIcon: const Icon(Icons.qr_code_scanner),
             label: l10n.tabRestore,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.folder_outlined),
+            selectedIcon: const Icon(Icons.folder),
+            label: l10n.tabFiles,
           ),
           NavigationDestination(
             icon: const Icon(Icons.info_outline),
