@@ -21,7 +21,7 @@ jobs:
 
       - run: yarn install
 
-      - name: Install operating system dependencies
-        run: npx playwright install-deps
+      - name: Install Playwright browsers and OS dependencies
+        run: npx playwright install --with-deps chromium
 
       - run: npm run test:e2e
