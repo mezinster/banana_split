@@ -1,6 +1,7 @@
 import 'dart:io' show File, Platform;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -163,8 +164,9 @@ class _ShardScannerState extends State<ShardScanner>
     }
 
     if (mounted) {
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No QR code found in image')),
+        SnackBar(content: Text(l10n.scannerNoQrFound)),
       );
     }
   }
@@ -201,9 +203,10 @@ class _ShardScannerState extends State<ShardScanner>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final progressText = widget.requiredCount != null
-        ? '${widget.scannedCount} of ${widget.requiredCount} scanned'
-        : 'Scan first shard...';
+        ? l10n.scannerProgress(widget.scannedCount, widget.requiredCount!)
+        : l10n.scannerScanFirst;
 
     return Column(
       children: [
@@ -229,15 +232,14 @@ class _ShardScannerState extends State<ShardScanner>
             height: 200,
             padding: const EdgeInsets.all(16),
             alignment: Alignment.center,
-            child: const Column(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Camera permission denied.\n'
-                    'Grant camera access in Settings, or import QR images below.'),
-                SizedBox(height: 8),
+                Text(l10n.scannerCameraDenied),
+                const SizedBox(height: 8),
                 TextButton(
                   onPressed: openAppSettings,
-                  child: Text('Open Settings'),
+                  child: Text(l10n.scannerOpenSettings),
                 ),
               ],
             ),
@@ -246,15 +248,14 @@ class _ShardScannerState extends State<ShardScanner>
           Container(
             height: 200,
             alignment: Alignment.center,
-            child: const Text('Camera not available.\n'
-                'Use the import button below to load QR code images.'),
+            child: Text(l10n.scannerCameraUnavailable),
           ),
 
         const SizedBox(height: 16),
         OutlinedButton.icon(
           onPressed: _importFromGallery,
           icon: const Icon(Icons.photo_library),
-          label: const Text('Import from gallery'),
+          label: Text(l10n.scannerImportGallery),
         ),
       ],
     );

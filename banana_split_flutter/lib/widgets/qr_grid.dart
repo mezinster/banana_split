@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:banana_split_flutter/services/export_service.dart';
 
@@ -10,6 +11,7 @@ class QrGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -26,7 +28,7 @@ class QrGrid extends StatelessWidget {
             padding: const EdgeInsets.all(8),
             child: Column(
               children: [
-                Text('Shard ${index + 1} of ${shardJsons.length}',
+                Text(l10n.shardLabel(index + 1, shardJsons.length),
                     style: Theme.of(context).textTheme.labelMedium),
                 const SizedBox(height: 4),
                 Expanded(
@@ -41,7 +43,7 @@ class QrGrid extends StatelessWidget {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.save_alt, size: 18),
-                      tooltip: 'Save this shard',
+                      tooltip: l10n.shardSaveTooltip,
                       onPressed: () async {
                         try {
                           await ExportService.saveSinglePng(
@@ -50,14 +52,16 @@ class QrGrid extends StatelessWidget {
                             shardIndex: index + 1,
                           );
                           if (context.mounted) {
+                            final l10n = AppLocalizations.of(context)!;
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Shard saved')),
+                              SnackBar(content: Text(l10n.shardSaved)),
                             );
                           }
                         } catch (e) {
                           if (context.mounted) {
+                            final l10n = AppLocalizations.of(context)!;
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error saving: $e')),
+                              SnackBar(content: Text(l10n.errorSaving(e.toString()))),
                             );
                           }
                         }
@@ -65,7 +69,7 @@ class QrGrid extends StatelessWidget {
                     ),
                     IconButton(
                       icon: const Icon(Icons.share, size: 18),
-                      tooltip: 'Share this shard',
+                      tooltip: l10n.shardShareTooltip,
                       onPressed: () async {
                         try {
                           await ExportService.shareSingleShard(
@@ -75,8 +79,9 @@ class QrGrid extends StatelessWidget {
                           );
                         } catch (e) {
                           if (context.mounted) {
+                            final l10n = AppLocalizations.of(context)!;
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error sharing: $e')),
+                              SnackBar(content: Text(l10n.errorSharing(e.toString()))),
                             );
                           }
                         }
