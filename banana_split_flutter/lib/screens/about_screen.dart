@@ -66,9 +66,9 @@ class AboutScreen extends StatelessWidget {
                 context: context,
                 applicationName: l10n.appTitle,
                 applicationVersion: l10n.aboutVersion(info.version, info.buildNumber),
-                applicationIcon: const Padding(
-                  padding: EdgeInsets.all(8),
-                  child: Icon(Icons.security, size: 48),
+                applicationIcon: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Image.asset('assets/app_icon.png', width: 48, height: 48),
                 ),
               );
             },
