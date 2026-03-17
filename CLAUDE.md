@@ -60,9 +60,11 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 
 **State** (`lib/state/`): `ChangeNotifier` + `Provider`, no persistent storage.
 - `create_notifier.dart` — Title, secret, shard count, passphrase, generated shards.
-- `restore_notifier.dart` — Scanned shards with validation, passphrase normalization, reconstruction.
+- `restore_notifier.dart` — Scanned shards with validation, passphrase normalization, reconstruction. Error handling uses `ShardError` sealed class hierarchy (not strings) — UI localizes errors via exhaustive `switch`.
 
-**UI** (`lib/screens/`, `lib/widgets/`): Bottom nav with Create (two-step wizard), Restore (scanner → passphrase → result), About. Widgets: `QrGrid` (2-column QR display), `ShardScanner` (camera + gallery import), `PassphraseField` (auto/manual toggle).
+**UI** (`lib/screens/`, `lib/widgets/`): Bottom nav with Create (two-step wizard), Restore (scanner → passphrase → result), About (with version, privacy policy, licenses). Widgets: `QrGrid` (2-column QR display), `ShardScanner` (camera + gallery import), `PassphraseField` (auto/manual toggle).
+
+**Localization** (`lib/l10n/`): Flutter's official `flutter_localizations` with ARB files and code generation. 6 locales: EN, RU, TR, BE, KA, UK. All UI strings use `AppLocalizations.of(context)!`. Config in `l10n.yaml`, template is `app_en.arb`. Navigation labels are built inside `build()` (not `static const`) because they need `BuildContext`.
 
 **Services** (`lib/services/`):
 - `export_service.dart` — Save QR shards as PNGs or PDF, share via OS share sheet.
@@ -74,6 +76,7 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 - Shard format: reads v0/v1/v2, writes v2 only. v2 shards are NOT backward-compatible with the current web app.
 - QR codes use error correction level M (15% recovery).
 - Test wrapper (`tests/run_all.sh`) uses `flutter test --reporter json` piped through a Python3 parser for clean CLI output.
+- All new UI strings must be added to `lib/l10n/app_en.arb` (template) and all 5 translation files. Run `flutter gen-l10n` after editing ARB files. Use `AppLocalizations.of(context)!.keyName` in widgets.
 - Camera scanner uses `WidgetsBindingObserver` for Android lifecycle handling — disposes camera on background, re-inits on resume. `_disposed` flag prevents use-after-dispose in async callbacks.
 - Gallery QR import has two-stage decode: `mobile_scanner.analyzeImage()` first (native, mobile), then `zxing2` QRCodeReader fallback (pure Dart, all platforms).
 - Windows builds include `launch.bat` — checks for VC++ Runtime and offers to download/install if missing.

@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-03-17
+
+### Added
+
+- **About screen enhancements**: Version display (via `package_info_plus`), Privacy Policy page (inline + "View online" link to GitHub), Open-source licenses page (Flutter built-in `showLicensePage` with GPLv3 registered).
+- **Privacy Policy**: `PRIVACY_POLICY.md` at repo root; in-app screen with localized text.
+- **App localization**: 6 languages — English, Russian, Turkish, Belarusian, Georgian, Ukrainian. Uses Flutter's official `flutter_localizations` with ARB files and code generation.
+- **Typed error handling**: `ShardError` sealed class hierarchy in `restore_notifier.dart` replaces string-based errors. Enables localized error messages via exhaustive `switch` in the UI layer.
+- **Unit tests**: 5 new tests for `ShardError` handling in `restore_notifier_test.dart` (41 total).
+
+### Changed
+
+- All hardcoded UI strings replaced with `AppLocalizations` calls across all screens, widgets, and services.
+- Navigation labels refactored from `static const` to runtime-built (localization requires `BuildContext`).
+- `ExportService.saveAsPdf` now accepts localized string parameters instead of hardcoded English text.
+
 ## [0.3.2] - 2026-03-17
 
 ### Added

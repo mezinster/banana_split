@@ -4,6 +4,8 @@ A Flutter port of the Banana Split web app. Splits secrets into QR code shards u
 
 Platforms: Android, Windows, macOS, Linux (no iOS).
 
+Languages: English, Russian, Turkish, Belarusian, Georgian, Ukrainian.
+
 ## How It Works
 
 1. **Create**: Enter a title, secret text, and number of shards. The app encrypts the secret with a passphrase-derived key (scrypt + NaCl secretbox), splits the ciphertext via Shamir's Secret Sharing, and renders each shard as a QR code.
@@ -79,7 +81,15 @@ lib/
   screens/
     create_screen.dart      Two-step create wizard
     restore_screen.dart     Scanner + passphrase + result
-    about_screen.dart       Info/explanation
+    about_screen.dart       Version, privacy policy, licenses
+    privacy_policy_screen.dart  Inline privacy policy + online link
+  l10n/
+    app_en.arb              English (template)
+    app_ru.arb              Russian
+    app_tr.arb              Turkish
+    app_be.arb              Belarusian
+    app_ka.arb              Georgian
+    app_uk.arb              Ukrainian
   widgets/
     qr_grid.dart            QR code display grid
     shard_scanner.dart      Camera + gallery scanner
