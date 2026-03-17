@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:pinenacl/tweetnacl.dart';
 import 'package:pinenacl/api.dart';
@@ -79,14 +80,14 @@ class BananaCrypto {
     }
   }
 
-  /// Split secret data into Shamir shards, returning JSON strings.
-  static Future<List<String>> share({
+  /// The synchronous core of share() — separated so it can run in an Isolate.
+  static List<String> _shareSync({
     required String data,
     required String title,
     required String passphrase,
     required int totalShards,
     required int requiredShards,
-  }) async {
+  }) {
     final salt = _hashString(title);
     final encrypted = _encrypt(data, salt, passphrase);
 
@@ -98,7 +99,6 @@ class BananaCrypto {
 
     final result = <String>[];
     for (final share in shamirShares) {
-      // First char is the bitfield indicator, rest is hex data
       final bitfieldChar = share[0];
       final hexData = share.substring(1);
       final encodedShard = bitfieldChar + base64Encode(_dehexify(hexData));
@@ -116,9 +116,38 @@ class BananaCrypto {
     return result;
   }
 
-  /// Reconstruct the original secret from shard objects and passphrase.
-  static Future<String> reconstruct(
-      List<Shard> shardObjects, String passphrase) async {
+  /// Split secret data into Shamir shards, returning JSON strings.
+  /// Runs heavy crypto (scrypt) in a separate Isolate to keep the UI responsive.
+  static Future<List<String>> share({
+    required String data,
+    required String title,
+    required String passphrase,
+    required int totalShards,
+    required int requiredShards,
+  }) {
+    return Isolate.run(() => _shareSync(
+          data: data,
+          title: title,
+          passphrase: passphrase,
+          totalShards: totalShards,
+          requiredShards: requiredShards,
+        ));
+  }
+
+  /// The synchronous core of reconstruct() — separated so it can run in an Isolate.
+  static String _reconstructSync(
+      List<Map<String, dynamic>> shardMaps, String passphrase) {
+    // Rehydrate Shard objects inside the isolate
+    final shardObjects = shardMaps
+        .map((m) => Shard(
+              version: m['version'] as int,
+              title: m['title'] as String,
+              requiredShards: m['requiredShards'] as int,
+              data: m['data'] as String,
+              nonce: m['nonce'] as String,
+            ))
+        .toList();
+
     Shard.validateCompatibility(shardObjects);
 
     final first = shardObjects.first;
@@ -133,14 +162,11 @@ class BananaCrypto {
     Uint8List nonce;
 
     if (first.version == 0) {
-      // v0: hex nonces, raw hex shard data
       nonce = _dehexify(first.nonce);
-      final shamirShares =
-          shardObjects.map((s) => s.data).toList();
+      final shamirShares = shardObjects.map((s) => s.data).toList();
       final hexSecret = shamir.combine(shamirShares);
       ciphertext = _dehexify(hexSecret);
     } else {
-      // v1/v2: base64 nonces, bitfield char + base64 shard data
       nonce = base64Decode(first.nonce);
       final shamirShares = shardObjects.map((s) {
         final bitfieldChar = s.data[0];
@@ -158,5 +184,24 @@ class BananaCrypto {
     }
 
     return utf8.decode(result);
+  }
+
+  /// Reconstruct the original secret from shard objects and passphrase.
+  /// Runs heavy crypto (scrypt) in a separate Isolate to keep the UI responsive.
+  static Future<String> reconstruct(
+      List<Shard> shardObjects, String passphrase) {
+    // Serialize Shard objects to Maps for cross-isolate transfer
+    // (Shard instances can't be sent directly across isolate boundaries)
+    final shardMaps = shardObjects
+        .map((s) => {
+              'version': s.version,
+              'title': s.title,
+              'requiredShards': s.requiredShards,
+              'data': s.data,
+              'nonce': s.nonce,
+            })
+        .toList();
+
+    return Isolate.run(() => _reconstructSync(shardMaps, passphrase));
   }
 }
