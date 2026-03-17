@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:pinenacl/tweetnacl.dart';
 import 'package:pinenacl/api.dart';

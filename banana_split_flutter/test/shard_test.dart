@@ -32,7 +32,7 @@ void main() {
 
   group('Shard.toJson', () {
     test('serializes as v2', () {
-      final shard = Shard(
+      const shard = Shard(
         version: 2, title: 'test', requiredShards: 3,
         data: '7abc', nonce: 'bm9uY2U=',
       );
@@ -45,35 +45,35 @@ void main() {
 
   group('Shard validation', () {
     test('validateCompatibility passes for matching shards', () {
-      final a = Shard(version: 1, title: 'x', requiredShards: 3, data: 'd1', nonce: 'n');
-      final b = Shard(version: 1, title: 'x', requiredShards: 3, data: 'd2', nonce: 'n');
+      const a = Shard(version: 1, title: 'x', requiredShards: 3, data: 'd1', nonce: 'n');
+      const b = Shard(version: 1, title: 'x', requiredShards: 3, data: 'd2', nonce: 'n');
       Shard.validateCompatibility([a, b]);
     });
 
     test('validateCompatibility throws on title mismatch', () {
-      final a = Shard(version: 1, title: 'x', requiredShards: 3, data: 'd1', nonce: 'n');
-      final b = Shard(version: 1, title: 'y', requiredShards: 3, data: 'd2', nonce: 'n');
+      const a = Shard(version: 1, title: 'x', requiredShards: 3, data: 'd1', nonce: 'n');
+      const b = Shard(version: 1, title: 'y', requiredShards: 3, data: 'd2', nonce: 'n');
       expect(() => Shard.validateCompatibility([a, b]),
         throwsA(predicate((e) => e.toString().contains('itle'))));
     });
 
     test('validateCompatibility throws on version mismatch', () {
-      final a = Shard(version: 1, title: 'x', requiredShards: 3, data: 'd1', nonce: 'n');
-      final b = Shard(version: 2, title: 'x', requiredShards: 3, data: 'd2', nonce: 'n');
+      const a = Shard(version: 1, title: 'x', requiredShards: 3, data: 'd1', nonce: 'n');
+      const b = Shard(version: 2, title: 'x', requiredShards: 3, data: 'd2', nonce: 'n');
       expect(() => Shard.validateCompatibility([a, b]),
         throwsA(predicate((e) => e.toString().contains('ersion'))));
     });
 
     test('validateCompatibility throws on nonce mismatch', () {
-      final a = Shard(version: 1, title: 'x', requiredShards: 3, data: 'd1', nonce: 'n1');
-      final b = Shard(version: 1, title: 'x', requiredShards: 3, data: 'd2', nonce: 'n2');
+      const a = Shard(version: 1, title: 'x', requiredShards: 3, data: 'd1', nonce: 'n1');
+      const b = Shard(version: 1, title: 'x', requiredShards: 3, data: 'd2', nonce: 'n2');
       expect(() => Shard.validateCompatibility([a, b]),
         throwsA(predicate((e) => e.toString().contains('once'))));
     });
 
     test('validateCompatibility throws on requiredShards mismatch', () {
-      final a = Shard(version: 1, title: 'x', requiredShards: 3, data: 'd1', nonce: 'n');
-      final b = Shard(version: 1, title: 'x', requiredShards: 4, data: 'd2', nonce: 'n');
+      const a = Shard(version: 1, title: 'x', requiredShards: 3, data: 'd1', nonce: 'n');
+      const b = Shard(version: 1, title: 'x', requiredShards: 4, data: 'd2', nonce: 'n');
       expect(() => Shard.validateCompatibility([a, b]),
         throwsA(predicate((e) => e.toString().contains('shard'))));
     });

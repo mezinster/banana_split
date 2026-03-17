@@ -73,7 +73,6 @@ void main() {
 
     test('empty secret round-trip', () {
       final shamir = Shamir(bits: 8);
-      const hexSecret = '';
       // Empty secret should either throw or handle gracefully
       // Testing that non-empty secrets of various lengths work
       for (final hex in ['00', 'ff', '0000', 'abcdef1234567890']) {
