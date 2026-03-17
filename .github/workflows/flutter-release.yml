@@ -1,0 +1,325 @@
+name: Flutter Release
+run-name: "Release ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }} from ${{ inputs.branch || 'tag' }}"
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.3.1)'
+        required: true
+        type: string
+      branch:
+        description: 'Branch to release from'
+        required: false
+        type: string
+        default: 'master'
+      release_notes:
+        description: 'Release notes (what changed in this version)'
+        required: false
+        type: string
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  FLUTTER_VERSION: '3.24.0'
+
+jobs:
+  version:
+    name: Determine Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_number: ${{ steps.version.outputs.build_number }}
+      tag: ${{ steps.version.outputs.tag }}
+      branch: ${{ steps.version.outputs.branch }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref }}
+
+      - name: Determine version
+        id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          INPUT_BRANCH: ${{ github.event.inputs.branch }}
+        run: |
+          if [ "$EVENT_NAME" == "workflow_dispatch" ]; then
+            VERSION="$INPUT_VERSION"
+            BRANCH="$INPUT_BRANCH"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+            BRANCH=$(git branch -r --contains HEAD | head -1 | sed 's|.*origin/||' || echo "unknown")
+          fi
+          BUILD_NUMBER=$(git rev-list --count HEAD)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "build_number=${BUILD_NUMBER}" >> $GITHUB_OUTPUT
+          echo "tag=v${VERSION}" >> $GITHUB_OUTPUT
+          echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}"
+          echo "Build Number: ${BUILD_NUMBER}"
+          echo "Branch: ${BRANCH}"
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: banana_split_flutter
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+  build-android:
+    name: Build Android
+    needs: [version, test]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: banana_split_flutter
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Update version in pubspec.yaml
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          BUILD: ${{ needs.version.outputs.build_number }}
+        run: |
+          sed -i "s/^version: .*/version: ${VERSION}+${BUILD}/" pubspec.yaml
+          grep "^version:" pubspec.yaml
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Build release App Bundle
+        run: flutter build appbundle --release
+
+      - name: Rename artifacts with version
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          BUILD: ${{ needs.version.outputs.build_number }}
+        run: |
+          mkdir -p artifacts
+          cp build/app/outputs/flutter-apk/app-release.apk \
+             "artifacts/banana-split-${VERSION}+${BUILD}.apk"
+          cp build/app/outputs/bundle/release/app-release.aab \
+             "artifacts/banana-split-${VERSION}+${BUILD}.aab"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: banana_split_flutter/artifacts/*.apk
+          retention-days: 90
+
+      - name: Upload App Bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-aab
+          path: banana_split_flutter/artifacts/*.aab
+          retention-days: 90
+
+  build-windows:
+    name: Build Windows
+    needs: [version, test]
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: banana_split_flutter
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Update version in pubspec.yaml
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          BUILD: ${{ needs.version.outputs.build_number }}
+        run: |
+          (Get-Content pubspec.yaml) -replace '^version: .*', "version: $env:VERSION+$env:BUILD" | Set-Content pubspec.yaml
+          Select-String -Path pubspec.yaml -Pattern '^version:'
+        shell: pwsh
+
+      - name: Build release Windows
+        run: flutter build windows --release
+
+      - name: Create Windows zip
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          BUILD: ${{ needs.version.outputs.build_number }}
+        run: |
+          Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "banana-split-windows-$env:VERSION+$env:BUILD.zip"
+        shell: pwsh
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-zip
+          path: banana_split_flutter/banana-split-windows-*.zip
+          retention-days: 90
+
+  create-release:
+    name: Create GitHub Release
+    needs: [version, build-android, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref }}
+
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-apk
+          path: release-artifacts/
+
+      - name: Download App Bundle artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-aab
+          path: release-artifacts/
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-zip
+          path: release-artifacts/
+
+      - name: Generate checksums
+        run: |
+          cd release-artifacts
+          sha256sum * > checksums-sha256.txt
+          cat checksums-sha256.txt
+
+      - name: Generate release notes
+        id: release_notes
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          BUILD: ${{ needs.version.outputs.build_number }}
+          BRANCH: ${{ needs.version.outputs.branch }}
+          CUSTOM_NOTES: ${{ github.event.inputs.release_notes }}
+          FL_VERSION: ${{ env.FLUTTER_VERSION }}
+        run: |
+          cat > release-notes.md << HEADER
+          ## Banana Split v${VERSION}
+
+          ### Downloads
+
+          **Android**
+          - **APK** — Direct install on Android devices
+          - **AAB** — For Google Play Store upload
+
+          **Windows**
+          - **ZIP** — Extract and run on Windows x64
+
+          ### What's New
+          HEADER
+
+          if [ -n "$CUSTOM_NOTES" ]; then
+            printf '%s\n' "$CUSTOM_NOTES" >> release-notes.md
+          else
+            echo "See commit history for detailed changes." >> release-notes.md
+          fi
+
+          cat >> release-notes.md << EOF
+
+          ### Checksums (SHA-256)
+          \`\`\`
+          $(cat release-artifacts/checksums-sha256.txt)
+          \`\`\`
+
+          ### Build Info
+          - Version: ${VERSION}
+          - Build Number: ${BUILD}
+          - Branch: ${BRANCH}
+          - Flutter: ${FL_VERSION}
+          EOF
+
+          cat release-notes.md
+
+      - name: Create or update tag
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          RELEASE_TAG: ${{ needs.version.outputs.tag }}
+          RELEASE_BRANCH: ${{ needs.version.outputs.branch }}
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag -fa "$RELEASE_TAG" -m "Release $RELEASE_TAG from branch $RELEASE_BRANCH"
+          git push origin "$RELEASE_TAG" --force
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.version.outputs.tag }}
+          name: Banana Split v${{ needs.version.outputs.version }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease == 'true' }}
+          files: |
+            release-artifacts/*.apk
+            release-artifacts/*.aab
+            release-artifacts/*.zip
+            release-artifacts/checksums-sha256.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
