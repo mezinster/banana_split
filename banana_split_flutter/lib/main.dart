@@ -107,12 +107,13 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _selectedIndex = 0;
+  final _filesKey = GlobalKey<FilesScreenState>();
 
-  static const List<Widget> _screens = [
-    CreateScreen(),
-    RestoreScreen(),
-    FilesScreen(),
-    AboutScreen(),
+  late final List<Widget> _screens = [
+    const CreateScreen(),
+    const RestoreScreen(),
+    FilesScreen(key: _filesKey),
+    const AboutScreen(),
   ];
 
   @override
@@ -134,6 +135,9 @@ class _HomeShellState extends State<HomeShell> {
           setState(() {
             _selectedIndex = index;
           });
+          if (index == 2) {
+            _filesKey.currentState?.refresh();
+          }
         },
         destinations: [
           NavigationDestination(

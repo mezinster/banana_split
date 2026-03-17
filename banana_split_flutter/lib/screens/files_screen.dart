@@ -9,18 +9,34 @@ class FilesScreen extends StatefulWidget {
   const FilesScreen({super.key});
 
   @override
-  State<FilesScreen> createState() => _FilesScreenState();
+  State<FilesScreen> createState() => FilesScreenState();
 }
 
-class _FilesScreenState extends State<FilesScreen> {
+class FilesScreenState extends State<FilesScreen> with WidgetsBindingObserver {
   List<File> _files = [];
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadFiles();
   }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadFiles();
+    }
+  }
+
+  void refresh() => _loadFiles();
 
   Future<void> _loadFiles() async {
     setState(() => _loading = true);
