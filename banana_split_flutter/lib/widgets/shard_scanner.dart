@@ -32,14 +32,24 @@ class _ShardScannerState extends State<ShardScanner> {
   }
 
   Future<void> _initCamera() async {
-    if (Platform.isWindows || Platform.isLinux) return;
+    // On mobile, request permission first
+    if (Platform.isAndroid || Platform.isMacOS) {
+      final status = await Permission.camera.request();
+      if (!status.isGranted) {
+        setState(() => _permissionDenied = true);
+        return;
+      }
+    }
 
-    final status = await Permission.camera.request();
-    if (status.isGranted) {
+    // Try to start the camera on all platforms
+    try {
       _cameraController = MobileScannerController();
-      setState(() => _cameraSupported = true);
-    } else {
-      setState(() => _permissionDenied = true);
+      await _cameraController!.start();
+      if (mounted) setState(() => _cameraSupported = true);
+    } catch (_) {
+      // Camera not available — fall back to gallery import
+      _cameraController?.dispose();
+      _cameraController = null;
     }
   }
 
@@ -130,7 +140,7 @@ class _ShardScannerState extends State<ShardScanner> {
           Container(
             height: 200,
             alignment: Alignment.center,
-            child: const Text('Camera not available on this platform.\n'
+            child: const Text('Camera not available.\n'
                 'Use the import button below to load QR code images.'),
           ),
 
