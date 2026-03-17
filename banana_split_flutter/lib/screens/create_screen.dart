@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:banana_split_flutter/services/export_service.dart';
 import 'package:banana_split_flutter/state/create_notifier.dart';
 import 'package:banana_split_flutter/widgets/passphrase_field.dart';
 import 'package:banana_split_flutter/widgets/qr_grid.dart';
@@ -211,19 +212,43 @@ class _ResultsView extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.save_alt),
                 tooltip: 'Save all shards',
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Save coming soon')),
-                  );
+                onPressed: () async {
+                  try {
+                    final path = await ExportService.saveAsPdf(
+                      shardJsons: notifier.generatedShards,
+                      title: notifier.title,
+                      requiredShards: notifier.requiredShards,
+                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Saved to $path')),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error saving: $e')),
+                      );
+                    }
+                  }
                 },
               ),
               IconButton(
                 icon: const Icon(Icons.share),
                 tooltip: 'Share all shards',
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Share coming soon')),
-                  );
+                onPressed: () async {
+                  try {
+                    await ExportService.shareShards(
+                      shardJsons: notifier.generatedShards,
+                      title: notifier.title,
+                    );
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error sharing: $e')),
+                      );
+                    }
+                  }
                 },
               ),
             ],

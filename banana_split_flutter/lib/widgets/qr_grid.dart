@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:banana_split_flutter/services/export_service.dart';
 
 class QrGrid extends StatelessWidget {
   final List<String> shardJsons;
@@ -41,19 +42,44 @@ class QrGrid extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.save_alt, size: 18),
                       tooltip: 'Save this shard',
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Save coming soon')),
-                        );
+                      onPressed: () async {
+                        try {
+                          await ExportService.saveSinglePng(
+                            shardJson: shardJsons[index],
+                            title: title,
+                            shardIndex: index + 1,
+                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Shard saved')),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error saving: $e')),
+                            );
+                          }
+                        }
                       },
                     ),
                     IconButton(
                       icon: const Icon(Icons.share, size: 18),
                       tooltip: 'Share this shard',
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Share coming soon')),
-                        );
+                      onPressed: () async {
+                        try {
+                          await ExportService.shareSingleShard(
+                            shardJson: shardJsons[index],
+                            title: title,
+                            shardIndex: index + 1,
+                          );
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error sharing: $e')),
+                            );
+                          }
+                        }
                       },
                     ),
                   ],
