@@ -113,6 +113,10 @@ jobs:
       - name: Build release Windows
         run: flutter build windows --release
 
+      - name: Copy launcher script
+        run: Copy-Item "windows\launcher\launch.bat" "build\windows\x64\runner\Release\"
+        shell: pwsh
+
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
