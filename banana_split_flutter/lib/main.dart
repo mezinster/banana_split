@@ -11,6 +11,8 @@ import 'package:banana_split_flutter/state/restore_notifier.dart';
 import 'package:banana_split_flutter/screens/create_screen.dart';
 import 'package:banana_split_flutter/screens/restore_screen.dart';
 import 'package:banana_split_flutter/screens/about_screen.dart';
+import 'package:banana_split_flutter/state/locale_notifier.dart';
+import 'package:banana_split_flutter/widgets/language_selector.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +21,9 @@ Future<void> main() async {
       await rootBundle.loadString('assets/wordlist.txt');
   final passphraseGenerator =
       PassphraseGenerator.fromString(wordlistContent);
+
+  final localeNotifier = LocaleNotifier();
+  await localeNotifier.load();
 
   LicenseRegistry.addLicense(() async* {
     yield const LicenseEntryWithLineBreaks(
@@ -40,6 +45,7 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider.value(value: localeNotifier),
         ChangeNotifierProvider(
           create: (_) => CreateNotifier(passphraseGenerator),
         ),
@@ -59,31 +65,34 @@ class BananaSplitApp extends StatelessWidget {
   Widget build(BuildContext context) {
     const seedColor = Colors.amber;
 
-    return MaterialApp(
-      title: 'Banana Split',
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: seedColor,
-          brightness: Brightness.light,
+    return Consumer<LocaleNotifier>(
+      builder: (context, localeNotifier, _) => MaterialApp(
+        title: 'Banana Split',
+        locale: localeNotifier.locale,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: seedColor,
+            brightness: Brightness.light,
+          ),
+          useMaterial3: true,
         ),
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: seedColor,
-          brightness: Brightness.dark,
+        darkTheme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: seedColor,
+            brightness: Brightness.dark,
+          ),
+          useMaterial3: true,
         ),
-        useMaterial3: true,
+        themeMode: ThemeMode.system,
+        home: const HomeShell(),
       ),
-      themeMode: ThemeMode.system,
-      home: const HomeShell(),
     );
   }
 }
@@ -111,6 +120,7 @@ class _HomeShellState extends State<HomeShell> {
       appBar: AppBar(
         title: Text(l10n.appTitle),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: const [LanguageSelectorButton()],
       ),
       body: IndexedStack(
         index: _selectedIndex,
