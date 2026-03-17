@@ -258,10 +258,15 @@ class _ResultsView extends StatelessWidget {
                 tooltip: l10n.createSaveAllTooltip,
                 onPressed: () async {
                   try {
+                    final l10n = AppLocalizations.of(context)!;
                     final path = await ExportService.saveAsPdf(
                       shardJsons: notifier.generatedShards,
                       title: notifier.title,
                       requiredShards: notifier.requiredShards,
+                      shardLabelBuilder: (index, total) =>
+                          l10n.pdfShardLabel(index, total),
+                      requiresLabel: l10n.pdfRequiresShards(notifier.requiredShards),
+                      passphrasePlaceholder: l10n.pdfPassphrasePlaceholder,
                     );
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(

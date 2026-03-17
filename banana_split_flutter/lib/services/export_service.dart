@@ -59,6 +59,9 @@ class ExportService {
     required List<String> shardJsons,
     required String title,
     required int requiredShards,
+    required String Function(int index, int total) shardLabelBuilder,
+    required String requiresLabel,
+    required String passphrasePlaceholder,
   }) async {
     final dir = await getApplicationDocumentsDirectory();
     final safeTitle = title.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
@@ -79,15 +82,15 @@ class ExportService {
             children: [
               pw.Text(title, style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 16),
-              pw.Text('Shard ${i + 1} of ${shardJsons.length}', style: const pw.TextStyle(fontSize: 18)),
-              pw.Text('Requires $requiredShards shards to reconstruct', style: const pw.TextStyle(fontSize: 14)),
+              pw.Text(shardLabelBuilder(i + 1, shardJsons.length), style: const pw.TextStyle(fontSize: 18)),
+              pw.Text(requiresLabel, style: const pw.TextStyle(fontSize: 14)),
               pw.SizedBox(height: 24),
               pw.Image(image, width: 300, height: 300),
               pw.SizedBox(height: 24),
               pw.Container(
                 padding: const pw.EdgeInsets.all(12),
                 decoration: pw.BoxDecoration(border: pw.Border.all(width: 2)),
-                child: pw.Text('Write your passphrase here: ___________________________',
+                child: pw.Text(passphrasePlaceholder,
                     style: const pw.TextStyle(fontSize: 16)),
               ),
             ],
