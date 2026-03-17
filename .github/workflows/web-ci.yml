@@ -3,8 +3,14 @@ name: Web App CI
 on:
   push:
     branches: [master]
+    paths-ignore:
+      - 'banana_split_flutter/**'
+      - '.github/workflows/flutter-*'
   pull_request:
     branches: [master]
+    paths-ignore:
+      - 'banana_split_flutter/**'
+      - '.github/workflows/flutter-*'
   schedule:
     - cron: '30 23 * * 5'
 
