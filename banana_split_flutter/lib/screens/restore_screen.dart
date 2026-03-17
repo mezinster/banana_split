@@ -1,13 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:banana_split_flutter/state/restore_notifier.dart';
 import 'package:banana_split_flutter/widgets/shard_scanner.dart';
+
+String _localizeError(AppLocalizations l10n, ShardError error) {
+  return switch (error) {
+    EmptyQrError() => l10n.errorEmptyQr,
+    DuplicateShardError() => l10n.errorDuplicateShard,
+    ParseError(:final detail) => l10n.errorParseFailed(detail),
+    TitleMismatchError(:final expected, :final actual) =>
+      l10n.errorTitleMismatch(expected, actual),
+    NonceMismatchError() => l10n.errorNonceMismatch,
+    RequiredMismatchError() => l10n.errorRequiredMismatch,
+    VersionMismatchError() => l10n.errorVersionMismatch,
+    DecryptionError() => l10n.errorDecryptionFailed,
+    NotEnoughShardsError(:final required, :final got) =>
+      l10n.errorNotEnoughShards(required, got),
+  };
+}
 
 class RestoreScreen extends StatelessWidget {
   const RestoreScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Consumer<RestoreNotifier>(
       builder: (context, notifier, _) {
         return SingleChildScrollView(
@@ -17,8 +35,8 @@ class RestoreScreen extends StatelessWidget {
             children: [
               Text(
                 notifier.title.isNotEmpty
-                    ? 'Combine shards for "${notifier.title}"'
-                    : 'Combine shards',
+                    ? l10n.restoreCombineTitle(notifier.title)
+                    : l10n.restoreCombineTitleDefault,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 16),
@@ -36,7 +54,7 @@ class RestoreScreen extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: notifier.reset,
                   icon: const Icon(Icons.restart_alt),
-                  label: const Text('Start over'),
+                  label: Text(l10n.restoreStartOver),
                 ),
             ],
           ),
@@ -53,6 +71,7 @@ class _ScannerView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return ShardScanner(
       scannedCount: notifier.scannedCount,
       requiredCount: notifier.requiredCount > 0 ? notifier.requiredCount : null,
@@ -60,14 +79,16 @@ class _ScannerView extends StatelessWidget {
         final error = notifier.addShard(rawData);
         if (error != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(error)),
+            SnackBar(content: Text(_localizeError(l10n, error))),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Shard ${notifier.scannedCount} of '
-                '${notifier.requiredCount} scanned',
+                l10n.restoreShardScanned(
+                  notifier.scannedCount,
+                  notifier.requiredCount,
+                ),
               ),
               duration: const Duration(seconds: 1),
             ),
@@ -103,23 +124,24 @@ class _PassphraseViewState extends State<_PassphraseView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final notifier = widget.notifier;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          'All shards collected!',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Text(
+          l10n.restoreAllCollected,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
         TextField(
           controller: _controller,
-          decoration: const InputDecoration(
-            labelText: 'Passphrase',
-            border: OutlineInputBorder(),
-            hintText: 'Enter passphrase to decrypt',
+          decoration: InputDecoration(
+            labelText: l10n.restorePassphraseLabel,
+            border: const OutlineInputBorder(),
+            hintText: l10n.restorePassphraseHint,
           ),
           obscureText: true,
           onSubmitted: (_) => _submit(),
@@ -129,7 +151,7 @@ class _PassphraseViewState extends State<_PassphraseView> {
         if (notifier.error != null) ...[
           const SizedBox(height: 8),
           Text(
-            notifier.error!,
+            _localizeError(l10n, notifier.error!),
             style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
         ],
@@ -139,11 +161,11 @@ class _PassphraseViewState extends State<_PassphraseView> {
         else
           ElevatedButton(
             onPressed: _submit,
-            child: const Text('Reconstruct Secret'),
+            child: Text(l10n.restoreReconstructButton),
           ),
         if (notifier.isDecrypting) ...[
           const SizedBox(height: 8),
-          const Center(child: Text('Decrypting...')),
+          Center(child: Text(l10n.restoreDecrypting)),
         ],
       ],
     );
@@ -157,15 +179,16 @@ class _RecoveredView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Recovered Secret',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Text(
+              l10n.restoreRecoveredSecret,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             SelectableText(
