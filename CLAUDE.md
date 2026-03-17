@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Banana Split is a Vue 2 + TypeScript web app that uses Shamir's Secret Sharing to split secrets (e.g., paper backups) into N QR-code shards, requiring N/2+1 to reconstruct. It builds to a **single self-contained HTML file** (all JS/CSS inlined) designed to run offline.
+Banana Split is a Vue 2 + TypeScript web app that uses Shamir's Secret Sharing to split secrets (e.g., paper backups) into N QR-code shards, requiring N/2+1 to reconstruct. It builds to a **single self-contained HTML file** (all JS/CSS inlined) that can be deployed to S3, any web server, or opened locally as a file.
 
 ## Commands
 
@@ -18,10 +18,6 @@ Banana Split is a Vue 2 + TypeScript web app that uses Shamir's Secret Sharing t
 ## Architecture
 
 **Crypto pipeline** (`src/util/crypto.ts`): Core logic — encrypts secret with scrypt-derived key + NaCl secretbox, then splits ciphertext via `secrets.js-grempe` (Shamir). Supports v0 (hex-encoded nonces) and v1 (base64-encoded nonces/shards) formats. Exports `share()`, `parse()`, `reconstruct()`.
-
-**Vue plugins** (`src/plugins/`):
-- `online.ts` — global `isOnline` computed property; app enforces offline-only usage
-- `ipfs.ts` — computes IPFS CID of current page for integrity verification
 
 **Views** (`src/views/`): Four routes — Info (landing), Share (split a secret), Print (QR code printout), Combine (scan QR codes to reconstruct).
 
@@ -58,16 +54,19 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 **Models** (`lib/models/`):
 - `shard.dart` — Shard data class with `parse()` supporting v0/v1/v2 formats, `toJson()` with unicode escaping, `validateCompatibility()` for cross-shard consistency checks.
 
-**State** (`lib/state/`): `ChangeNotifier` + `Provider`, no persistent storage.
+**State** (`lib/state/`): `ChangeNotifier` + `Provider`.
 - `create_notifier.dart` — Title, secret, shard count, passphrase, generated shards.
 - `restore_notifier.dart` — Scanned shards with validation, passphrase normalization, reconstruction. Error handling uses `ShardError` sealed class hierarchy (not strings) — UI localizes errors via exhaustive `switch`.
+- `locale_notifier.dart` — Persists selected locale via `SharedPreferences`. Loaded at startup before `runApp()`.
 
-**UI** (`lib/screens/`, `lib/widgets/`): Bottom nav with Create (two-step wizard), Restore (scanner → passphrase → result), About (with version, privacy policy, licenses). Widgets: `QrGrid` (2-column QR display), `ShardScanner` (camera + gallery import), `PassphraseField` (auto/manual toggle).
+**UI** (`lib/screens/`, `lib/widgets/`): Bottom nav with 4 tabs — Create (two-step wizard), Restore (scanner → passphrase → result), Files (browse/share/delete saved PDFs and PNGs), About (with version, privacy policy, licenses). Widgets: `QrGrid` (2-column QR display), `ShardScanner` (camera + gallery import), `PassphraseField` (auto/manual toggle), `LanguageSelectorButton` (flag-based locale picker in AppBar).
 
 **Localization** (`lib/l10n/`): Flutter's official `flutter_localizations` with ARB files and code generation. 6 locales: EN, RU, TR, BE, KA, UK. All UI strings use `AppLocalizations.of(context)!`. Config in `l10n.yaml`, template is `app_en.arb`. Navigation labels are built inside `build()` (not `static const`) because they need `BuildContext`.
 
 **Services** (`lib/services/`):
-- `export_service.dart` — Save QR shards as PNGs or PDF, share via OS share sheet.
+- `export_service.dart` — Save QR shards as PNGs or PDF to `getApplicationDocumentsDirectory()/banana_split/`, share via OS share sheet.
+
+**Files tab** (`lib/screens/files_screen.dart`): Scans `banana_split/` directory recursively for `.png` and `.pdf` files. Supports share (via `Share.shareXFiles`), delete with confirmation dialog, pull-to-refresh, and empty state. Parent directory name shown as subtitle for files in subdirectories.
 
 ### Key Conventions
 
@@ -80,9 +79,16 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 - Camera scanner uses `WidgetsBindingObserver` for Android lifecycle handling — disposes camera on background, re-inits on resume. `_disposed` flag prevents use-after-dispose in async callbacks.
 - Gallery QR import has two-stage decode: `mobile_scanner.analyzeImage()` first (native, mobile), then `zxing2` QRCodeReader fallback (pure Dart, all platforms).
 - Windows builds include `launch.bat` — checks for VC++ Runtime and offers to download/install if missing.
+- `LanguageSelectorButton` uses `PopupMenuButton<Locale>` with Dart records for locale data. Normalizes locale with `Locale(currentLocale.languageCode)` to match `initialValue` (avoids `Locale('en', 'US') != Locale('en')` gotcha).
+- `FilesScreen` widget tests use `FakePathProvider` with `PathProviderPlatform.instance` mocking and `tester.runAsync()` for real I/O in `initState()`.
+- App icon: `assets/app_icon.png` (1536x1536, padded from 1024x1536 source). Android adaptive icon with `#FFFFFF` background. Android app label is "Banana Split" (set in `AndroidManifest.xml`).
 
 ### CI/CD
 
 - **Flutter CI** (`.github/workflows/flutter-ci.yml`): Analyze + test on push/PR (scoped to `banana_split_flutter/`). On-demand debug APK and release Windows builds via `workflow_dispatch`.
-- **Flutter Release** (`.github/workflows/flutter-release.yml`): Triggered by tag push (`v*.*.*`) or manual dispatch. Builds Android (APK + AAB) and Windows (zip). Creates GitHub Release with checksums.
+- **Release** (`.github/workflows/release.yml`): Triggered by tag push (`v*.*.*`) or manual dispatch. Builds Android (APK + AAB), Windows (zip), and Web (single HTML file) in parallel. Creates GitHub Release with all artifacts and checksums.
 - **Web App CI** (`.github/workflows/web-ci.yml`): Lint, unit tests, E2E tests, CodeQL, Trivy scan. Skips Flutter-only changes via `paths-ignore`.
+
+### Deployment
+
+**Web app to S3:** Download `banana-split-web-X.Y.Z.html` from GitHub Release, upload as `index.html` to an S3 bucket with static website hosting enabled. The HTML file is fully self-contained (all JS/CSS inlined) — no other assets needed.
