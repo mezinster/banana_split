@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-03-18
+
+### Added
+
+- **Language selector**: Flag-based locale picker in the AppBar on every screen. Switches language immediately. Choice persisted via `SharedPreferences` across app restarts. 6 languages: English, Russian, Turkish, Belarusian, Georgian, Ukrainian.
+- **Files tab**: 4th tab in bottom navigation for browsing, sharing, and deleting saved PDFs and PNGs. Scans `banana_split/` directory recursively, shows file size and date, supports pull-to-refresh. Auto-refreshes when tab is selected or app is resumed.
+- **App icon**: Custom Banana Split logo for Android (adaptive icon with white background, all mipmap densities) and Windows (ICO). Android app label changed to "Banana Split".
+- **Web app S3 support**: Removed offline-only enforcement, local file protocol check, and IPFS integrity hash. The web app now works from any origin — S3 static hosting, any web server, or local file.
+- **Web build in release workflow**: Release workflow now builds the self-contained HTML file alongside Android and Windows artifacts, all attached to GitHub Releases with checksums.
+- **Widget tests**: Tests for `FilesScreen` (empty state, file listing, delete confirmation) and `LanguageSelectorButton` (flag display, dropdown, locale switching). 56 total tests.
+
+### Changed
+
+- Release workflow renamed from `flutter-release.yml` to `release.yml` — now covers all platforms (Android, Windows, Web).
+- License page icon updated from generic security icon to Banana Split logo.
+- README fully rewritten with downloads table, architecture overview, dev setup, CI/CD docs, S3 deployment guide, and shard compatibility matrix.
+
+### Fixed
+
+- Files tab now refreshes on tab selection (`IndexedStack` builds all tabs at startup, so `initState` alone missed files saved after launch).
+- Locale matching in language selector normalized to avoid `Locale('en', 'US') != Locale('en')` mismatch with `PopupMenuButton.initialValue`.
+- Duplicate Android resource `ic_launcher_background` between `ic_launcher_background.xml` and `colors.xml`.
+- Web app build: restored `vm` type declaration in `vue.d.ts` needed by `ShardInfo.vue` print portal.
+
 ## [0.4.0] - 2026-03-17
 
 ### Added
