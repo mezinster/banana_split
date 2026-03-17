@@ -29,6 +29,8 @@ class _ShardScannerState extends State<ShardScanner>
   bool _cameraSupported = false;
   bool _permissionDenied = false;
   bool _disposed = false;
+  final Set<String> _seenCodes = {};
+  DateTime _lastScanTime = DateTime(0);
 
   @override
   void initState() {
@@ -116,11 +118,21 @@ class _ShardScannerState extends State<ShardScanner>
 
   void _onDetect(BarcodeCapture capture) {
     if (_disposed) return;
+
+    // Throttle: ignore detections within 500ms of the last successful scan
+    final now = DateTime.now();
+    if (now.difference(_lastScanTime).inMilliseconds < 500) return;
+
     for (final barcode in capture.barcodes) {
       final raw = barcode.rawValue;
-      if (raw != null && raw.isNotEmpty) {
-        widget.onScanned(raw);
-      }
+      if (raw == null || raw.isEmpty) continue;
+
+      // Skip codes we've already forwarded
+      if (_seenCodes.contains(raw)) continue;
+
+      _seenCodes.add(raw);
+      _lastScanTime = now;
+      widget.onScanned(raw);
     }
   }
 
