@@ -1,61 +1,77 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:banana_split_flutter/screens/privacy_policy_screen.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final textTheme = Theme.of(context).textTheme;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('About Banana Split', style: textTheme.headlineSmall),
+          Text(l10n.aboutHeading, style: textTheme.headlineSmall),
           const SizedBox(height: 16),
-          Text(
-            'Banana Split lets you securely split a secret — such as a password, '
-            'seed phrase, or private key — into multiple shards using '
-            "Shamir's Secret Sharing.",
-            style: textTheme.bodyLarge,
-          ),
+          Text(l10n.aboutDescription, style: textTheme.bodyLarge),
           const SizedBox(height: 16),
-          Text("What is Shamir's Secret Sharing?",
-              style: textTheme.titleMedium),
+          Text(l10n.aboutWhatIsSss, style: textTheme.titleMedium),
           const SizedBox(height: 8),
-          Text(
-            "Shamir's Secret Sharing (SSS) is a cryptographic algorithm invented by "
-            'Adi Shamir in 1979. It divides a secret into N pieces (shards) such that '
-            'any K of them (the threshold) are sufficient to reconstruct the original '
-            'secret, but K-1 or fewer shards reveal nothing about the secret.',
-            style: textTheme.bodyMedium,
-          ),
+          Text(l10n.aboutSssExplanation, style: textTheme.bodyMedium),
           const SizedBox(height: 16),
-          Text('How Banana Split works', style: textTheme.titleMedium),
+          Text(l10n.aboutHowItWorks, style: textTheme.titleMedium),
           const SizedBox(height: 8),
-          Text(
-            '1. You enter a secret and a passphrase.\n'
-            '2. The secret is encrypted with your passphrase using NaCl secretbox '
-            '(XSalsa20-Poly1305).\n'
-            '3. The encrypted data is split into N shards using Shamir\'s Secret '
-            'Sharing over GF(256).\n'
-            '4. Each shard is encoded as a QR code that you can print or distribute '
-            'to trusted custodians.\n'
-            '5. To recover the secret, you scan at least K shards and enter the '
-            'passphrase. The shards are recombined and the data is decrypted.',
-            style: textTheme.bodyMedium,
-          ),
+          Text(l10n.aboutHowItWorksBody, style: textTheme.bodyMedium),
           const SizedBox(height: 16),
-          Text('Security notes', style: textTheme.titleMedium),
+          Text(l10n.aboutSecurityNotes, style: textTheme.titleMedium),
           const SizedBox(height: 8),
-          Text(
-            '- All cryptographic operations happen on-device. No data is ever '
-            'transmitted to a server.\n'
-            '- The passphrase adds an additional layer of protection: even if '
-            'enough shards are compromised, the attacker still needs the passphrase '
-            'to decrypt the secret.\n'
-            '- Store shards separately and in physically secure locations.',
-            style: textTheme.bodyMedium,
+          Text(l10n.aboutSecurityNotesBody, style: textTheme.bodyMedium),
+          const Divider(height: 32),
+          FutureBuilder<PackageInfo>(
+            future: PackageInfo.fromPlatform(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const SizedBox.shrink();
+              final info = snapshot.data!;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  l10n.aboutVersion(info.version, info.buildNumber),
+                  style: textTheme.bodySmall,
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.privacy_tip_outlined),
+            title: Text(l10n.aboutPrivacyPolicy),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const PrivacyPolicyScreen(),
+              ),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.description_outlined),
+            title: Text(l10n.aboutLicenses),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () async {
+              final info = await PackageInfo.fromPlatform();
+              if (!context.mounted) return;
+              showLicensePage(
+                context: context,
+                applicationName: l10n.appTitle,
+                applicationVersion: l10n.aboutVersion(info.version, info.buildNumber),
+                applicationIcon: const Padding(
+                  padding: EdgeInsets.all(8),
+                  child: Icon(Icons.security, size: 48),
+                ),
+              );
+            },
           ),
         ],
       ),
