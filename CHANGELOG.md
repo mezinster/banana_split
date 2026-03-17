@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.2] - 2026-03-17
+
+### Added
+
+- **CI/CD workflows**: Flutter CI (analyze, test, on-demand debug builds) and Flutter Release (Android APK/AAB + Windows zip, GitHub Release with SHA-256 checksums). Triggered by tag push or manual dispatch.
+- **Consolidated web app CI**: Merged yarn tests, E2E tests, CodeQL, and Trivy scan into single `web-ci.yml` with path filtering to skip Flutter-only changes.
+- **Windows launcher** (`launch.bat`): Checks for Visual C++ Runtime and offers to download/install the redistributable if missing.
+- **zxing2 QR fallback**: Gallery image import now decodes QR codes via pure Dart `zxing2` library when `mobile_scanner.analyzeImage()` is unavailable (fixes Windows/Linux gallery import).
+- **Camera on all platforms**: Removed hard-coded skip of camera init on Windows/Linux. Camera now attempts to start on all platforms with graceful fallback.
+- **Android lifecycle handling**: `WidgetsBindingObserver` disposes camera on app background and re-initializes on resume. `_disposed` flag prevents use-after-dispose crashes in async callbacks.
+
+### Fixed
+
+- **`vue.config.js`**: `git describe --long` now falls back to `git rev-parse --short HEAD` when no tags exist, fixing CI failures.
+- **E2E workflow**: Install Playwright browsers + ffmpeg for E2E tests.
+- **Windows builds**: Use release mode (not debug) to avoid dependency on non-redistributable debug CRT DLLs.
+
 ## [0.3.1] - 2026-03-17
 
 ### Added

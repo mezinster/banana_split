@@ -74,3 +74,12 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 - Shard format: reads v0/v1/v2, writes v2 only. v2 shards are NOT backward-compatible with the current web app.
 - QR codes use error correction level M (15% recovery).
 - Test wrapper (`tests/run_all.sh`) uses `flutter test --reporter json` piped through a Python3 parser for clean CLI output.
+- Camera scanner uses `WidgetsBindingObserver` for Android lifecycle handling — disposes camera on background, re-inits on resume. `_disposed` flag prevents use-after-dispose in async callbacks.
+- Gallery QR import has two-stage decode: `mobile_scanner.analyzeImage()` first (native, mobile), then `zxing2` QRCodeReader fallback (pure Dart, all platforms).
+- Windows builds include `launch.bat` — checks for VC++ Runtime and offers to download/install if missing.
+
+### CI/CD
+
+- **Flutter CI** (`.github/workflows/flutter-ci.yml`): Analyze + test on push/PR (scoped to `banana_split_flutter/`). On-demand debug APK and release Windows builds via `workflow_dispatch`.
+- **Flutter Release** (`.github/workflows/flutter-release.yml`): Triggered by tag push (`v*.*.*`) or manual dispatch. Builds Android (APK + AAB) and Windows (zip). Creates GitHub Release with checksums.
+- **Web App CI** (`.github/workflows/web-ci.yml`): Lint, unit tests, E2E tests, CodeQL, Trivy scan. Skips Flutter-only changes via `paths-ignore`.

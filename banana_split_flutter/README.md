@@ -51,6 +51,18 @@ The Flutter app reads shards from all versions:
 
 The Flutter app writes v2 shards only. Note: the current web app does not handle v2 shards — they are forward-incompatible.
 
+## Windows
+
+The Windows build includes a `launch.bat` launcher script. If the Visual C++ Runtime is not installed, the launcher offers to download and install it automatically.
+
+Saved QR shards go to: `C:\Users\<username>\Documents\banana_split\<title>\`
+
+## CI/CD
+
+CI workflows are in `.github/workflows/`:
+- **flutter-ci.yml** — Analyze + test on push/PR. On-demand debug APK and release Windows builds.
+- **flutter-release.yml** — Tag push (`v*.*.*`) or manual dispatch. Builds Android APK/AAB + Windows zip. Creates GitHub Release with SHA-256 checksums.
+
 ## Project Structure
 
 ```
@@ -78,6 +90,10 @@ lib/
 
 assets/
   wordlist.txt              7776-word passphrase list
+
+windows/
+  launcher/
+    launch.bat              VCRedist check + app launcher
 
 tests/
   run_all.sh                Test runner wrapper
