@@ -27,7 +27,7 @@ class LanguageSelectorButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentLocale = Localizations.localeOf(context);
     return PopupMenuButton<Locale>(
-      initialValue: currentLocale,
+      initialValue: Locale(currentLocale.languageCode),
       onSelected: (locale) {
         context.read<LocaleNotifier>().setLocale(locale);
       },
