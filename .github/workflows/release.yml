@@ -1,4 +1,4 @@
-name: Flutter Release
+name: Release
 run-name: "Release ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }} from ${{ inputs.branch || 'tag' }}"
 
 on:
@@ -165,6 +165,52 @@ jobs:
           path: banana_split_flutter/artifacts/*.aab
           retention-days: 90
 
+  build-web:
+    name: Build Web App
+    needs: [version]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref }}
+
+      - name: Read .nvmrc
+        run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_ENV
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NVMRC }}
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Lint
+        run: yarn lint --max-warnings 0
+
+      - name: Unit tests
+        run: yarn test:unit
+
+      - name: Build
+        run: yarn build
+
+      - name: Rename artifact with version
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          mkdir -p artifacts
+          cp dist/index.html "artifacts/banana-split-web-${VERSION}.html"
+
+      - name: Upload web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-html
+          path: artifacts/*.html
+          retention-days: 90
+
   build-windows:
     name: Build Windows
     needs: [version, test]
@@ -221,7 +267,7 @@ jobs:
 
   create-release:
     name: Create GitHub Release
-    needs: [version, build-android, build-windows]
+    needs: [version, build-android, build-windows, build-web]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -247,6 +293,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: windows-zip
+          path: release-artifacts/
+
+      - name: Download Web artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-html
           path: release-artifacts/
 
       - name: Generate checksums
@@ -275,6 +327,9 @@ jobs:
 
           **Windows**
           - **ZIP** — Extract and run on Windows x64
+
+          **Web**
+          - **HTML** — Single self-contained file, deploy to S3 or open locally
 
           ### What's New
           HEADER
@@ -324,6 +379,7 @@ jobs:
             release-artifacts/*.apk
             release-artifacts/*.aab
             release-artifacts/*.zip
+            release-artifacts/*.html
             release-artifacts/checksums-sha256.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
