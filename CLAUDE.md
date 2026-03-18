@@ -42,10 +42,13 @@ export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh" && yarn test:unit
 
 **Build** (`vue.config.js`): Uses `html-webpack-inline-source-plugin` to inline all assets into a single HTML file. Injects git revision via `DefinePlugin`.
 
+**Localization** (`src/i18n.ts`, `src/locales/`): vue-i18n v8 with 6 locales (EN, RU, TR, BE, KA, UK) in JSON files. Browser language auto-detected on each visit (no persistence). Slavic languages (RU, UK, BE) use custom `pluralizationRules` for 3-form plurals (one|few|many). Print language is independently selectable via `printLocale` on Share.vue, passed through ShardInfo → ShardQrCode using `$t(key, locale)` 3-arg form. ShardInfo's detached Vue instance for print rendering requires explicit `i18n` injection (`new Vue({ el, i18n, render })`). All new UI strings must be added to `src/locales/en.json` (template) and all 5 translation files.
+
 ## Key Conventions
 
 - Path alias `@/` maps to `src/` (configured in jest and webpack)
 - ESLint security plugin is active — `detect-object-injection` and `detect-non-literal-fs-filename` rules require `eslint-disable` comments for legitimate array indexing and NaCl API usage
+- TypeScript target does not support optional chaining (`?.`) or nullish coalescing (`??`) — use ternary operators instead
 - Passphrase generation uses a large embedded word list (`src/util/passPhrase.ts`). Share view supports auto-generated (4-word) or custom manual passphrase (min 8 chars) via checkbox toggle.
 - Share view quorum (`requiredShards`) is user-editable (range 2 to totalShards), defaults to majority via watcher on `totalShards`. Stored as data property, not computed. In Vue 2, converting computed to data+watcher is the standard pattern for reactive defaults the user can override.
 
