@@ -2,36 +2,36 @@
   <div>
     <div class="card" :transparent="!encryptionMode">
       <h2 class="card-title">
-        Create a secret split
+        {{ $t('createTitle') }}
       </h2>
       <p>
-        <label>1. Name of your split</label>
+        <label>{{ $t('createNameLabel') }}</label>
         <input
           id="secretTitle"
           v-model="title"
           type="text"
           :disabled="encryptionMode"
-          placeholder="Ex: 'My Bitcoin seed phrase'"
+          :placeholder="$t('createNameHint')"
           autofocus
         />
       </p>
       <p>
-        <label>2. Secret</label>
+        <label>{{ $t('createSecretLabel') }}</label>
         <textarea
           id="secret"
           v-model="secret"
           :class="{ tooLong: secretTooLong }"
           :disabled="encryptionMode"
-          placeholder="Your secret goes here"
+          :placeholder="$t('createSecretHint')"
         />
         <span v-if="secret.length > 0" :class="{ 'error-text': secretTooLong, 'char-counter': !secretTooLong }">
-          {{ 1024 - secret.length }} / 1024 characters remaining
+          {{ $t('createCharCounter', { remaining: 1024 - secret.length }) }}
         </span>
       </p>
       <p>
-        <label>3. Shards</label>
+        <label>{{ $t('createShardsLabel') }}</label>
         <br />
-        Will require any
+        {{ $t('createShardsRequire') }}
         <input
           id="requiredShards"
           v-model.number="requiredShards"
@@ -40,7 +40,7 @@
           min="2"
           :max="totalShards"
         />
-        shards out of
+        {{ $t('createShardsOutOf') }}
         <input
           id="totalShards"
           v-model.number="totalShards"
@@ -49,10 +49,10 @@
           min="3"
           max="255"
         />
-        to reconstruct
+        {{ $t('createShardsReconstruct') }}
       </p>
       <div class="form-group">
-        <label>4. Recovery passphrase</label>
+        <label>{{ $t('createPassphraseLabel') }}</label>
         <div v-if="!useManualPassphrase" class="flex justify-between align-center">
           <canvas-text :text="recoveryPassphrase" />
           <button class="button-icon" :disabled="encryptionMode" @click="regenPassphrase">
@@ -65,10 +65,10 @@
             v-model="recoveryPassphrase"
             type="text"
             :disabled="encryptionMode"
-            placeholder="Enter passphrase (min 8 characters)"
+            :placeholder="$t('createPassphraseHint')"
           />
           <span v-if="passphraseTooShort" class="error-text">
-            Passphrase must be at least 8 characters
+            {{ $t('createPassphraseTooShort') }}
           </span>
         </div>
         <label class="checkbox-label">
@@ -78,7 +78,7 @@
             :disabled="encryptionMode"
             @change="onPassphraseToggle"
           />
-          Use custom passphrase
+          {{ $t('createPassphraseCustom') }}
         </label>
       </div>
       <button
@@ -88,7 +88,7 @@
         :hidden="encryptionMode"
         v-on:click="toggleMode"
       >
-        Generate QR codes!
+        {{ $t('createGenerateButton') }}
       </button>
       <button
         id="backToEditBtn"
@@ -97,21 +97,44 @@
         :hidden="!encryptionMode"
         v-on:click="toggleMode"
       >
-        Back to editing data
+        {{ $t('createBackButton') }}
       </button>
     </div>
 
     <div v-if="encryptionMode">
       <div class="card" transparent="true">
-        <button id="printBtn" class="button-card" @click="print">
-          Print us!
-        </button>
+        <div class="flex align-center" style="gap: 8px; margin-bottom: 8px;">
+          <button id="printBtn" class="button-card" @click="print">
+            {{ $t('createPrintButton') }}
+          </button>
+          <select v-model="printLocale" class="print-locale-select">
+            <option value="en">
+              🇬🇧
+            </option>
+            <option value="ru">
+              🇷🇺
+            </option>
+            <option value="tr">
+              🇹🇷
+            </option>
+            <option value="be">
+              🇧🇾
+            </option>
+            <option value="ka">
+              🇬🇪
+            </option>
+            <option value="uk">
+              🇺🇦
+            </option>
+          </select>
+        </div>
         <shard-info
           v-for="shard in shards"
           :key="shard"
           :shard="shard"
           :required-shards="requiredShards"
           :title="title"
+          :locale="printLocale"
         />
       </div>
     </div>
@@ -134,6 +157,7 @@ type ShareData = {
   recoveryPassphrase: string;
   useManualPassphrase: boolean;
   encryptionMode: boolean;
+  printLocale: string;
 };
 
 export default Vue.extend({
@@ -147,7 +171,8 @@ export default Vue.extend({
       requiredShards: 2,
       recoveryPassphrase: "",
       useManualPassphrase: false,
-      encryptionMode: false
+      encryptionMode: false,
+      printLocale: ""
     };
   },
   computed: {
@@ -184,6 +209,7 @@ export default Vue.extend({
   },
   created: function() {
     this.regenPassphrase();
+    this.printLocale = this.$i18n.locale;
   },
   mounted: function() {
     this.$eventHub.$emit("foldGeneralInfo");
@@ -242,5 +268,14 @@ input[type="number"] {
   font-size: 1.6rem;
   font-weight: 400;
   color: var(--c_text-secondary);
+}
+.print-locale-select {
+  width: auto;
+  padding: 0.5rem;
+  font-size: 2rem;
+  border: 1px solid var(--c_border-main);
+  border-radius: 0.5rem;
+  background: var(--c_bg-card);
+  cursor: pointer;
 }
 </style>
