@@ -2,12 +2,12 @@
   <div>
     <div class="card measure" :transparent="needMoreShards">
       <h2 class="card-title">
-        Print shards
+        {{ $t('printTitle') }}
         <div v-if="!numberEntered">
           <p>
-            <label>Shards</label>
+            <label>{{ $t('printShardsLabel') }}</label>
             <br />
-            How many shards have you generated?
+            {{ $t('printShardsQuestion') }}
             <br>
             <input
               id="totalShards"
@@ -18,11 +18,11 @@
             />
           </p>
           <button id="generateBtn" class="button-card" @click="handleShardsInput">
-            Import QR codes!
+            {{ $t('printImportButton') }}
           </button>
         </div>
         <span v-if="title">
-          for <em v-if="title"> {{ title }}</em>
+          {{ $t('combineFor') }} <em v-if="title"> {{ title }}</em>
         </span>
       </h2>
       <div v-if="numberEntered && needMoreShards">
@@ -30,7 +30,7 @@
       </div>
       <div v-else-if="numberEntered">
         <button id="printBtn" class="button-card" @click="print">
-          Print us!
+          {{ $t('createPrintButton') }}
         </button>
         <shard-info
           v-for="code in qrCodes"
@@ -126,13 +126,13 @@ export default Vue.extend({
       }
 
       if (this.title && this.title !== parsed.title) {
-        this.$eventHub.$emit("showError", "title mismatch!");
+        this.$eventHub.$emit("showError", this.$t('errorTitleMismatch'));
         return;
       } else {
         this.title = parsed.title;
       }
       if (this.nonce && this.nonce !== parsed.nonce) {
-        this.$eventHub.$emit("showError", "nonce mismatch!");
+        this.$eventHub.$emit("showError", this.$t('errorNonceMismatch'));
         return;
       } else {
         this.nonce = parsed.nonce;
@@ -147,7 +147,7 @@ export default Vue.extend({
       if (this.requiredShards && this.requiredShards >= 3 && this.requiredShards <= 255) {
         this.numberEntered = true;
       } else {
-        this.$eventHub.$emit("showError", "Please enter a valid number of shards between 3 and 255.");
+        this.$eventHub.$emit("showError", this.$t('printInvalidShards'));
       }
     },
     toggleMode: function() {
