@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.1] - 2026-03-19
+
+### Added
+
+- **Web app internationalization**: Full i18n support using vue-i18n v8 with 6 languages — English, Russian, Turkish, Belarusian, Georgian, Ukrainian. All UI strings extracted to JSON locale files (55 keys each). Browser language auto-detected on each visit (no persistence). Slavic languages use custom pluralization rules for 3-form plurals (one|few|many).
+- **Language selector in web app**: Flag-based dropdown in the header for switching the app language.
+- **Independent print language**: Print language can be selected separately from the app language via a flag dropdown next to the Print button on the Share view. Shard QR code labels render in the selected print language.
+
+### Fixed
+
+- CSS: Global `input { width: 100% }` no longer affects checkboxes — reset to native sizing.
+- CSS: "Use custom passphrase" label aligned right under the refresh button with correct font size.
+- Build: Replaced optional chaining (`?.`) with ternary for ES2015 target compatibility.
+
 ## [0.5.0] - 2026-03-18
 
 ### Added
