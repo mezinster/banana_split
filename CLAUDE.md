@@ -6,6 +6,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Banana Split is a Vue 2 + TypeScript web app that uses Shamir's Secret Sharing to split secrets (e.g., paper backups) into N QR-code shards, requiring a user-configurable quorum to reconstruct. It builds to a **single self-contained HTML file** (all JS/CSS inlined) that can be deployed to S3, any web server, or opened locally as a file.
 
+## Environment Setup
+
+Requires Node.js v14 (see `.nvmrc`) and Yarn. Use nvm to manage Node versions:
+
+```bash
+# Install nvm (if not already installed)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+
+# In a new terminal (or source ~/.bashrc), then:
+nvm install 14          # Installs Node v14.x (matches .nvmrc)
+npm install -g yarn     # Install Yarn globally
+yarn install            # Install project dependencies
+```
+
+nvm is a bash function, not a binary — it requires `source "$NVM_DIR/nvm.sh"` before use. In non-interactive or tool shells (e.g., Claude Code Bash tool), source it explicitly each time:
+```bash
+export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh" && yarn test:unit
+```
+
 ## Commands
 
 - **Dev server:** `yarn serve`
@@ -28,7 +47,7 @@ Banana Split is a Vue 2 + TypeScript web app that uses Shamir's Secret Sharing t
 - Path alias `@/` maps to `src/` (configured in jest and webpack)
 - ESLint security plugin is active — `detect-object-injection` and `detect-non-literal-fs-filename` rules require `eslint-disable` comments for legitimate array indexing and NaCl API usage
 - Passphrase generation uses a large embedded word list (`src/util/passPhrase.ts`). Share view supports auto-generated (4-word) or custom manual passphrase (min 8 chars) via checkbox toggle.
-- Share view quorum (`requiredShards`) is user-editable (range 2 to totalShards), defaults to majority via watcher on `totalShards`. Stored as data property, not computed.
+- Share view quorum (`requiredShards`) is user-editable (range 2 to totalShards), defaults to majority via watcher on `totalShards`. Stored as data property, not computed. In Vue 2, converting computed to data+watcher is the standard pattern for reactive defaults the user can override.
 
 ---
 
@@ -83,7 +102,7 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 - `LanguageSelectorButton` uses `PopupMenuButton<Locale>` with Dart records for locale data. Normalizes locale with `Locale(currentLocale.languageCode)` to match `initialValue` (avoids `Locale('en', 'US') != Locale('en')` gotcha).
 - `FilesScreen` widget tests use `FakePathProvider` with `PathProviderPlatform.instance` mocking and `tester.runAsync()` for real I/O in `initState()`.
 - App icon: `assets/app_icon.png` (1536x1536, padded from 1024x1536 source). Android adaptive icon with `#FFFFFF` background. Android app label is "Banana Split" (set in `AndroidManifest.xml`).
-- PDF fonts: `assets/fonts/Roboto-Regular.ttf`, `Roboto-Bold.ttf`, `NotoSansGeorgian-Regular.ttf`. Loaded via `rootBundle.load()` in `export_service.dart`. Font chosen by locale: Georgian (`ka`) uses Noto Sans Georgian, all others use Roboto.
+- PDF fonts: `assets/fonts/Roboto-Regular.ttf`, `Roboto-Bold.ttf`, `NotoSansGeorgian-Regular.ttf`. Loaded via `rootBundle.load()` in `export_service.dart`. Font chosen by locale: Georgian (`ka`) uses Noto Sans Georgian, all others use Roboto. The Dart `pdf` package defaults to Helvetica which only supports Latin-1 — any non-Latin text (Cyrillic, Georgian, etc.) requires explicitly loading a TTF via `pw.Font.ttf(ByteData)` and passing it to every `pw.TextStyle`. Remove `const` from TextStyle constructors when adding font parameters since `pw.Font` instances aren't compile-time constants.
 
 ### CI/CD
 
