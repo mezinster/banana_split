@@ -23,9 +23,10 @@ All artifacts are available on the [Releases](https://github.com/mezinster/banan
 ### Splitting a Secret
 
 1. Enter your secret (e.g., a seed phrase, private key, password).
-2. Choose how many shards to create (default: 5).
-3. Banana Split encrypts the secret with a randomly generated passphrase, then splits the ciphertext into N QR codes using Shamir's scheme — requiring N/2+1 to reconstruct.
-4. Print or save the QR codes. **Write the passphrase by hand on every sheet** — this protects against printer interception.
+2. Choose how many shards to create and how many are required to reconstruct (default: majority).
+3. Use the auto-generated passphrase or enter your own custom passphrase (min 8 characters).
+4. Banana Split encrypts the secret with the passphrase, then splits the ciphertext into N QR codes using Shamir's scheme.
+5. Print or save the QR codes. **Write the passphrase by hand on every sheet** — this protects against printer interception.
 
 ### Reconstructing a Secret
 
@@ -53,12 +54,17 @@ Vue 2 + TypeScript single-page app. Builds to a **single self-contained HTML fil
 
 Native app for Android and Windows (also builds for macOS/Linux). Pure Dart implementation of the same crypto pipeline using `pinenacl` and a custom Shamir port.
 
-**Features beyond the web app:**
-- Save shards as PNGs or PDF
+**Additional features:**
+- Save shards as PNGs or PDF with full Unicode font support (Roboto + Noto Sans Georgian)
 - Files tab for browsing, sharing, and deleting saved exports
 - Language selector with 6 locales (EN, RU, TR, BE, KA, UK) persisted across sessions
 - Camera and gallery QR scanning with two-stage decode
 - Custom Banana Split app icon
+
+**Shared features (both apps):**
+- Custom passphrase or auto-generated passphrase
+- User-selectable quorum (how many shards required to reconstruct)
+- Full shard format interoperability (v0, v1, v2)
 
 ## Development
 

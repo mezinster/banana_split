@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Banana Split is a Vue 2 + TypeScript web app that uses Shamir's Secret Sharing to split secrets (e.g., paper backups) into N QR-code shards, requiring N/2+1 to reconstruct. It builds to a **single self-contained HTML file** (all JS/CSS inlined) that can be deployed to S3, any web server, or opened locally as a file.
+Banana Split is a Vue 2 + TypeScript web app that uses Shamir's Secret Sharing to split secrets (e.g., paper backups) into N QR-code shards, requiring a user-configurable quorum to reconstruct. It builds to a **single self-contained HTML file** (all JS/CSS inlined) that can be deployed to S3, any web server, or opened locally as a file.
 
 ## Commands
 
@@ -27,7 +27,8 @@ Banana Split is a Vue 2 + TypeScript web app that uses Shamir's Secret Sharing t
 
 - Path alias `@/` maps to `src/` (configured in jest and webpack)
 - ESLint security plugin is active — `detect-object-injection` and `detect-non-literal-fs-filename` rules require `eslint-disable` comments for legitimate array indexing and NaCl API usage
-- Passphrase generation uses a large embedded word list (`src/util/passPhrase.ts`)
+- Passphrase generation uses a large embedded word list (`src/util/passPhrase.ts`). Share view supports auto-generated (4-word) or custom manual passphrase (min 8 chars) via checkbox toggle.
+- Share view quorum (`requiredShards`) is user-editable (range 2 to totalShards), defaults to majority via watcher on `totalShards`. Stored as data property, not computed.
 
 ---
 
@@ -64,7 +65,7 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 **Localization** (`lib/l10n/`): Flutter's official `flutter_localizations` with ARB files and code generation. 6 locales: EN, RU, TR, BE, KA, UK. All UI strings use `AppLocalizations.of(context)!`. Config in `l10n.yaml`, template is `app_en.arb`. Navigation labels are built inside `build()` (not `static const`) because they need `BuildContext`.
 
 **Services** (`lib/services/`):
-- `export_service.dart` — Save QR shards as PNGs or PDF to `getApplicationDocumentsDirectory()/banana_split/`, share via OS share sheet.
+- `export_service.dart` — Save QR shards as PNGs or PDF to `getApplicationDocumentsDirectory()/banana_split/`, share via OS share sheet. PDF export uses bundled Roboto (Latin/Cyrillic/Turkish) and Noto Sans Georgian fonts for Unicode support — font selected by `languageCode` parameter.
 
 **Files tab** (`lib/screens/files_screen.dart`): Scans `banana_split/` directory recursively for `.png` and `.pdf` files. Supports share (via `Share.shareXFiles`), delete with confirmation dialog, pull-to-refresh, and empty state. Parent directory name shown as subtitle for files in subdirectories.
 
@@ -82,6 +83,7 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 - `LanguageSelectorButton` uses `PopupMenuButton<Locale>` with Dart records for locale data. Normalizes locale with `Locale(currentLocale.languageCode)` to match `initialValue` (avoids `Locale('en', 'US') != Locale('en')` gotcha).
 - `FilesScreen` widget tests use `FakePathProvider` with `PathProviderPlatform.instance` mocking and `tester.runAsync()` for real I/O in `initState()`.
 - App icon: `assets/app_icon.png` (1536x1536, padded from 1024x1536 source). Android adaptive icon with `#FFFFFF` background. Android app label is "Banana Split" (set in `AndroidManifest.xml`).
+- PDF fonts: `assets/fonts/Roboto-Regular.ttf`, `Roboto-Bold.ttf`, `NotoSansGeorgian-Regular.ttf`. Loaded via `rootBundle.load()` in `export_service.dart`. Font chosen by locale: Georgian (`ka`) uses Noto Sans Georgian, all others use Roboto.
 
 ### CI/CD
 
