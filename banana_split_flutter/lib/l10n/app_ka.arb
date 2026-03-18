@@ -11,7 +11,7 @@
   "createSecretLabel": "საიდუმლო",
   "createSecretHint": "შეიყვანეთ საიდუმლო გასაყოფად",
   "createSecretTooLong": "საიდუმლო აღემატება 1024 სიმბოლოს",
-  "createSecretCharCount": "{count}/1024 სიმბოლო",
+  "createSecretCharCount": "{count} / 1024 სიმბოლო დარჩენილია",
   "createTotalShardsLabel": "ფრაგმენტების რაოდენობა",
   "createTotalShardsHint": "3–255",
   "createRequiredLabel": "საჭიროა აღდგენისთვის",

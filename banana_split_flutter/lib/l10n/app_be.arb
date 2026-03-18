@@ -11,7 +11,7 @@
   "createSecretLabel": "Сакрэт",
   "createSecretHint": "Увядзіце сакрэт для падзелу",
   "createSecretTooLong": "Сакрэт перавышае 1024 сімвалы",
-  "createSecretCharCount": "{count}/1024 сімвалаў",
+  "createSecretCharCount": "{count} / 1024 сімвалаў засталося",
   "createTotalShardsLabel": "Усяго фрагментаў",
   "createTotalShardsHint": "3–255",
   "createRequiredLabel": "Неабходна для аднаўлення",

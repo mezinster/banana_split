@@ -98,8 +98,8 @@ class _InputFormState extends State<_InputForm> {
               errorText: notifier.secretTooLong
                   ? l10n.createSecretTooLong
                   : null,
-              helperText: notifier.secret.length > 900
-                  ? l10n.createSecretCharCount(notifier.secret.length)
+              helperText: notifier.secret.isNotEmpty
+                  ? l10n.createSecretCharCount(1024 - notifier.secret.length)
                   : null,
             ),
           ),

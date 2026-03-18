@@ -24,8 +24,8 @@
           :disabled="encryptionMode"
           placeholder="Your secret goes here"
         />
-        <span v-if="secretTooLong" class="error-text">
-          Inputs longer than 1024 characters make QR codes illegible
+        <span v-if="secret.length > 0" :class="{ 'error-text': secretTooLong, 'char-counter': !secretTooLong }">
+          {{ 1024 - secret.length }} / 1024 characters remaining
         </span>
       </p>
       <p>
@@ -224,6 +224,10 @@ input[type="number"] {
 }
 .error-text {
   color: red;
+}
+.char-counter {
+  color: gray;
+  font-size: 0.85em;
 }
 .form-group {
   margin: 1em 0;

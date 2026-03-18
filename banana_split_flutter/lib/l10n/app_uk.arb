@@ -11,7 +11,7 @@
   "createSecretLabel": "Секрет",
   "createSecretHint": "Введіть секрет для поділу",
   "createSecretTooLong": "Секрет перевищує 1024 символи",
-  "createSecretCharCount": "{count}/1024 символів",
+  "createSecretCharCount": "{count} / 1024 символів залишилось",
   "createTotalShardsLabel": "Всього фрагментів",
   "createTotalShardsHint": "3–255",
   "createRequiredLabel": "Необхідно для відновлення",
