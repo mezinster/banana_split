@@ -31,7 +31,16 @@
       <p>
         <label>3. Shards</label>
         <br />
-        Will require any {{ requiredShards }} shards out of
+        Will require any
+        <input
+          id="requiredShards"
+          v-model.number="requiredShards"
+          :disabled="encryptionMode"
+          type="number"
+          min="2"
+          :max="totalShards"
+        />
+        shards out of
         <input
           id="totalShards"
           v-model.number="totalShards"
@@ -42,10 +51,40 @@
         />
         to reconstruct
       </p>
+      <p>
+        <label>4. Recovery passphrase</label>
+        <div v-if="!useManualPassphrase" class="flex justify-between align-center">
+          <canvas-text :text="recoveryPassphrase" />
+          <button class="button-icon" @click="regenPassphrase" :disabled="encryptionMode">
+            &#x21ba;
+          </button>
+        </div>
+        <div v-else>
+          <input
+            id="manualPassphrase"
+            v-model="recoveryPassphrase"
+            type="text"
+            :disabled="encryptionMode"
+            placeholder="Enter passphrase (min 8 characters)"
+          />
+          <span v-if="passphraseTooShort" class="error-text">
+            Passphrase must be at least 8 characters
+          </span>
+        </div>
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            v-model="useManualPassphrase"
+            :disabled="encryptionMode"
+            @change="onPassphraseToggle"
+          />
+          Use custom passphrase
+        </label>
+      </p>
       <button
         id="generateBtn"
         class="button-card"
-        :disabled="secretTooLong"
+        :disabled="secretTooLong || passphraseTooShort"
         :hidden="encryptionMode"
         v-on:click="toggleMode"
       >
@@ -63,15 +102,6 @@
     </div>
 
     <div v-if="encryptionMode">
-      <div class="card" framed="true" transparent="true">
-        <label>4. Your passphrase for the recovery is:</label>
-        <div class="flex justify-between align-center">
-          <canvas-text :text="recoveryPassphrase" />
-          <button class="button-icon" @click="regenPassphrase">
-            &#x21ba;
-          </button>
-        </div>
-      </div>
       <div class="card" transparent="true">
         <button id="printBtn" class="button-card" @click="print">
           Print us!
@@ -100,7 +130,9 @@ type ShareData = {
   title: string;
   secret: string;
   totalShards: number;
+  requiredShards: number;
   recoveryPassphrase: string;
+  useManualPassphrase: boolean;
   encryptionMode: boolean;
 };
 
@@ -111,8 +143,10 @@ export default Vue.extend({
     return {
       title: "",
       secret: "",
-      totalShards: 3, // TODO: 5
+      totalShards: 3,
+      requiredShards: 2,
       recoveryPassphrase: "",
+      useManualPassphrase: false,
       encryptionMode: false
     };
   },
@@ -120,8 +154,8 @@ export default Vue.extend({
     secretTooLong(): boolean {
       return this.secret.length > 1024;
     },
-    requiredShards(): number {
-      return Math.floor(this.totalShards / 2) + 1;
+    passphraseTooShort(): boolean {
+      return this.useManualPassphrase && this.recoveryPassphrase.length < 8;
     },
     shards(): string[] {
       this.$eventHub.$emit("clearAlerts");
@@ -141,6 +175,11 @@ export default Vue.extend({
         this.toggleMode(); // back to editing
       }
       return [];
+    }
+  },
+  watch: {
+    totalShards(newVal: number) {
+      this.requiredShards = Math.floor(newVal / 2) + 1;
     }
   },
   created: function() {
@@ -163,6 +202,13 @@ export default Vue.extend({
     },
     toggleMode: function() {
       this.encryptionMode = !this.encryptionMode;
+    },
+    onPassphraseToggle: function() {
+      if (!this.useManualPassphrase) {
+        this.regenPassphrase();
+      } else {
+        this.recoveryPassphrase = "";
+      }
     }
   }
 });
@@ -178,5 +224,13 @@ input[type="number"] {
 }
 .error-text {
   color: red;
+}
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  cursor: pointer;
+  font-weight: normal;
 }
 </style>
