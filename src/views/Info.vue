@@ -4,13 +4,13 @@
     <div class="measure">
       <div>
         <router-link id="shareNav" class="button-nav" to="/share">
-          Create
+          {{ $t('tabCreate') }}
         </router-link>
         <router-link id="combineNav" class="button-nav" to="/combine">
-          Restore
+          {{ $t('tabRestore') }}
         </router-link>
         <router-link id="printNav" class="button-nav" to="/print">
-          Print
+          {{ $t('tabPrint') }}
         </router-link>
       </div>
     </div>

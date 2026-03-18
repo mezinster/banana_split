@@ -1,6 +1,6 @@
 <template>
   <span id="forkongithub">
-    <a :href="url">🥄&nbsp;Fork me on GitHub</a>
+    <a :href="url">🥄&nbsp;{{ $t('forkMe') }}</a>
   </span>
 </template>
 

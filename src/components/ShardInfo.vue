@@ -1,6 +1,7 @@
 <script lang="ts">
 import Vue, { VNode } from "vue";
 import ShardQrCode from "./ShardQrCode.vue";
+import i18n from "../i18n";
 
 export default Vue.extend({
   name: "ShardInfo",
@@ -17,6 +18,10 @@ export default Vue.extend({
     requiredShards: {
       type: Number,
       required: true
+    },
+    locale: {
+      type: String,
+      default: ""
     }
   },
   beforeDestroy: function() {
@@ -35,6 +40,7 @@ export default Vue.extend({
     const passedProps = this.$props;
     this.vm = new Vue({
       el: element,
+      i18n,
       render: function(h) {
         return h(ShardQrCode, { props: passedProps });
       }
