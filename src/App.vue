@@ -209,6 +209,16 @@ textarea {
   font-size: 2rem;
   font-family: var(--f_main);
 }
+input[type="checkbox"] {
+  width: auto;
+  background: initial;
+  border: initial;
+  padding: initial;
+  border-radius: initial;
+  font-size: initial;
+  flex-shrink: 0;
+  cursor: pointer;
+}
 textarea {
   min-height: 120px;
 }

@@ -235,9 +235,12 @@ input[type="number"] {
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 8px;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
   cursor: pointer;
-  font-weight: normal;
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: var(--c_text-secondary);
 }
 </style>
