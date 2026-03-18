@@ -104,6 +104,20 @@ test("reconstructs the reference example of v1 serialization", () => {
   });
 });
 
+test("reconstructs v2 shards (Flutter app format, same encoding as v1)", () => {
+  var shards = [
+    '{"v":2,"t":"Pssst","r":2,"d":"8AdI3F1Xn4CK9mXEVWLWgg2gzho5WV38E/hn1OYyRMZenL/Jm6dmrZoiji2ZlMSVEW+XN9WW1I/ilDC1yiu4oBa4=","n":"a17TDZHP2iL/sdPHgFJUP3NlAC7bDgrp"}',
+    '{"v":2,"t":"Pssst","r":2,"d":"8ArluLqrT3URnL+IqsHddG9MpXqvSNt5JBLfTqSJmCg4raIFLg2XhfbnFLCTgCumI4qByThq9bBxnwLy8EgEHYiw=","n":"a17TDZHP2iL/sdPHgFJUP3NlAC7bDgrp"}',
+    '{"v":2,"t":"Pssst","r":2,"d":"8A2tZOf80PWbatpM/6ML9mLrUFkOu4kpyUiY62bPA6HmkVVtQpfosdF3nuhpo6K3MfmjsJ8ROokDShDgNka/ptFI=","n":"a17TDZHP2iL/sdPHgFJUP3NlAC7bDgrp"}'
+  ].map(s => crypto.parse(s));
+
+  [[0, 1], [0, 2], [1, 2], [1, 0], [2, 0], [2, 1]].forEach(([i, j]) => {
+    expect(
+      crypto.reconstruct([shards[i], shards[j]], "excess-torch-unfold-fix")
+    ).toBe("Version one is all-around better");
+  });
+});
+
 test("throws an error if nonces mismatch", () => {
   var shards = crypto
     .share("Message", "Title", "correct-horse-battery-staple", 3, 2)

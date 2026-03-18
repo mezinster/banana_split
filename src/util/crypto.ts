@@ -178,7 +178,8 @@ function reconstruct(shardObjects: Shard[], passphrase: string): string {
       decryptedMsg = decrypt(secret, salt, passphrase, nonce);
       break;
     }
-    case 1: {
+    case 1:
+    case 2: {
       const shardDataV1 = shardObjects.map(
         shard => shard.data[0] + hexify(BASE64.toByteArray(shard.data.slice(1)))
       );
