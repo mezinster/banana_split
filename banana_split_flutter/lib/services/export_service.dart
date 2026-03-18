@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -62,11 +63,26 @@ class ExportService {
     required String Function(int index, int total) shardLabelBuilder,
     required String requiresLabel,
     required String passphrasePlaceholder,
+    String languageCode = 'en',
   }) async {
     final dir = await getApplicationDocumentsDirectory();
     final safeTitle = title.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
     final subDir = Directory('${dir.path}/banana_split');
     await subDir.create(recursive: true);
+
+    // Load Unicode-compatible fonts for PDF rendering
+    final pw.Font regularFont;
+    final pw.Font boldFont;
+    if (languageCode == 'ka') {
+      final fontData = await rootBundle.load('assets/fonts/NotoSansGeorgian-Regular.ttf');
+      regularFont = pw.Font.ttf(fontData);
+      boldFont = regularFont; // No bold variant for Georgian
+    } else {
+      final regularData = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
+      final boldData = await rootBundle.load('assets/fonts/Roboto-Bold.ttf');
+      regularFont = pw.Font.ttf(regularData);
+      boldFont = pw.Font.ttf(boldData);
+    }
 
     final pdf = pw.Document();
 
@@ -80,10 +96,10 @@ class ExportService {
           return pw.Center(child: pw.Column(
             mainAxisAlignment: pw.MainAxisAlignment.center,
             children: [
-              pw.Text(title, style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              pw.Text(title, style: pw.TextStyle(fontSize: 24, font: boldFont, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 16),
-              pw.Text(shardLabelBuilder(i + 1, shardJsons.length), style: const pw.TextStyle(fontSize: 18)),
-              pw.Text(requiresLabel, style: const pw.TextStyle(fontSize: 14)),
+              pw.Text(shardLabelBuilder(i + 1, shardJsons.length), style: pw.TextStyle(fontSize: 18, font: regularFont)),
+              pw.Text(requiresLabel, style: pw.TextStyle(fontSize: 14, font: regularFont)),
               pw.SizedBox(height: 24),
               pw.Image(image, width: 300, height: 300),
               pw.SizedBox(height: 24),
@@ -91,7 +107,7 @@ class ExportService {
                 padding: const pw.EdgeInsets.all(12),
                 decoration: pw.BoxDecoration(border: pw.Border.all(width: 2)),
                 child: pw.Text(passphrasePlaceholder,
-                    style: const pw.TextStyle(fontSize: 16)),
+                    style: pw.TextStyle(fontSize: 16, font: regularFont)),
               ),
             ],
           ));

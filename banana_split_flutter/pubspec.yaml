@@ -66,3 +66,6 @@ flutter:
   assets:
     - assets/wordlist.txt
     - assets/app_icon.png
+    - assets/fonts/Roboto-Regular.ttf
+    - assets/fonts/Roboto-Bold.ttf
+    - assets/fonts/NotoSansGeorgian-Regular.ttf

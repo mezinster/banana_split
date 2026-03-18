@@ -267,6 +267,7 @@ class _ResultsView extends StatelessWidget {
                           l10n.pdfShardLabel(index, total),
                       requiresLabel: l10n.pdfRequiresShards(notifier.requiredShards),
                       passphrasePlaceholder: l10n.pdfPassphrasePlaceholder,
+                      languageCode: Localizations.localeOf(context).languageCode,
                     );
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
