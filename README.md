@@ -114,9 +114,9 @@ The file is fully self-contained — no additional assets, no routing configurat
 |--------|---------|-------------|
 | v0 (hex) | Read/Write | Read only |
 | v1 (base64) | Read/Write | Read only |
-| v2 (base64, Dart) | — | Read/Write |
+| v2 (base64, Dart) | Read only | Read/Write |
 
-The Flutter app writes v2 shards which are not backward-compatible with the web app. Both apps can read v0 and v1 shards.
+All shard formats are fully interoperable — shards created in either app can be reconstructed in either app.
 
 ## License
 

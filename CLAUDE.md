@@ -72,7 +72,7 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 
 - Crypto operations run in `Isolate.run()` — sync cores (`_shareSync`, `_reconstructSync`) are separated from async wrappers. Shard objects are serialized to `Map<String, dynamic>` for cross-isolate transfer.
 - Uses `pinenacl`'s `TweetNaCl` low-level API directly (not the high-level `SecretBox` class) for byte-level compatibility with the web app's tweetnacl.
-- Shard format: reads v0/v1/v2, writes v2 only. v2 shards are NOT backward-compatible with the current web app.
+- Shard format: reads v0/v1/v2, writes v2 only. v2 uses same encoding as v1 (base64). Both web and Flutter apps can read all formats — full cross-app interoperability.
 - QR codes use error correction level M (15% recovery).
 - Test wrapper (`tests/run_all.sh`) uses `flutter test --reporter json` piped through a Python3 parser for clean CLI output.
 - All new UI strings must be added to `lib/l10n/app_en.arb` (template) and all 5 translation files. Run `flutter gen-l10n` after editing ARB files. Use `AppLocalizations.of(context)!.keyName` in widgets.
