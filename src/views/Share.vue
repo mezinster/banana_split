@@ -51,11 +51,11 @@
         />
         to reconstruct
       </p>
-      <p>
+      <div class="form-group">
         <label>4. Recovery passphrase</label>
         <div v-if="!useManualPassphrase" class="flex justify-between align-center">
           <canvas-text :text="recoveryPassphrase" />
-          <button class="button-icon" @click="regenPassphrase" :disabled="encryptionMode">
+          <button class="button-icon" :disabled="encryptionMode" @click="regenPassphrase">
             &#x21ba;
           </button>
         </div>
@@ -73,14 +73,14 @@
         </div>
         <label class="checkbox-label">
           <input
-            type="checkbox"
             v-model="useManualPassphrase"
+            type="checkbox"
             :disabled="encryptionMode"
             @change="onPassphraseToggle"
           />
           Use custom passphrase
         </label>
-      </p>
+      </div>
       <button
         id="generateBtn"
         class="button-card"
@@ -224,6 +224,9 @@ input[type="number"] {
 }
 .error-text {
   color: red;
+}
+.form-group {
+  margin: 1em 0;
 }
 .checkbox-label {
   display: flex;
