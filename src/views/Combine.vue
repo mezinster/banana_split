@@ -2,9 +2,9 @@
   <div>
     <div class="card measure" :transparent="!recoveredSecret">
       <h2 class="card-title">
-        Combine shards
+        {{ $t('combineTitle') }}
         <span v-if="title">
-          for <em v-if="title"> {{ title }}</em>
+          {{ $t('combineFor') }} <em v-if="title"> {{ title }}</em>
         </span>
       </h2>
       <div v-if="needMoreShards">
@@ -12,18 +12,18 @@
       </div>
       <div v-else>
         <p>
-          <label>1. Secret Phrase</label>
+          <label>{{ $t('combinePassphraseLabel') }}</label>
           <input
             id="passphrase"
             v-model="passphrase"
             type="text"
-            placeholder="type your passphrase"
+            :placeholder="$t('combinePassphraseHint')"
             autofocus
             @keyup.enter="reconstruct"
           />
         </p>
         <p>
-          <label>2. Secret</label>
+          <label>{{ $t('combineSecretLabel') }}</label>
           <textarea
             v-if="recoveredSecret"
             id="recoveredSecret"
@@ -34,7 +34,7 @@
         </p>
         <div v-if="!recoveredSecret">
           <button id="reconstructBtn" class="button-card" @click="reconstruct">
-            Reconstruct Secret
+            {{ $t('combineReconstructButton') }}
           </button>
         </div>
       </div>
@@ -111,7 +111,7 @@ export default Vue.extend({
         return;
       }
       if (this.qrCodes.has(result)) {
-        this.$eventHub.$emit("showWarn", "Shard already seen");
+        this.$eventHub.$emit("showWarn", this.$t('errorShardSeen'));
         return;
       }
       let parsed;
@@ -123,13 +123,13 @@ export default Vue.extend({
       }
 
       if (this.title && this.title !== parsed.title) {
-        this.$eventHub.$emit("showError", "title mismatch!");
+        this.$eventHub.$emit("showError", this.$t('errorTitleMismatch'));
         return;
       } else {
         this.title = parsed.title;
       }
       if (this.nonce && this.nonce !== parsed.nonce) {
-        this.$eventHub.$emit("showError", "nonce mismatch!");
+        this.$eventHub.$emit("showError", this.$t('errorNonceMismatch'));
         return;
       } else {
         this.nonce = parsed.nonce;
@@ -138,7 +138,7 @@ export default Vue.extend({
         this.requiredShards &&
         this.requiredShards !== parsed.requiredShards
       ) {
-        this.$eventHub.$emit("showError", "requiredShards mismatch");
+        this.$eventHub.$emit("showError", this.$t('errorRequiredMismatch'));
         return;
       } else {
         this.requiredShards = parsed.requiredShards;
