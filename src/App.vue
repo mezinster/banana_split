@@ -3,14 +3,17 @@
     <div id="app" class="measure">
       <ForkMe url="https://github.com/paritytech/banana_split" />
       <nav>
-        <router-link id="logo" to="/">
-          <span class="logo-text">
-            Banana Split
-          </span>
-          <span class="logo-icon">
-            🍌
-          </span>
-        </router-link>
+        <div class="nav-top">
+          <router-link id="logo" to="/">
+            <span class="logo-text">
+              {{ $t('appTitle') }}
+            </span>
+            <span class="logo-icon">
+              🍌
+            </span>
+          </router-link>
+          <LanguageSelector />
+        </div>
         <Alert />
       </nav>
 
@@ -26,16 +29,25 @@
 <script lang="ts">
 import Alert from "./components/Alert.vue";
 import ForkMe from "./components/ForkMe.vue";
+import LanguageSelector from "./components/LanguageSelector.vue";
 
 import Vue from "vue";
 
 export default Vue.extend({
   name: "App",
-  components: { Alert, ForkMe },
+  components: { Alert, ForkMe, LanguageSelector },
   computed: {
     gitRevision: function() {
       return process.env.GIT_REVISION;
     }
+  },
+  watch: {
+    "$i18n.locale"(newLocale: string) {
+      document.documentElement.lang = newLocale;
+    }
+  },
+  created() {
+    document.documentElement.lang = this.$i18n.locale;
   }
 });
 </script>
@@ -286,6 +298,12 @@ button {
   font-style: italic;
   color: darkgray;
   text-align: center;
+}
+.nav-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 @media screen and (max-width: 415px) {
   .fold input:checked ~ .fold-content {
