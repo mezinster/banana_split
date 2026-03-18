@@ -13,7 +13,7 @@ Vue.use(VueI18n);
 const SUPPORTED_LOCALES = ["en", "ru", "tr", "be", "ka", "uk"];
 
 function detectLocale(): string {
-  const browserLang = navigator.language?.split("-")[0];
+  const browserLang = navigator.language ? navigator.language.split("-")[0] : "";
   if (browserLang && SUPPORTED_LOCALES.includes(browserLang)) {
     return browserLang;
   }
