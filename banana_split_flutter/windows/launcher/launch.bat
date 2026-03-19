@@ -6,7 +6,7 @@ where /q vcruntime140.dll
 if %errorlevel% neq 0 goto :missing_vcredist
 
 :: Launch the app from the same directory as this script
-start "" "%~dp0banana_split_flutter.exe"
+start "" "%~dp0banana_split.exe"
 exit /b 0
 
 :missing_vcredist
@@ -48,5 +48,5 @@ if %errorlevel% neq 0 (
 del "%TEMP%\vc_redist.x64.exe" 2>nul
 
 echo  Done! Launching Banana Split...
-start "" "%~dp0banana_split_flutter.exe"
+start "" "%~dp0banana_split.exe"
 exit /b 0

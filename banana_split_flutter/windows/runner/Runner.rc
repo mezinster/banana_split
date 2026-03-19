@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "banana_split_flutter" "\0"
+            VALUE "CompanyName", "Parity Technologies" "\0"
+            VALUE "FileDescription", "Banana Split" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "banana_split_flutter" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "banana_split_flutter.exe" "\0"
-            VALUE "ProductName", "banana_split_flutter" "\0"
+            VALUE "InternalName", "banana_split" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Parity Technologies. All rights reserved." "\0"
+            VALUE "OriginalFilename", "banana_split.exe" "\0"
+            VALUE "ProductName", "Banana Split" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
