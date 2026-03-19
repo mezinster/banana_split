@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.4] - 2026-03-19
+
+### Fixed
+
+- Exported QR PNGs now include a quiet zone (10% white border on each side). QR spec requires a margin around finder patterns for reliable scanning. Affects all platforms (Android, Windows, macOS, Linux) — PNGs, PDFs, and shared files.
+
 ## [0.5.3] - 2026-03-19
 
 ### Fixed
