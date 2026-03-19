@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2026-03-19
+
+### Added
+
+- **Bulk gallery import**: "Import from gallery" now supports multi-file selection. Select all shard PNGs at once instead of one by one. Uses `FilePicker` (Windows) with `allowMultiple` and `ImagePicker.pickMultiImage` (mobile). Shows summary snackbar ("X imported, Y failed") for partial failures. Localized in all 6 languages.
+
+### Fixed
+
+- **QR code export quality**: Exported QR PNGs and PDFs rendered at 800px (was 300px) with 8% quiet zone (white border). Eliminates fractional module sizes that damaged finder patterns at low resolution — QR codes are now crisp and reliably scannable on all platforms.
+- Unicode secret titles (Cyrillic, Georgian, etc.) now create proper named folders and files. Previous regex stripped all non-ASCII characters.
+
 ## [0.5.6] - 2026-03-19
 
 ### Fixed
