@@ -260,54 +260,77 @@ class _ShardScannerState extends State<ShardScanner>
     _scanTimer?.cancel();
 
     try {
-      String? filePath;
+      List<String> filePaths = [];
 
       if (Platform.isWindows) {
-        // Use FilePicker on Windows — supports initialDirectory
+        // Use FilePicker on Windows — supports initialDirectory + multi-select
         final initialDir = await _getInitialDirectory();
         final result = await FilePicker.platform.pickFiles(
           type: FileType.image,
+          allowMultiple: true,
           initialDirectory: initialDir,
         );
         if (result == null || result.files.isEmpty || _disposed) return;
-        filePath = result.files.first.path;
+        for (final file in result.files) {
+          if (file.path != null) filePaths.add(file.path!);
+        }
       } else {
         final picker = ImagePicker();
-        final picked = await picker.pickImage(
-          source: ImageSource.gallery,
+        final picked = await picker.pickMultiImage(
           requestFullMetadata: false,
         );
-        if (picked == null || _disposed) return;
-        filePath = picked.path;
+        if (picked.isEmpty || _disposed) return;
+        filePaths = picked.map((f) => f.path).toList();
       }
 
-      if (filePath == null || _disposed) return;
+      if (filePaths.isEmpty || _disposed) return;
 
-      // Try mobile_scanner's image analysis first (works best on mobile)
-      if (_mobileController != null) {
-        try {
-          final capture = await _mobileController!.analyzeImage(filePath);
-          if (capture != null && capture.barcodes.isNotEmpty) {
-            _onDetect(capture);
-            return;
+      int decoded = 0;
+      int failed = 0;
+
+      for (final filePath in filePaths) {
+        if (_disposed) return;
+
+        bool found = false;
+
+        // Try mobile_scanner's image analysis first (works best on mobile)
+        if (_mobileController != null) {
+          try {
+            final capture = await _mobileController!.analyzeImage(filePath);
+            if (capture != null && capture.barcodes.isNotEmpty) {
+              _onDetect(capture);
+              found = true;
+            }
+          } catch (_) {
+            // analyzeImage may not be supported on all platforms
           }
-        } catch (_) {
-          // analyzeImage may not be supported on all platforms
+        }
+
+        // Fallback: decode with zxing2 (pure Dart, works on all platforms)
+        if (!found) {
+          final result = await _decodeQrWithZxing(filePath);
+          if (_disposed) return;
+          if (result != null) {
+            _onQrDetected(result);
+            found = true;
+          }
+        }
+
+        if (found) {
+          decoded++;
+        } else {
+          failed++;
         }
       }
 
-      // Fallback: decode with zxing2 (pure Dart, works on all platforms)
-      final decoded = await _decodeQrWithZxing(filePath);
-      if (_disposed) return;
-      if (decoded != null) {
-        widget.onScanned(decoded);
-        return;
-      }
-
-      if (mounted) {
+      if (mounted && failed > 0) {
         final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.scannerNoQrFound)),
+          SnackBar(content: Text(
+            failed == filePaths.length
+                ? l10n.scannerNoQrFound
+                : l10n.scannerBulkResult(decoded, failed),
+          )),
         );
       }
     } finally {

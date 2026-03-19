@@ -39,6 +39,7 @@
   "scannerScanFirst": "Відскануйте перший фрагмент...",
   "scannerProgress": "{count} з {total} відскановано",
   "scannerNoQrFound": "QR-код не знайдено на зображенні",
+  "scannerBulkResult": "{decoded} імпортовано, {failed} не вдалося",
   "scannerCameraDenied": "Доступ до камери заборонено.\nНадайте доступ до камери в Налаштуваннях або імпортуйте зображення QR-кодів нижче.",
   "scannerOpenSettings": "Відкрити налаштування",
   "scannerCameraUnavailable": "Камера недоступна.\nВикористовуйте кнопку імпорту нижче для завантаження зображень QR-кодів.",

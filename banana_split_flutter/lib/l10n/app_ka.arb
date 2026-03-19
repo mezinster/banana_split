@@ -39,6 +39,7 @@
   "scannerScanFirst": "დაასკანირეთ პირველი ფრაგმენტი...",
   "scannerProgress": "{count} / {total} დასკანირებულია",
   "scannerNoQrFound": "QR კოდი ვერ მოიძებნა სურათში",
+  "scannerBulkResult": "{decoded} იმპორტირებულია, {failed} ვერ მოხერხდა",
   "scannerCameraDenied": "კამერის წვდომა უარყოფილია.\nმიეცით კამერის წვდომა პარამეტრებში, ან შემოიტანეთ QR სურათები ქვემოთ.",
   "scannerOpenSettings": "პარამეტრების გახსნა",
   "scannerCameraUnavailable": "კამერა მიუწვდომელია.\nგამოიყენეთ ქვემოთ მოცემული იმპორტის ღილაკი QR კოდის სურათების ჩასატვირთად.",

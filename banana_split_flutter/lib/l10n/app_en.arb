@@ -46,6 +46,8 @@
   "scannerProgress": "{count} of {total} scanned",
   "@scannerProgress": { "placeholders": { "count": { "type": "int" }, "total": { "type": "int" } } },
   "scannerNoQrFound": "No QR code found in image",
+  "scannerBulkResult": "{decoded} imported, {failed} failed",
+  "@scannerBulkResult": { "placeholders": { "decoded": { "type": "int" }, "failed": { "type": "int" } } },
   "scannerCameraDenied": "Camera permission denied.\nGrant camera access in Settings, or import QR images below.",
   "scannerOpenSettings": "Open Settings",
   "scannerCameraUnavailable": "Camera not available.\nUse the import button below to load QR code images.",

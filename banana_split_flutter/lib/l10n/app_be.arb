@@ -39,6 +39,7 @@
   "scannerScanFirst": "Адскануйце першы фрагмент...",
   "scannerProgress": "{count} з {total} адсканіравана",
   "scannerNoQrFound": "QR-код не знойдзены на выяве",
+  "scannerBulkResult": "{decoded} імпартавана, {failed} не ўдалося",
   "scannerCameraDenied": "Доступ да камеры адхілены.\nНадайце доступ да камеры ў Наладах або імпартуйце выявы QR-кодаў ніжэй.",
   "scannerOpenSettings": "Адкрыць налады",
   "scannerCameraUnavailable": "Камера недаступная.\nВыкарыстоўвайце кнопку імпарту ніжэй для загрузкі выяў QR-кодаў.",

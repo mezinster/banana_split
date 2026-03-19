@@ -39,6 +39,7 @@
   "scannerScanFirst": "İlk parçayı tarayın...",
   "scannerProgress": "{count} / {total} tarandı",
   "scannerNoQrFound": "Görüntüde QR kodu bulunamadı",
+  "scannerBulkResult": "{decoded} içe aktarıldı, {failed} başarısız",
   "scannerCameraDenied": "Kamera izni reddedildi.\nAyarlar'dan kamera erişimi verin veya aşağıdan QR görüntülerini içe aktarın.",
   "scannerOpenSettings": "Ayarları Aç",
   "scannerCameraUnavailable": "Kamera kullanılamıyor.\nQR kod görüntülerini yüklemek için aşağıdaki içe aktarma düğmesini kullanın.",
