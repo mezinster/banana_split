@@ -12,22 +12,31 @@ class ExportService {
   ExportService._();
 
   static Future<Uint8List> _qrToPng(String data, {int size = 300}) async {
+    // Render QR smaller than output to leave a quiet zone (white border).
+    // QR spec requires ≥4 modules; ~10% padding per side is generous enough.
+    final padding = (size * 0.10).round();
+    final qrSize = size - padding * 2;
+
     final qrPainter = QrPainter(
       data: data,
       version: QrVersions.auto,
       errorCorrectionLevel: QrErrorCorrectLevel.M,
       gapless: true,
     );
-    final qrImage = await qrPainter.toImage(size.toDouble());
+    final qrImage = await qrPainter.toImage(qrSize.toDouble());
 
-    // Composite onto white background (QrPainter renders transparent bg)
+    // Composite onto white background with quiet zone
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     canvas.drawRect(
       Rect.fromLTWH(0, 0, size.toDouble(), size.toDouble()),
       Paint()..color = const Color(0xFFFFFFFF),
     );
-    canvas.drawImage(qrImage, Offset.zero, Paint());
+    canvas.drawImage(
+      qrImage,
+      Offset(padding.toDouble(), padding.toDouble()),
+      Paint(),
+    );
     final picture = recorder.endRecording();
     final image = await picture.toImage(size, size);
 
