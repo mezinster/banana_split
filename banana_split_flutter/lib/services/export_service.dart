@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -17,7 +18,19 @@ class ExportService {
       errorCorrectionLevel: QrErrorCorrectLevel.M,
       gapless: true,
     );
-    final image = await qrPainter.toImage(size.toDouble());
+    final qrImage = await qrPainter.toImage(size.toDouble());
+
+    // Composite onto white background (QrPainter renders transparent bg)
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.toDouble(), size.toDouble()),
+      Paint()..color = const Color(0xFFFFFFFF),
+    );
+    canvas.drawImage(qrImage, Offset.zero, Paint());
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(size, size);
+
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
     return byteData!.buffer.asUint8List();
   }
