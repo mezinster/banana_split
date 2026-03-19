@@ -291,15 +291,14 @@ class _ShardScannerState extends State<ShardScanner>
       for (final filePath in filePaths) {
         if (_disposed) return;
 
-        bool found = false;
+        String? raw;
 
         // Try mobile_scanner's image analysis first (works best on mobile)
         if (_mobileController != null) {
           try {
             final capture = await _mobileController!.analyzeImage(filePath);
             if (capture != null && capture.barcodes.isNotEmpty) {
-              _onDetect(capture);
-              found = true;
+              raw = capture.barcodes.first.rawValue;
             }
           } catch (_) {
             // analyzeImage may not be supported on all platforms
@@ -307,18 +306,17 @@ class _ShardScannerState extends State<ShardScanner>
         }
 
         // Fallback: decode with zxing2 (pure Dart, works on all platforms)
-        if (!found) {
-          final result = await _decodeQrWithZxing(filePath);
+        if (raw == null) {
+          raw = await _decodeQrWithZxing(filePath);
           if (_disposed) return;
-          if (result != null) {
-            _onQrDetected(result);
-            found = true;
-          }
         }
 
-        if (found) {
+        // Skip throttle — dedup via _seenCodes only (no camera rapid-fire here)
+        if (raw != null && raw.isNotEmpty && !_seenCodes.contains(raw)) {
+          _seenCodes.add(raw);
+          widget.onScanned(raw);
           decoded++;
-        } else {
+        } else if (raw == null) {
           failed++;
         }
       }
