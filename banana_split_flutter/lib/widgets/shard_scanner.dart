@@ -178,17 +178,18 @@ class _ShardScannerState extends State<ShardScanner>
       if (decoded == null) return null;
 
       // Convert to luminance source for zxing2
+      // Use normalized accessors (0.0-1.0) to handle any bit depth
       final width = decoded.width;
       final height = decoded.height;
       final pixels = Int32List(width * height);
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
           final pixel = decoded.getPixel(x, y);
-          pixels[y * width + x] =
-              (pixel.a.toInt() << 24) |
-              (pixel.r.toInt() << 16) |
-              (pixel.g.toInt() << 8) |
-              pixel.b.toInt();
+          final r = (pixel.rNormalized * 255).round();
+          final g = (pixel.gNormalized * 255).round();
+          final b = (pixel.bNormalized * 255).round();
+          final a = (pixel.aNormalized * 255).round();
+          pixels[y * width + x] = (a << 24) | (r << 16) | (g << 8) | b;
         }
       }
 
@@ -196,7 +197,8 @@ class _ShardScannerState extends State<ShardScanner>
       final bitmap = BinaryBitmap(HybridBinarizer(source));
       final result = QRCodeReader().decode(bitmap);
       return result.text;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('QR decode error: $e');
       return null;
     }
   }
