@@ -49,7 +49,7 @@ class ExportService {
     required String title,
   }) async {
     final dir = await getApplicationDocumentsDirectory();
-    final safeTitle = title.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
+    final safeTitle = title.replaceAll(RegExp(r'[/\\:*?"<>|]'), '').replaceAll(' ', '_');
     final subDir = Directory('${dir.path}/banana_split/$safeTitle');
     await subDir.create(recursive: true);
 
@@ -67,7 +67,7 @@ class ExportService {
     required int shardIndex,
   }) async {
     final dir = await getApplicationDocumentsDirectory();
-    final safeTitle = title.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
+    final safeTitle = title.replaceAll(RegExp(r'[/\\:*?"<>|]'), '').replaceAll(' ', '_');
     final subDir = Directory('${dir.path}/banana_split/$safeTitle');
     await subDir.create(recursive: true);
 
@@ -87,7 +87,7 @@ class ExportService {
     String languageCode = 'en',
   }) async {
     final dir = await getApplicationDocumentsDirectory();
-    final safeTitle = title.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
+    final safeTitle = title.replaceAll(RegExp(r'[/\\:*?"<>|]'), '').replaceAll(' ', '_');
     final subDir = Directory('${dir.path}/banana_split');
     await subDir.create(recursive: true);
 

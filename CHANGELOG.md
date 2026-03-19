@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.5] - 2026-03-19
+
+### Fixed
+
+- Unicode secret titles (Cyrillic, Georgian, etc.) now create proper named folders and files. Previous regex `[^\w\s-]` stripped all non-ASCII characters, causing files like `_shard_1.png` in the root `banana_split/` directory. Now only filesystem-unsafe characters (`/\:*?"<>|`) are stripped.
+
 ## [0.5.4] - 2026-03-19
 
 ### Fixed
