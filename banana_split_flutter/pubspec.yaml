@@ -44,6 +44,7 @@ dependencies:
   zxing2: ^0.2.3
   image: ^4.3.0
   camera_windows: ^0.2.6+2
+  file_picker: ^8.0.7
 
 dev_dependencies:
   flutter_test:

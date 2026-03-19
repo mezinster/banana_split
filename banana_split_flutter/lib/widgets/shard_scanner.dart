@@ -1,12 +1,14 @@
 import 'dart:async';
-import 'dart:io' show File, Platform;
+import 'dart:io' show Directory, File, Platform;
 import 'dart:typed_data';
 import 'package:camera/camera.dart' as cam;
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:image/image.dart' as img;
+import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:zxing2/qrcode.dart';
 
@@ -39,6 +41,7 @@ class _ShardScannerState extends State<ShardScanner>
   bool _cameraSupported = false;
   bool _permissionDenied = false;
   bool _disposed = false;
+  bool _isPickingFile = false;
   final Set<String> _seenCodes = {};
   DateTime _lastScanTime = DateTime(0);
 
@@ -61,7 +64,7 @@ class _ShardScannerState extends State<ShardScanner>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (_disposed) return;
+    if (_disposed || _isPickingFile) return;
 
     switch (state) {
       case AppLifecycleState.inactive:
@@ -232,37 +235,80 @@ class _ShardScannerState extends State<ShardScanner>
     widget.onScanned(raw);
   }
 
+  Future<String?> _getInitialDirectory() async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final bsDir = '${dir.path}/banana_split';
+      if (await Directory(bsDir).exists()) return bsDir;
+      return dir.path;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _importFromGallery() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked == null || _disposed) return;
+    _isPickingFile = true;
 
-    // Try mobile_scanner's image analysis first (works best on mobile)
-    if (_mobileController != null) {
-      try {
-        final capture = await _mobileController!.analyzeImage(picked.path);
-        if (capture != null && capture.barcodes.isNotEmpty) {
-          _onDetect(capture);
-          return;
-        }
-      } catch (_) {
-        // analyzeImage may not be supported on all platforms
+    // Pause periodic scanning while file picker is open
+    _scanTimer?.cancel();
+
+    try {
+      String? filePath;
+
+      if (Platform.isWindows) {
+        // Use FilePicker on Windows — supports initialDirectory
+        final initialDir = await _getInitialDirectory();
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.image,
+          initialDirectory: initialDir,
+        );
+        if (result == null || result.files.isEmpty || _disposed) return;
+        filePath = result.files.first.path;
+      } else {
+        final picker = ImagePicker();
+        final picked = await picker.pickImage(
+          source: ImageSource.gallery,
+          requestFullMetadata: false,
+        );
+        if (picked == null || _disposed) return;
+        filePath = picked.path;
       }
-    }
 
-    // Fallback: decode with zxing2 (pure Dart, works on all platforms)
-    final decoded = await _decodeQrWithZxing(picked.path);
-    if (_disposed) return;
-    if (decoded != null) {
-      widget.onScanned(decoded);
-      return;
-    }
+      if (filePath == null || _disposed) return;
 
-    if (mounted) {
-      final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.scannerNoQrFound)),
-      );
+      // Try mobile_scanner's image analysis first (works best on mobile)
+      if (_mobileController != null) {
+        try {
+          final capture = await _mobileController!.analyzeImage(filePath);
+          if (capture != null && capture.barcodes.isNotEmpty) {
+            _onDetect(capture);
+            return;
+          }
+        } catch (_) {
+          // analyzeImage may not be supported on all platforms
+        }
+      }
+
+      // Fallback: decode with zxing2 (pure Dart, works on all platforms)
+      final decoded = await _decodeQrWithZxing(filePath);
+      if (_disposed) return;
+      if (decoded != null) {
+        widget.onScanned(decoded);
+        return;
+      }
+
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.scannerNoQrFound)),
+        );
+      }
+    } finally {
+      _isPickingFile = false;
+      // Resume periodic scanning if camera is still active
+      if (_useWindowsCamera && _winCameraController != null && !_disposed) {
+        _startPeriodicScanning();
+      }
     }
   }
 
@@ -290,7 +336,11 @@ class _ShardScannerState extends State<ShardScanner>
 
       final source = RGBLuminanceSource(width, height, pixels);
       final bitmap = BinaryBitmap(HybridBinarizer(source));
-      final result = QRCodeReader().decode(bitmap);
+
+      final hints = DecodeHints();
+      hints.put(DecodeHintType.tryHarder);
+
+      final result = QRCodeReader().decode(bitmap, hints: hints);
       return result.text;
     } catch (e) {
       debugPrint('QR decode error: $e');
