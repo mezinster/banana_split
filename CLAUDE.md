@@ -87,7 +87,7 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 **Localization** (`lib/l10n/`): Flutter's official `flutter_localizations` with ARB files and code generation. 6 locales: EN, RU, TR, BE, KA, UK. All UI strings use `AppLocalizations.of(context)!`. Config in `l10n.yaml`, template is `app_en.arb`. Navigation labels are built inside `build()` (not `static const`) because they need `BuildContext`.
 
 **Services** (`lib/services/`):
-- `export_service.dart` — Save QR shards as PNGs or PDF to `getApplicationDocumentsDirectory()/banana_split/`, share via OS share sheet. PDF export uses bundled Roboto (Latin/Cyrillic/Turkish) and Noto Sans Georgian fonts for Unicode support — font selected by `languageCode` parameter.
+- `export_service.dart` — Save QR shards as PNGs or PDF to `getApplicationDocumentsDirectory()/banana_split/`, share via OS share sheet. QR PNGs are composited onto a white background (QrPainter renders transparent bg which appears black on Windows). PDF export uses bundled Roboto (Latin/Cyrillic/Turkish) and Noto Sans Georgian fonts for Unicode support — font selected by `languageCode` parameter.
 
 **Files tab** (`lib/screens/files_screen.dart`): Scans `banana_split/` directory recursively for `.png` and `.pdf` files. Supports share (via `Share.shareXFiles`), delete with confirmation dialog, pull-to-refresh, and empty state. Parent directory name shown as subtitle for files in subdirectories.
 
@@ -99,7 +99,7 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 - QR codes use error correction level M (15% recovery).
 - Test wrapper (`tests/run_all.sh`) uses `flutter test --reporter json` piped through a Python3 parser for clean CLI output.
 - All new UI strings must be added to `lib/l10n/app_en.arb` (template) and all 5 translation files. Run `flutter gen-l10n` after editing ARB files. Use `AppLocalizations.of(context)!.keyName` in widgets.
-- Camera scanner is platform-conditional: `mobile_scanner` on Android/iOS/macOS (ML Kit/Vision), `camera` package on Windows (periodic `takePicture()` every 800ms + `zxing2` decode). Uses `WidgetsBindingObserver` for Android lifecycle handling — disposes camera on background, re-inits on resume. `_disposed` flag prevents use-after-dispose in async callbacks.
+- Camera scanner is platform-conditional: `mobile_scanner` on Android/iOS/macOS (ML Kit/Vision), `camera` package on Windows (periodic `takePicture()` every 800ms + `zxing2` decode). Uses `WidgetsBindingObserver` for lifecycle handling — disposes camera on background, re-inits on resume. `_disposed` flag prevents use-after-dispose in async callbacks. `_isPickingFile` guard prevents camera disposal during file picker dialogs (Windows file dialogs trigger `paused`/`inactive` lifecycle states). `_cameraInitialized` flag tracks first successful init for smart auto-recovery. Manual retry button shown when camera is unavailable.
 - Gallery QR import has two-stage decode: `mobile_scanner.analyzeImage()` first (native, mobile), then `zxing2` QRCodeReader fallback (pure Dart, all platforms). Pixel values normalized via `rNormalized` (0.0-1.0) to handle any image bit depth.
 - Windows builds include `launch.bat` — checks for VC++ Runtime and offers to download/install if missing.
 - `LanguageSelectorButton` uses `PopupMenuButton<Locale>` with Dart records for locale data. Normalizes locale with `Locale(currentLocale.languageCode)` to match `initialValue` (avoids `Locale('en', 'US') != Locale('en')` gotcha).

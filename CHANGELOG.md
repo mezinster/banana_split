@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.3] - 2026-03-19
+
+### Fixed
+
+- Windows: Camera auto-recovers after file picker dialogs and tab switches. `_isPickingFile` guard prevents false lifecycle disposal. `_cameraInitialized` flag enables smart reinit.
+- Windows: Manual "Retry camera" button in the "Camera not available" state (localized in all 6 languages).
+- Windows: QR PNG export rendered with white background instead of transparent — fixes "No QR found in image" when re-importing saved PNGs. Root cause: `QrPainter.toImage()` produces transparent background, which Windows viewers render as black-on-black.
+- Windows: File picker now opens in `banana_split/` documents directory (switched from `ImagePicker` to `FilePicker` on Windows for `initialDirectory` support).
+- Windows: `DecodeHintType.tryHarder` added to zxing2 QR decode for more robust detection.
+
 ## [0.5.2] - 2026-03-19
 
 ### Added
