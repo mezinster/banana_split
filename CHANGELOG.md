@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.1] - 2026-03-19
+
+### Added
+
+- **Save format picker**: "Save all shards" button now opens a menu with two options — "Save as PDF" (multi-page document with passphrase placeholder) or "Save as PNGs" (individual QR images in a named folder). Localized in all 6 languages.
+
+### Fixed
+
+- Bulk gallery import now processes all selected files. Previous version only imported the first file due to a 500ms scan throttle designed for live camera deduplication.
+
 ## [0.6.0] - 2026-03-19
 
 ### Added
