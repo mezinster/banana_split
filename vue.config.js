@@ -6,7 +6,7 @@ let Webpack = require("webpack");
 let childProcess = require("child_process");
 let GIT_REVISION;
 try {
-  GIT_REVISION = childProcess.execSync("git describe --long").toString().trim();
+  GIT_REVISION = childProcess.execSync("git describe --long --tags").toString().trim();
 } catch (_) {
   GIT_REVISION = childProcess.execSync("git rev-parse --short HEAD").toString().trim();
 }
