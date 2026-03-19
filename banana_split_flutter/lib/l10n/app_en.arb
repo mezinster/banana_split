@@ -49,6 +49,7 @@
   "scannerCameraDenied": "Camera permission denied.\nGrant camera access in Settings, or import QR images below.",
   "scannerOpenSettings": "Open Settings",
   "scannerCameraUnavailable": "Camera not available.\nUse the import button below to load QR code images.",
+  "scannerRetryCamera": "Retry camera",
   "scannerImportGallery": "Import from gallery",
 
   "passphraseTitle": "Passphrase",

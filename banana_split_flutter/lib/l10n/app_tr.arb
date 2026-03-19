@@ -42,6 +42,7 @@
   "scannerCameraDenied": "Kamera izni reddedildi.\nAyarlar'dan kamera erişimi verin veya aşağıdan QR görüntülerini içe aktarın.",
   "scannerOpenSettings": "Ayarları Aç",
   "scannerCameraUnavailable": "Kamera kullanılamıyor.\nQR kod görüntülerini yüklemek için aşağıdaki içe aktarma düğmesini kullanın.",
+  "scannerRetryCamera": "Kamerayı yeniden dene",
   "scannerImportGallery": "Galeriden içe aktar",
 
   "passphraseTitle": "Parola",

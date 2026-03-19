@@ -42,6 +42,7 @@
   "scannerCameraDenied": "Доступ да камеры адхілены.\nНадайце доступ да камеры ў Наладах або імпартуйце выявы QR-кодаў ніжэй.",
   "scannerOpenSettings": "Адкрыць налады",
   "scannerCameraUnavailable": "Камера недаступная.\nВыкарыстоўвайце кнопку імпарту ніжэй для загрузкі выяў QR-кодаў.",
+  "scannerRetryCamera": "Паўтарыць камеру",
   "scannerImportGallery": "Імпарт з галерэі",
 
   "passphraseTitle": "Парольная фраза",

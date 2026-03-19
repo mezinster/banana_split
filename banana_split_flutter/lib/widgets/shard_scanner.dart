@@ -39,6 +39,7 @@ class _ShardScannerState extends State<ShardScanner>
   bool _isScanning = false;
 
   bool _cameraSupported = false;
+  bool _cameraInitialized = false; // tracks if camera was ever successfully started
   bool _permissionDenied = false;
   bool _disposed = false;
   bool _isPickingFile = false;
@@ -72,13 +73,17 @@ class _ShardScannerState extends State<ShardScanner>
         _disposeCamera();
         break;
       case AppLifecycleState.resumed:
-        if (_cameraSupported || (!_permissionDenied && _mobileController == null && _winCameraController == null)) {
-          _initCamera();
-        }
+        _retryCamera();
         break;
       default:
         break;
     }
+  }
+
+  void _retryCamera() {
+    if (_disposed || _permissionDenied) return;
+    if (_cameraSupported) return; // already working
+    _initCamera();
   }
 
   void _disposeCamera() {
@@ -137,6 +142,7 @@ class _ShardScannerState extends State<ShardScanner>
         return;
       }
 
+      _cameraInitialized = true;
       if (mounted) setState(() => _cameraSupported = true);
       _startPeriodicScanning();
     } catch (e) {
@@ -198,6 +204,7 @@ class _ShardScannerState extends State<ShardScanner>
         _mobileController = null;
         return;
       }
+      _cameraInitialized = true;
       if (mounted) setState(() => _cameraSupported = true);
     } catch (_) {
       _mobileController?.dispose();
@@ -305,9 +312,13 @@ class _ShardScannerState extends State<ShardScanner>
       }
     } finally {
       _isPickingFile = false;
-      // Resume periodic scanning if camera is still active
-      if (_useWindowsCamera && _winCameraController != null && !_disposed) {
-        _startPeriodicScanning();
+      if (!_disposed) {
+        // If camera was lost during file pick, reinitialize it
+        if (!_cameraSupported && _cameraInitialized) {
+          _initCamera();
+        } else if (_useWindowsCamera && _winCameraController != null) {
+          _startPeriodicScanning();
+        }
       }
     }
   }
@@ -385,8 +396,21 @@ class _ShardScannerState extends State<ShardScanner>
         else
           Container(
             height: 200,
+            padding: const EdgeInsets.all(16),
             alignment: Alignment.center,
-            child: Text(l10n.scannerCameraUnavailable),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l10n.scannerCameraUnavailable,
+                    textAlign: TextAlign.center),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _retryCamera,
+                  icon: const Icon(Icons.refresh),
+                  label: Text(l10n.scannerRetryCamera),
+                ),
+              ],
+            ),
           ),
 
         const SizedBox(height: 16),
