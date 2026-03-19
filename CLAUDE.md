@@ -82,7 +82,7 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 - `restore_notifier.dart` — Scanned shards with validation, passphrase normalization, reconstruction. Error handling uses `ShardError` sealed class hierarchy (not strings) — UI localizes errors via exhaustive `switch`.
 - `locale_notifier.dart` — Persists selected locale via `SharedPreferences`. Loaded at startup before `runApp()`.
 
-**UI** (`lib/screens/`, `lib/widgets/`): Bottom nav with 4 tabs — Create (two-step wizard), Restore (scanner → passphrase → result), Files (browse/share/delete saved PDFs and PNGs), About (with version, privacy policy, licenses). Widgets: `QrGrid` (2-column QR display), `ShardScanner` (camera + gallery import), `PassphraseField` (auto/manual toggle), `LanguageSelectorButton` (flag-based locale picker in AppBar).
+**UI** (`lib/screens/`, `lib/widgets/`): Bottom nav with 4 tabs — Create (two-step wizard), Restore (scanner → passphrase → result), Files (browse/share/delete saved PDFs and PNGs), About (with version, privacy policy, licenses). Widgets: `QrGrid` (responsive QR display — 1-4 columns via `LayoutBuilder`, adapts to window width), `ShardScanner` (platform-conditional: `mobile_scanner` on Android/iOS, `camera` package + periodic `takePicture()` + `zxing2` decode on Windows), `PassphraseField` (auto/manual toggle), `LanguageSelectorButton` (flag-based locale picker in AppBar).
 
 **Localization** (`lib/l10n/`): Flutter's official `flutter_localizations` with ARB files and code generation. 6 locales: EN, RU, TR, BE, KA, UK. All UI strings use `AppLocalizations.of(context)!`. Config in `l10n.yaml`, template is `app_en.arb`. Navigation labels are built inside `build()` (not `static const`) because they need `BuildContext`.
 
@@ -99,12 +99,12 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 - QR codes use error correction level M (15% recovery).
 - Test wrapper (`tests/run_all.sh`) uses `flutter test --reporter json` piped through a Python3 parser for clean CLI output.
 - All new UI strings must be added to `lib/l10n/app_en.arb` (template) and all 5 translation files. Run `flutter gen-l10n` after editing ARB files. Use `AppLocalizations.of(context)!.keyName` in widgets.
-- Camera scanner uses `WidgetsBindingObserver` for Android lifecycle handling — disposes camera on background, re-inits on resume. `_disposed` flag prevents use-after-dispose in async callbacks.
-- Gallery QR import has two-stage decode: `mobile_scanner.analyzeImage()` first (native, mobile), then `zxing2` QRCodeReader fallback (pure Dart, all platforms).
+- Camera scanner is platform-conditional: `mobile_scanner` on Android/iOS/macOS (ML Kit/Vision), `camera` package on Windows (periodic `takePicture()` every 800ms + `zxing2` decode). Uses `WidgetsBindingObserver` for Android lifecycle handling — disposes camera on background, re-inits on resume. `_disposed` flag prevents use-after-dispose in async callbacks.
+- Gallery QR import has two-stage decode: `mobile_scanner.analyzeImage()` first (native, mobile), then `zxing2` QRCodeReader fallback (pure Dart, all platforms). Pixel values normalized via `rNormalized` (0.0-1.0) to handle any image bit depth.
 - Windows builds include `launch.bat` — checks for VC++ Runtime and offers to download/install if missing.
 - `LanguageSelectorButton` uses `PopupMenuButton<Locale>` with Dart records for locale data. Normalizes locale with `Locale(currentLocale.languageCode)` to match `initialValue` (avoids `Locale('en', 'US') != Locale('en')` gotcha).
 - `FilesScreen` widget tests use `FakePathProvider` with `PathProviderPlatform.instance` mocking and `tester.runAsync()` for real I/O in `initState()`.
-- App icon: `assets/app_icon.png` (1536x1536, padded from 1024x1536 source). Android adaptive icon with `#FFFFFF` background. Android app label is "Banana Split" (set in `AndroidManifest.xml`).
+- App icon: `assets/app_icon.png` (1536x1536, padded from 1024x1536 source). Android adaptive icon with `#FFFFFF` background. Android app label is "Banana Split" (set in `AndroidManifest.xml`). Windows icon: multi-size ICO (16-256px) at `windows/runner/resources/app_icon.ico`. Windows window title, exe name (`banana_split.exe`), and version info set in `main.cpp`, `CMakeLists.txt`, and `Runner.rc`.
 - PDF fonts: `assets/fonts/Roboto-Regular.ttf`, `Roboto-Bold.ttf`, `NotoSansGeorgian-Regular.ttf`. Loaded via `rootBundle.load()` in `export_service.dart`. Font chosen by locale: Georgian (`ka`) uses Noto Sans Georgian, all others use Roboto. The Dart `pdf` package defaults to Helvetica which only supports Latin-1 — any non-Latin text (Cyrillic, Georgian, etc.) requires explicitly loading a TTF via `pw.Font.ttf(ByteData)` and passing it to every `pw.TextStyle`. Remove `const` from TextStyle constructors when adding font parameters since `pw.Font` instances aren't compile-time constants.
 
 ### CI/CD

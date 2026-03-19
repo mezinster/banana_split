@@ -9,12 +9,20 @@ All notable changes to this project will be documented in this file.
 - **Web app internationalization**: Full i18n support using vue-i18n v8 with 6 languages — English, Russian, Turkish, Belarusian, Georgian, Ukrainian. All UI strings extracted to JSON locale files (55 keys each). Browser language auto-detected on each visit (no persistence). Slavic languages use custom pluralization rules for 3-form plurals (one|few|many).
 - **Language selector in web app**: Flag-based dropdown in the header for switching the app language.
 - **Independent print language**: Print language can be selected separately from the app language via a flag dropdown next to the Print button on the Share view. Shard QR code labels render in the selected print language.
+- **Windows live camera scanning**: Camera-based QR scanning on Windows using the `camera` package (`camera_windows`) with periodic `takePicture()` + `zxing2` decode. Shows live camera preview and scans for QR codes every 800ms. Android/iOS continue using `mobile_scanner`.
+- **Responsive QR grid**: QR shard cards dynamically adapt columns (1-4) and sizing based on window width using `LayoutBuilder`. Cards scale between 160-240px. Resizes live when the window is dragged on desktop.
+- **Web app favicon**: Banana emoji (🍌) as inline SVG favicon, works in the self-contained single HTML file.
 
 ### Fixed
 
 - CSS: Global `input { width: 100% }` no longer affects checkboxes — reset to native sizing.
 - CSS: "Use custom passphrase" label aligned right under the refresh button with correct font size.
 - Build: Replaced optional chaining (`?.`) with ternary for ES2015 target compatibility.
+- Build: `git describe --tags` flag added so lightweight tags are recognized for the version footer.
+- Windows: Gallery QR import ("No QR found in image") — normalized pixel values to 0-255 range for all image bit depths.
+- Windows: Window title set to "Banana Split" (was "banana_split_flutter").
+- Windows: Custom app icon (6 sizes: 16-256px) replacing default Flutter icon.
+- Windows: Executable renamed to `banana_split.exe` with updated version info and `launch.bat`.
 
 ## [0.5.0] - 2026-03-18
 
