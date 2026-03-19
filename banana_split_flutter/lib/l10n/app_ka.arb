@@ -22,6 +22,8 @@
   "createPassphraseNeeded": "ეს საიდუმლო ფრაზა დაგჭირდებათ საიდუმლოს აღდგენისთვის.",
   "createBack": "უკან",
   "createSaveAllTooltip": "ყველა ფრაგმენტის შენახვა",
+  "createSaveAsPdf": "შენახვა PDF-ით",
+  "createSaveAsPngs": "შენახვა PNG-ით",
   "createShareAllTooltip": "ყველა ფრაგმენტის გაზიარება",
   "createSavedTo": "შენახულია {path}-ში",
 

@@ -253,22 +253,30 @@ class _ResultsView extends StatelessWidget {
                 label: Text(l10n.createBack),
               ),
               const Spacer(),
-              IconButton(
+              PopupMenuButton<String>(
                 icon: const Icon(Icons.save_alt),
                 tooltip: l10n.createSaveAllTooltip,
-                onPressed: () async {
+                onSelected: (format) async {
                   try {
                     final l10n = AppLocalizations.of(context)!;
-                    final path = await ExportService.saveAsPdf(
-                      shardJsons: notifier.generatedShards,
-                      title: notifier.title,
-                      requiredShards: notifier.requiredShards,
-                      shardLabelBuilder: (index, total) =>
-                          l10n.pdfShardLabel(index, total),
-                      requiresLabel: l10n.pdfRequiresShards(notifier.requiredShards),
-                      passphrasePlaceholder: l10n.pdfPassphrasePlaceholder,
-                      languageCode: Localizations.localeOf(context).languageCode,
-                    );
+                    final String path;
+                    if (format == 'pdf') {
+                      path = await ExportService.saveAsPdf(
+                        shardJsons: notifier.generatedShards,
+                        title: notifier.title,
+                        requiredShards: notifier.requiredShards,
+                        shardLabelBuilder: (index, total) =>
+                            l10n.pdfShardLabel(index, total),
+                        requiresLabel: l10n.pdfRequiresShards(notifier.requiredShards),
+                        passphrasePlaceholder: l10n.pdfPassphrasePlaceholder,
+                        languageCode: Localizations.localeOf(context).languageCode,
+                      );
+                    } else {
+                      path = await ExportService.saveAsPngs(
+                        shardJsons: notifier.generatedShards,
+                        title: notifier.title,
+                      );
+                    }
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(l10n.createSavedTo(path))),
@@ -282,6 +290,28 @@ class _ResultsView extends StatelessWidget {
                     }
                   }
                 },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'pdf',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.picture_as_pdf, size: 20),
+                        const SizedBox(width: 8),
+                        Text(l10n.createSaveAsPdf),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'png',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.image, size: 20),
+                        const SizedBox(width: 8),
+                        Text(l10n.createSaveAsPngs),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               IconButton(
                 icon: const Icon(Icons.share),

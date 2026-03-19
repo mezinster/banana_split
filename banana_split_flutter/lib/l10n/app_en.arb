@@ -25,6 +25,8 @@
   "createPassphraseNeeded": "You will need this passphrase to restore your secret.",
   "createBack": "Back",
   "createSaveAllTooltip": "Save all shards",
+  "createSaveAsPdf": "Save as PDF",
+  "createSaveAsPngs": "Save as PNGs",
   "createShareAllTooltip": "Share all shards",
   "createSavedTo": "Saved to {path}",
   "@createSavedTo": { "placeholders": { "path": { "type": "String" } } },

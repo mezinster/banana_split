@@ -22,6 +22,8 @@
   "createPassphraseNeeded": "Sırrınızı geri yüklemek için bu parolaya ihtiyacınız olacak.",
   "createBack": "Geri",
   "createSaveAllTooltip": "Tüm parçaları kaydet",
+  "createSaveAsPdf": "PDF olarak kaydet",
+  "createSaveAsPngs": "PNG olarak kaydet",
   "createShareAllTooltip": "Tüm parçaları paylaş",
   "createSavedTo": "{path} konumuna kaydedildi",
 

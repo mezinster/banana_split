@@ -22,6 +22,8 @@
   "createPassphraseNeeded": "Эта парольная фраза потребуется вам для восстановления секрета.",
   "createBack": "Назад",
   "createSaveAllTooltip": "Сохранить все фрагменты",
+  "createSaveAsPdf": "Сохранить как PDF",
+  "createSaveAsPngs": "Сохранить как PNG",
   "createShareAllTooltip": "Поделиться всеми фрагментами",
   "createSavedTo": "Сохранено в {path}",
 
