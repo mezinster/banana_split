@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io' show File, Platform;
 import 'dart:typed_data';
+import 'package:camera/camera.dart' as cam;
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:image/image.dart' as img;
@@ -26,12 +28,21 @@ class ShardScanner extends StatefulWidget {
 
 class _ShardScannerState extends State<ShardScanner>
     with WidgetsBindingObserver {
-  MobileScannerController? _cameraController;
+  // mobile_scanner (Android/iOS/macOS)
+  MobileScannerController? _mobileController;
+
+  // camera package (Windows)
+  cam.CameraController? _winCameraController;
+  Timer? _scanTimer;
+  bool _isScanning = false;
+
   bool _cameraSupported = false;
   bool _permissionDenied = false;
   bool _disposed = false;
   final Set<String> _seenCodes = {};
   DateTime _lastScanTime = DateTime(0);
+
+  bool get _useWindowsCamera => Platform.isWindows;
 
   @override
   void initState() {
@@ -55,12 +66,10 @@ class _ShardScannerState extends State<ShardScanner>
     switch (state) {
       case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
-        // Android reclaims camera when app goes to background
         _disposeCamera();
         break;
       case AppLifecycleState.resumed:
-        // Re-init camera when app returns to foreground
-        if (_cameraSupported || (!_permissionDenied && _cameraController == null)) {
+        if (_cameraSupported || (!_permissionDenied && _mobileController == null && _winCameraController == null)) {
           _initCamera();
         }
         break;
@@ -70,13 +79,22 @@ class _ShardScannerState extends State<ShardScanner>
   }
 
   void _disposeCamera() {
-    try {
-      _cameraController?.stop().catchError((_) {});
-      _cameraController?.dispose();
-    } catch (_) {
-      // Ignore errors during cleanup
+    _scanTimer?.cancel();
+    _scanTimer = null;
+
+    if (_useWindowsCamera) {
+      try {
+        _winCameraController?.dispose();
+      } catch (_) {}
+      _winCameraController = null;
+    } else {
+      try {
+        _mobileController?.stop().catchError((_) {});
+        _mobileController?.dispose();
+      } catch (_) {}
+      _mobileController = null;
     }
-    _cameraController = null;
+
     if (!_disposed && mounted) {
       setState(() => _cameraSupported = false);
     }
@@ -85,7 +103,76 @@ class _ShardScannerState extends State<ShardScanner>
   Future<void> _initCamera() async {
     if (_disposed) return;
 
-    // On mobile, request permission first
+    if (_useWindowsCamera) {
+      await _initWindowsCamera();
+    } else {
+      await _initMobileCamera();
+    }
+  }
+
+  Future<void> _initWindowsCamera() async {
+    try {
+      final cameras = await cam.availableCameras();
+      if (_disposed) return;
+      if (cameras.isEmpty) return;
+
+      final controller = cam.CameraController(
+        cameras.first,
+        cam.ResolutionPreset.medium,
+        enableAudio: false,
+      );
+      if (_disposed) {
+        controller.dispose();
+        return;
+      }
+
+      _winCameraController = controller;
+      await controller.initialize();
+      if (_disposed) {
+        controller.dispose();
+        _winCameraController = null;
+        return;
+      }
+
+      if (mounted) setState(() => _cameraSupported = true);
+      _startPeriodicScanning();
+    } catch (e) {
+      debugPrint('Windows camera init error: $e');
+      _winCameraController?.dispose();
+      _winCameraController = null;
+    }
+  }
+
+  void _startPeriodicScanning() {
+    _scanTimer?.cancel();
+    _scanTimer = Timer.periodic(const Duration(milliseconds: 800), (_) {
+      _captureAndDecode();
+    });
+  }
+
+  Future<void> _captureAndDecode() async {
+    if (_disposed || _isScanning || _winCameraController == null) return;
+    if (!_winCameraController!.value.isInitialized) return;
+
+    _isScanning = true;
+    try {
+      final xFile = await _winCameraController!.takePicture();
+      if (_disposed) return;
+      final decoded = await _decodeQrWithZxing(xFile.path);
+      // Clean up temp file
+      try { await File(xFile.path).delete(); } catch (_) {}
+      if (_disposed) return;
+      if (decoded != null) {
+        _onQrDetected(decoded);
+      }
+    } catch (e) {
+      debugPrint('Windows capture error: $e');
+    } finally {
+      _isScanning = false;
+    }
+  }
+
+  Future<void> _initMobileCamera() async {
     if (Platform.isAndroid || Platform.isMacOS) {
       final status = await Permission.camera.request();
       if (_disposed) return;
@@ -95,40 +182,35 @@ class _ShardScannerState extends State<ShardScanner>
       }
     }
 
-    // Try to start the camera on all platforms
     try {
       final controller = MobileScannerController();
       if (_disposed) {
         controller.dispose();
         return;
       }
-      _cameraController = controller;
+      _mobileController = controller;
       await controller.start();
       if (_disposed) {
         controller.dispose();
-        _cameraController = null;
+        _mobileController = null;
         return;
       }
       if (mounted) setState(() => _cameraSupported = true);
     } catch (_) {
-      // Camera not available — fall back to gallery import
-      _cameraController?.dispose();
-      _cameraController = null;
+      _mobileController?.dispose();
+      _mobileController = null;
     }
   }
 
   void _onDetect(BarcodeCapture capture) {
     if (_disposed) return;
 
-    // Throttle: ignore detections within 500ms of the last successful scan
     final now = DateTime.now();
     if (now.difference(_lastScanTime).inMilliseconds < 500) return;
 
     for (final barcode in capture.barcodes) {
       final raw = barcode.rawValue;
       if (raw == null || raw.isEmpty) continue;
-
-      // Skip codes we've already forwarded
       if (_seenCodes.contains(raw)) continue;
 
       _seenCodes.add(raw);
@@ -137,15 +219,28 @@ class _ShardScannerState extends State<ShardScanner>
     }
   }
 
+  void _onQrDetected(String raw) {
+    if (_disposed) return;
+    if (raw.isEmpty) return;
+
+    final now = DateTime.now();
+    if (now.difference(_lastScanTime).inMilliseconds < 500) return;
+    if (_seenCodes.contains(raw)) return;
+
+    _seenCodes.add(raw);
+    _lastScanTime = now;
+    widget.onScanned(raw);
+  }
+
   Future<void> _importFromGallery() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked == null || _disposed) return;
 
     // Try mobile_scanner's image analysis first (works best on mobile)
-    if (_cameraController != null) {
+    if (_mobileController != null) {
       try {
-        final capture = await _cameraController!.analyzeImage(picked.path);
+        final capture = await _mobileController!.analyzeImage(picked.path);
         if (capture != null && capture.barcodes.isNotEmpty) {
           _onDetect(capture);
           return;
@@ -218,17 +313,8 @@ class _ShardScannerState extends State<ShardScanner>
               style: Theme.of(context).textTheme.titleMedium),
         ),
 
-        if (_cameraSupported && _cameraController != null)
-          SizedBox(
-            height: 300,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: MobileScanner(
-                controller: _cameraController!,
-                onDetect: _onDetect,
-              ),
-            ),
-          )
+        if (_cameraSupported)
+          _buildCameraPreview()
         else if (_permissionDenied)
           Container(
             height: 200,
@@ -261,5 +347,32 @@ class _ShardScannerState extends State<ShardScanner>
         ),
       ],
     );
+  }
+
+  Widget _buildCameraPreview() {
+    if (_useWindowsCamera && _winCameraController != null) {
+      return SizedBox(
+        height: 300,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: cam.CameraPreview(_winCameraController!),
+        ),
+      );
+    }
+
+    if (_mobileController != null) {
+      return SizedBox(
+        height: 300,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: MobileScanner(
+            controller: _mobileController!,
+            onDetect: _onDetect,
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }
