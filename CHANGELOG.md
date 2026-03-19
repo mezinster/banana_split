@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.6] - 2026-03-19
+
+### Fixed
+
+- QR code export quality: rendered at 800px (was 300px) to eliminate fractional module sizes that damaged finder patterns. Both PNG and PDF exports now produce crisp, reliably scannable QR codes.
+
 ## [0.5.5] - 2026-03-19
 
 ### Fixed

@@ -11,10 +11,10 @@ import 'package:qr_flutter/qr_flutter.dart';
 class ExportService {
   ExportService._();
 
-  static Future<Uint8List> _qrToPng(String data, {int size = 300}) async {
-    // Render QR smaller than output to leave a quiet zone (white border).
-    // QR spec requires ≥4 modules; ~10% padding per side is generous enough.
-    final padding = (size * 0.10).round();
+  static Future<Uint8List> _qrToPng(String data, {int size = 800}) async {
+    // Render QR at high resolution with quiet zone (white border).
+    // High res avoids fractional module sizes that damage finder patterns.
+    final padding = (size * 0.08).round();
     final qrSize = size - padding * 2;
 
     final qrPainter = QrPainter(
@@ -108,7 +108,7 @@ class ExportService {
     final pdf = pw.Document();
 
     for (int i = 0; i < shardJsons.length; i++) {
-      final pngBytes = await _qrToPng(shardJsons[i], size: 300);
+      final pngBytes = await _qrToPng(shardJsons[i], size: 800);
       final image = pw.MemoryImage(pngBytes);
 
       pdf.addPage(pw.Page(
