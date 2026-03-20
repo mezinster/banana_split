@@ -12,15 +12,25 @@ class ExportService {
   ExportService._();
 
   static Future<Uint8List> _qrToPng(String data, {int size = 800}) async {
-    // Render QR at high resolution with quiet zone (white border).
-    // High res avoids fractional module sizes that damage finder patterns.
-    final padding = (size * 0.08).round();
-    final qrSize = size - padding * 2;
-
-    final qrPainter = QrPainter(
+    // Pre-compute QR code to determine module count, then render at a size
+    // that's an exact multiple of module count. This ensures integer pixel
+    // sizes per module, preventing qr_flutter's 0.5px rounding from pushing
+    // the QR outside image bounds and corrupting finder patterns.
+    final validationResult = QrValidator.validate(
       data: data,
       version: QrVersions.auto,
       errorCorrectionLevel: QrErrorCorrectLevel.M,
+    );
+    final qrCode = validationResult.qrCode!;
+    final moduleCount = qrCode.moduleCount;
+
+    final maxQrArea = size - 2 * (size * 0.08).round();
+    final modulePixels = maxQrArea ~/ moduleCount;
+    final qrSize = modulePixels * moduleCount;
+    final padding = (size - qrSize) ~/ 2;
+
+    final qrPainter = QrPainter.withQr(
+      qr: qrCode,
       gapless: true,
     );
     final qrImage = await qrPainter.toImage(qrSize.toDouble());
