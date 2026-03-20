@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.3] - 2026-03-20
+
+### Changed
+
+- **New app icon**: Replaced dark, low-contrast icon with new clean Banana Split logo (bright, white background, two bananas splitting with QR code). Updated across all platforms — Android (mipmap + adaptive foreground, 5 densities), Windows (multi-size ICO), macOS (7 AppIcon sizes), and Flutter assets. Web app retains banana emoji favicon.
+- Added `flutter_launcher_icons` as dev dependency for reproducible icon generation. Future icon changes: replace `assets/app_icon.png`, run `dart run flutter_launcher_icons`.
+
 ## [0.6.2] - 2026-03-20
 
 ### Fixed
