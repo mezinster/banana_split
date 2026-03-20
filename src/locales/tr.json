@@ -14,6 +14,7 @@
   "createShardsRequire": "Herhangi",
   "createShardsOutOf": "parça yeterli,",
   "createShardsReconstruct": "yeniden oluşturmak için",
+  "createShardsInvalid": "Toplam parça 3–255, çoğunluk 2 ile toplam parça arasında olmalıdır",
   "createPassphraseLabel": "4. Kurtarma parolası",
   "createPassphraseHint": "Parolanızı girin (en az 8 karakter)",
   "createPassphraseTooShort": "Parola en az 8 karakter olmalıdır",

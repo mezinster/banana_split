@@ -14,6 +14,7 @@
   "createShardsRequire": "Will require any",
   "createShardsOutOf": "shards out of",
   "createShardsReconstruct": "to reconstruct",
+  "createShardsInvalid": "Total shards must be 3–255, quorum must be 2 to total shards",
   "createPassphraseLabel": "4. Recovery passphrase",
   "createPassphraseHint": "Enter passphrase (min 8 characters)",
   "createPassphraseTooShort": "Passphrase must be at least 8 characters",

@@ -14,6 +14,7 @@
   "createShardsRequire": "Знадобляться будь-які",
   "createShardsOutOf": "фрагментів з",
   "createShardsReconstruct": "для відновлення",
+  "createShardsInvalid": "Загальна кількість фрагментів: 3–255, кворум: від 2 до загальної кількості",
   "createPassphraseLabel": "4. Парольна фраза для відновлення",
   "createPassphraseHint": "Введіть парольну фразу (мін. 8 символів)",
   "createPassphraseTooShort": "Парольна фраза повинна містити щонайменше 8 символів",

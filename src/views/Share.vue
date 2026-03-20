@@ -50,6 +50,9 @@
           max="255"
         />
         {{ $t('createShardsReconstruct') }}
+        <span v-if="shardsInvalid" class="error-text">
+          <br />{{ $t('createShardsInvalid') }}
+        </span>
       </p>
       <div class="form-group">
         <label>{{ $t('createPassphraseLabel') }}</label>
@@ -84,7 +87,7 @@
       <button
         id="generateBtn"
         class="button-card"
-        :disabled="secretTooLong || passphraseTooShort"
+        :disabled="secretTooLong || passphraseTooShort || shardsInvalid"
         :hidden="encryptionMode"
         v-on:click="toggleMode"
       >
@@ -181,6 +184,11 @@ export default Vue.extend({
     },
     passphraseTooShort(): boolean {
       return this.useManualPassphrase && this.recoveryPassphrase.length < 8;
+    },
+    shardsInvalid(): boolean {
+      return this.totalShards < 3 || this.totalShards > 255 ||
+        this.requiredShards < 2 || this.requiredShards > this.totalShards ||
+        !Number.isInteger(this.totalShards) || !Number.isInteger(this.requiredShards);
     },
     shards(): string[] {
       this.$eventHub.$emit("clearAlerts");

@@ -14,6 +14,7 @@
   "createShardsRequire": "საჭიროა ნებისმიერი",
   "createShardsOutOf": "ფრაგმენტი სულ",
   "createShardsReconstruct": "აღსადგენად",
+  "createShardsInvalid": "ფრაგმენტების საერთო რაოდენობა: 3–255, კვორუმი: 2-დან საერთო რაოდენობამდე",
   "createPassphraseLabel": "4. აღდგენის საიდუმლო ფრაზა",
   "createPassphraseHint": "შეიყვანეთ საიდუმლო ფრაზა (მინ. 8 სიმბოლო)",
   "createPassphraseTooShort": "საიდუმლო ფრაზა უნდა შეიცავდეს მინიმუმ 8 სიმბოლოს",
