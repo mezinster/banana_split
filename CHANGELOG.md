@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.2] - 2026-03-20
+
+### Fixed
+
+- **QR codes with non-Latin titles** (Flutter): Cyrillic, Georgian, and other Unicode titles produced QR codes with corrupted finder patterns (anchor squares). Root cause: `qr_flutter`'s pixel-size rounding could push the QR image beyond its container at certain module counts. Fixed by pre-computing the QR module count and sizing the render area to an exact integer multiple. Affects Windows and Android.
+- **Shard count validation** (Web app): Typing invalid values (e.g. 1/1) into the total shards or quorum fields bypassed HTML `min`/`max` attributes and crashed Shamir's algorithm. Added client-side validation with inline error message and disabled Generate button. Localized in all 6 languages.
+
+### Added
+
+- 16 new QR render-size tests covering all 6 app languages, emoji, CJK, Arabic, overflow regression proof, and all 40 QR versions.
+
 ## [0.6.1] - 2026-03-19
 
 ### Added
