@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.4] - 2026-03-22
+
+### Fixed
+
+- **Android file sharing** (Flutter): Telegram (and other strict apps) disabled the send button when receiving shared files from Banana Split. Root cause: `Share.shareXFiles` calls omitted MIME types, so Android's `ContentResolver` reported `application/octet-stream` — Telegram couldn't validate the content and refused to send. Fixed by specifying explicit MIME types (`image/png` for QR shards, `application/pdf` for documents) on all three share paths: single shard, batch PNGs, and Files tab.
+- **Android share target visibility** (Flutter): Added `SEND` and `SEND_MULTIPLE` intent queries to `AndroidManifest.xml`. On Android 11+ (API 30+), package visibility filtering could hide valid share targets unless the app declares which intent actions it uses.
+
 ## [0.6.3] - 2026-03-20
 
 ### Changed

@@ -158,7 +158,7 @@ class ExportService {
     final dirPath = await saveAsPngs(shardJsons: shardJsons, title: title);
     final dir = Directory(dirPath);
     final files = await dir.list().where((f) => f.path.endsWith('.png')).toList();
-    final xFiles = files.map((f) => XFile(f.path)).toList();
+    final xFiles = files.map((f) => XFile(f.path, mimeType: 'image/png')).toList();
     await Share.shareXFiles(xFiles, subject: 'Banana Split: $title');
   }
 
@@ -168,6 +168,6 @@ class ExportService {
     required int shardIndex,
   }) async {
     final path = await saveSinglePng(shardJson: shardJson, title: title, shardIndex: shardIndex);
-    await Share.shareXFiles([XFile(path)], subject: 'Banana Split: $title - Shard $shardIndex');
+    await Share.shareXFiles([XFile(path, mimeType: 'image/png')], subject: 'Banana Split: $title - Shard $shardIndex');
   }
 }

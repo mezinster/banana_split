@@ -94,7 +94,8 @@ class FilesScreenState extends State<FilesScreen> with WidgetsBindingObserver {
   Future<void> _shareFile(File file) async {
     final l10n = AppLocalizations.of(context)!;
     try {
-      await Share.shareXFiles([XFile(file.path)]);
+      final mime = file.path.endsWith('.pdf') ? 'application/pdf' : 'image/png';
+      await Share.shareXFiles([XFile(file.path, mimeType: mime)]);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
