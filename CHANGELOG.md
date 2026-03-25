@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2026-03-25
+
+### Added
+
+- **Multi-method shard input** (Web app): New `ShardInput` component replaces the bare `qrcode-stream` on both Combine and Print pages. Three shard entry modes — camera (default, existing), upload image (multi-file, decodes via `jsqr`), and paste text (multi-line JSON). Includes inline feedback with auto-clear timer. Camera mirror CSS scoped to component. New `src/util/qrDecode.ts` helper for image-to-text QR decoding. 11 new i18n keys across all 6 locales.
+- **Paste text mode** (Flutter): `ShardScanner` widget gains a "Paste text" mode alongside the existing camera and gallery import. Users can paste one or more JSON shard strings (one per line) and submit. Summary SnackBar reports added/failed/duplicate counts. Mode switching disposes/reinits camera to save resources. 8 new i18n keys across all 6 locales.
+
+### Changed
+
+- **`ShardScanner.onScanned` callback** (Flutter): Changed from `void Function(String)` to `ShardError? Function(String, {bool isBatch})`. Enables paste mode to collect per-line results and build summary feedback. Fixes pre-existing issue where shards rejected by `RestoreNotifier` were still added to `_seenCodes` dedup set. Gallery import now correctly classifies duplicates vs failures using the returned error.
+
 ## [0.6.4] - 2026-03-22
 
 ### Fixed
