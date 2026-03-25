@@ -54,5 +54,16 @@
   "infoStep1": "შეინახეთ ეს HTML გვერდი ლოკალურ Documents საქაღალდეში",
   "infoStep2": "გამორთეთ Wi-Fi, Bluetooth და მოწყობილობის ნებისმიერი სხვა კავშირი",
   "infoStep3": "გახსენით ჩამოტვირთული HTML გვერდი და მიჰყევით ინსტრუქციებს",
-  "infoMinimalRisk": "ამ გზით კომპრომეტაციის რისკი მინიმალური იქნება."
+  "infoMinimalRisk": "ამ გზით კომპრომეტაციის რისკი მინიმალური იქნება.",
+  "inputUploadImage": "Upload image",
+  "inputPasteText": "Paste text",
+  "inputUseCamera": "Use camera",
+  "inputPastePlaceholder": "Paste shard JSON here...",
+  "inputPasteSubmit": "Submit",
+  "inputDecodeSuccess": "Decoded {success} of {total} images",
+  "inputDecodeFail": "Could not decode QR code from image",
+  "inputDecodePartial": "Decoded {success} of {total} images. {fail} could not be read.",
+  "inputParseSuccess": "Parsed {success} of {total} shards",
+  "inputParseFail": "No valid shard JSON found",
+  "inputParsePartial": "Parsed {success} of {total} entries. {fail} not valid."
 }

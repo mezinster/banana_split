@@ -54,5 +54,16 @@
   "infoStep1": "Сохраните эту HTML-страницу в локальную папку Документы",
   "infoStep2": "Отключите Wi-Fi, Bluetooth и любые другие средства связи на устройстве",
   "infoStep3": "Откройте скачанную HTML-страницу и следуйте инструкциям",
-  "infoMinimalRisk": "Таким образом риск компрометации будет минимальным."
+  "infoMinimalRisk": "Таким образом риск компрометации будет минимальным.",
+  "inputUploadImage": "Upload image",
+  "inputPasteText": "Paste text",
+  "inputUseCamera": "Use camera",
+  "inputPastePlaceholder": "Paste shard JSON here...",
+  "inputPasteSubmit": "Submit",
+  "inputDecodeSuccess": "Decoded {success} of {total} images",
+  "inputDecodeFail": "Could not decode QR code from image",
+  "inputDecodePartial": "Decoded {success} of {total} images. {fail} could not be read.",
+  "inputParseSuccess": "Parsed {success} of {total} shards",
+  "inputParseFail": "No valid shard JSON found",
+  "inputParsePartial": "Parsed {success} of {total} entries. {fail} not valid."
 }

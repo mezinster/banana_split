@@ -54,5 +54,16 @@
   "infoStep1": "Bu HTML sayfasını yerel Belgeler klasörünüze kaydedin",
   "infoStep2": "Cihazınızdaki Wi-Fi, Bluetooth ve diğer tüm bağlantıları kapatın",
   "infoStep3": "İndirilen HTML sayfasını açın ve talimatları takip edin",
-  "infoMinimalRisk": "Bu şekilde ele geçirilme riski minimum düzeyde olacaktır."
+  "infoMinimalRisk": "Bu şekilde ele geçirilme riski minimum düzeyde olacaktır.",
+  "inputUploadImage": "Upload image",
+  "inputPasteText": "Paste text",
+  "inputUseCamera": "Use camera",
+  "inputPastePlaceholder": "Paste shard JSON here...",
+  "inputPasteSubmit": "Submit",
+  "inputDecodeSuccess": "Decoded {success} of {total} images",
+  "inputDecodeFail": "Could not decode QR code from image",
+  "inputDecodePartial": "Decoded {success} of {total} images. {fail} could not be read.",
+  "inputParseSuccess": "Parsed {success} of {total} shards",
+  "inputParseFail": "No valid shard JSON found",
+  "inputParsePartial": "Parsed {success} of {total} entries. {fail} not valid."
 }

@@ -54,5 +54,16 @@
   "infoStep1": "Save this HTML page into your local Documents folder",
   "infoStep2": "Turn off Wi-Fi, Bluetooth and any other connectivity on your device",
   "infoStep3": "Open the downloaded HTML page and follow the instructions",
-  "infoMinimalRisk": "This way the risk of compromise will be minimal."
+  "infoMinimalRisk": "This way the risk of compromise will be minimal.",
+  "inputUploadImage": "Upload image",
+  "inputPasteText": "Paste text",
+  "inputUseCamera": "Use camera",
+  "inputPastePlaceholder": "Paste shard JSON here...",
+  "inputPasteSubmit": "Submit",
+  "inputDecodeSuccess": "Decoded {success} of {total} images",
+  "inputDecodeFail": "Could not decode QR code from image",
+  "inputDecodePartial": "Decoded {success} of {total} images. {fail} could not be read.",
+  "inputParseSuccess": "Parsed {success} of {total} shards",
+  "inputParseFail": "No valid shard JSON found",
+  "inputParsePartial": "Parsed {success} of {total} entries. {fail} not valid."
 }
