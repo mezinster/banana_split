@@ -117,6 +117,7 @@ describe("decodeQrFromImage", () => {
 
   test("returns null when image fails to load", async () => {
     (global as any).Image = class {
+      // eslint-disable-next-line no-unused-vars
       onerror: ((e: any) => void) | null = null;
       set src(_: string) {
         setTimeout(() => {
