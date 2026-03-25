@@ -100,6 +100,8 @@ In paste mode, ShardScanner calls `onScanned` per line but handles the SnackBar 
 
 **Suppressing per-shard SnackBars:** Add an optional `bool isBatch` parameter to the `onScanned` callback signature: `ShardError? Function(String rawData, {bool isBatch})`. Camera/gallery calls pass `isBatch: false` (default). Paste mode calls pass `isBatch: true`. RestoreScreen skips per-shard SnackBars when `isBatch` is true.
 
+**Updating existing call sites in ShardScanner:** The three existing `widget.onScanned(raw)` calls within `shard_scanner.dart` (mobile camera `_onDetect`, Windows camera `_onQrDetected`, and `_importFromGallery`) must be updated to the new signature. Each call should capture the returned `ShardError?` and only add to `_seenCodes` on success (null return). This fixes a pre-existing inconsistency where shards rejected by the notifier were still added to `_seenCodes`. The gallery import path must also use the returned error to correctly classify duplicates vs. successes in its SnackBar count (a shard pasted first then gallery-imported will return `DuplicateShardError` from the notifier).
+
 ### Data Flow
 
 ```
