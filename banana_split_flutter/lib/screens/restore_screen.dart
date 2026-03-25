@@ -75,25 +75,28 @@ class _ScannerView extends StatelessWidget {
     return ShardScanner(
       scannedCount: notifier.scannedCount,
       requiredCount: notifier.requiredCount > 0 ? notifier.requiredCount : null,
-      onScanned: (rawData) {
+      onScanned: (rawData, {isBatch = false}) {
         final error = notifier.addShard(rawData);
-        if (error != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(_localizeError(l10n, error))),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                l10n.restoreShardScanned(
-                  notifier.scannedCount,
-                  notifier.requiredCount,
+        if (!isBatch) {
+          if (error != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(_localizeError(l10n, error))),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  l10n.restoreShardScanned(
+                    notifier.scannedCount,
+                    notifier.requiredCount,
+                  ),
                 ),
+                duration: const Duration(seconds: 1),
               ),
-              duration: const Duration(seconds: 1),
-            ),
-          );
+            );
+          }
         }
+        return error;
       },
     );
   }

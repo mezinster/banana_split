@@ -5,6 +5,7 @@ import 'package:camera/camera.dart' as cam;
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:image/image.dart' as img;
+import 'package:banana_split_flutter/state/restore_notifier.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -13,7 +14,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:zxing2/qrcode.dart';
 
 class ShardScanner extends StatefulWidget {
-  final void Function(String rawData) onScanned;
+  final ShardError? Function(String rawData, {bool isBatch}) onScanned;
   final int scannedCount;
   final int? requiredCount;
 
@@ -223,9 +224,11 @@ class _ShardScannerState extends State<ShardScanner>
       if (raw == null || raw.isEmpty) continue;
       if (_seenCodes.contains(raw)) continue;
 
-      _seenCodes.add(raw);
       _lastScanTime = now;
-      widget.onScanned(raw);
+      final error = widget.onScanned(raw);
+      if (error == null) {
+        _seenCodes.add(raw);
+      }
     }
   }
 
@@ -237,9 +240,11 @@ class _ShardScannerState extends State<ShardScanner>
     if (now.difference(_lastScanTime).inMilliseconds < 500) return;
     if (_seenCodes.contains(raw)) return;
 
-    _seenCodes.add(raw);
     _lastScanTime = now;
-    widget.onScanned(raw);
+    final error = widget.onScanned(raw);
+    if (error == null) {
+      _seenCodes.add(raw);
+    }
   }
 
   Future<String?> _getInitialDirectory() async {
@@ -311,12 +316,17 @@ class _ShardScannerState extends State<ShardScanner>
           if (_disposed) return;
         }
 
-        // Skip throttle — dedup via _seenCodes only (no camera rapid-fire here)
-        if (raw != null && raw.isNotEmpty && !_seenCodes.contains(raw)) {
-          _seenCodes.add(raw);
-          widget.onScanned(raw);
-          decoded++;
-        } else if (raw == null) {
+        if (raw != null && raw.isNotEmpty) {
+          final error = widget.onScanned(raw, isBatch: true);
+          if (error == null) {
+            _seenCodes.add(raw);
+            decoded++;
+          } else if (error is DuplicateShardError) {
+            // Already scanned — don't count as failed
+          } else {
+            failed++;
+          }
+        } else {
           failed++;
         }
       }
