@@ -22,6 +22,7 @@ const $t = function(key: string, params?: Record<string, unknown>) {
   if (params) {
     var result = key;
     Object.keys(params).forEach(function(k) {
+      // eslint-disable-next-line security/detect-object-injection
       result = result.replace("{" + k + "}", String(params[k]));
     });
     return result;
