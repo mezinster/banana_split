@@ -13,6 +13,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:zxing2/qrcode.dart';
 
+enum _InputMode { camera, paste }
+
 class ShardScanner extends StatefulWidget {
   final ShardError? Function(String rawData, {bool isBatch}) onScanned;
   final int scannedCount;
@@ -46,6 +48,8 @@ class _ShardScannerState extends State<ShardScanner>
   bool _isPickingFile = false;
   final Set<String> _seenCodes = {};
   DateTime _lastScanTime = DateTime(0);
+  _InputMode _mode = _InputMode.camera;
+  final TextEditingController _pasteController = TextEditingController();
 
   bool get _useWindowsCamera => Platform.isWindows;
 
@@ -54,6 +58,9 @@ class _ShardScannerState extends State<ShardScanner>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initCamera();
+    _pasteController.addListener(() {
+      if (_mode == _InputMode.paste) setState(() {});
+    });
   }
 
   @override
@@ -61,6 +68,7 @@ class _ShardScannerState extends State<ShardScanner>
     _disposed = true;
     WidgetsBinding.instance.removeObserver(this);
     _disposeCamera();
+    _pasteController.dispose();
     super.dispose();
   }
 
@@ -83,8 +91,69 @@ class _ShardScannerState extends State<ShardScanner>
 
   void _retryCamera() {
     if (_disposed || _permissionDenied) return;
+    if (_mode == _InputMode.paste) return;
     if (_cameraSupported) return; // already working
     _initCamera();
+  }
+
+  void _switchToPaste() {
+    _disposeCamera();
+    setState(() => _mode = _InputMode.paste);
+  }
+
+  void _switchToCamera() {
+    _pasteController.clear();
+    setState(() => _mode = _InputMode.camera);
+    _initCamera();
+  }
+
+  void _submitPaste() {
+    final text = _pasteController.text;
+    final lines = text.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
+
+    if (lines.isEmpty) {
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.scannerPasteEmpty)),
+        );
+      }
+      return;
+    }
+
+    int added = 0;
+    int failed = 0;
+    int duplicate = 0;
+
+    for (final line in lines) {
+      final error = widget.onScanned(line, isBatch: true);
+      if (error == null) {
+        _seenCodes.add(line);
+        added++;
+      } else if (error is DuplicateShardError) {
+        duplicate++;
+      } else {
+        failed++;
+      }
+    }
+
+    // Build summary SnackBar
+    final l10n = AppLocalizations.of(context)!;
+    final parts = <String>[];
+    if (added > 0) parts.add(l10n.scannerPasteAdded(added));
+    if (failed > 0) parts.add(l10n.scannerPasteFailed(failed));
+    if (duplicate > 0) parts.add(l10n.scannerPasteDuplicate(duplicate));
+
+    if (parts.isNotEmpty && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(parts.join(', '))),
+      );
+    }
+
+    // Clear on full success
+    if (failed == 0 && duplicate == 0) {
+      _pasteController.clear();
+    }
   }
 
   void _disposeCamera() {
@@ -405,51 +474,97 @@ class _ShardScannerState extends State<ShardScanner>
               style: Theme.of(context).textTheme.titleMedium),
         ),
 
-        if (_cameraSupported)
-          _buildCameraPreview()
-        else if (_permissionDenied)
-          Container(
-            height: 200,
-            padding: const EdgeInsets.all(16),
-            alignment: Alignment.center,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(l10n.scannerCameraDenied),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: openAppSettings,
-                  child: Text(l10n.scannerOpenSettings),
-                ),
-              ],
+        if (_mode == _InputMode.camera) ...[
+          if (_cameraSupported)
+            _buildCameraPreview()
+          else if (_permissionDenied)
+            Container(
+              height: 200,
+              padding: const EdgeInsets.all(16),
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(l10n.scannerCameraDenied),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: openAppSettings,
+                    child: Text(l10n.scannerOpenSettings),
+                  ),
+                ],
+              ),
+            )
+          else
+            Container(
+              height: 200,
+              padding: const EdgeInsets.all(16),
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(l10n.scannerCameraUnavailable,
+                      textAlign: TextAlign.center),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: _retryCamera,
+                    icon: const Icon(Icons.refresh),
+                    label: Text(l10n.scannerRetryCamera),
+                  ),
+                ],
+              ),
             ),
-          )
-        else
-          Container(
-            height: 200,
-            padding: const EdgeInsets.all(16),
-            alignment: Alignment.center,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(l10n.scannerCameraUnavailable,
-                    textAlign: TextAlign.center),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: _retryCamera,
-                  icon: const Icon(Icons.refresh),
-                  label: Text(l10n.scannerRetryCamera),
-                ),
-              ],
+
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _importFromGallery,
+                icon: const Icon(Icons.photo_library),
+                label: Text(l10n.scannerImportGallery),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: _switchToPaste,
+                icon: const Icon(Icons.content_paste),
+                label: Text(l10n.scannerPasteText),
+              ),
+            ],
+          ),
+        ],
+
+        if (_mode == _InputMode.paste) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              controller: _pasteController,
+              maxLines: 6,
+              decoration: InputDecoration(
+                hintText: l10n.scannerPasteHint,
+                border: const OutlineInputBorder(),
+              ),
             ),
           ),
-
-        const SizedBox(height: 16),
-        OutlinedButton.icon(
-          onPressed: _importFromGallery,
-          icon: const Icon(Icons.photo_library),
-          label: Text(l10n.scannerImportGallery),
-        ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _switchToCamera,
+                icon: const Icon(Icons.camera_alt),
+                label: Text(l10n.scannerBackToCamera),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: _pasteController.text.trim().isNotEmpty
+                    ? _submitPaste
+                    : null,
+                icon: const Icon(Icons.check),
+                label: Text(l10n.scannerPasteSubmit),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
