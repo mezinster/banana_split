@@ -40,6 +40,8 @@ export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh" && yarn test:unit
 
 **Views** (`src/views/`): Four routes — Info (landing), Share (split a secret), Print (QR code printout), Combine (scan QR codes to reconstruct).
 
+**ShardInput** (`src/components/ShardInput.vue`): Shared input component used by Combine and Print views. Provides three shard entry modes: camera (default, uses `qrcode-stream`), upload image (multi-file, decodes via `jsqr` through `src/util/qrDecode.ts`), and paste text (multi-line JSON). Emits `decode(string)` for each successfully read shard, matching the `qrcode-stream` event interface. Includes inline feedback (success/error/partial) with auto-clear timer. Camera mirror CSS is scoped within this component.
+
 **Build** (`vue.config.js`): Uses `html-webpack-inline-source-plugin` to inline all assets into a single HTML file. Injects git revision via `DefinePlugin`.
 
 **Localization** (`src/i18n.ts`, `src/locales/`): vue-i18n v8 with 6 locales (EN, RU, TR, BE, KA, UK) in JSON files. Browser language auto-detected on each visit (no persistence). Slavic languages (RU, UK, BE) use custom `pluralizationRules` for 3-form plurals (one|few|many). Print language is independently selectable via `printLocale` on Share.vue, passed through ShardInfo → ShardQrCode using `$t(key, locale)` 3-arg form. ShardInfo's detached Vue instance for print rendering requires explicit `i18n` injection (`new Vue({ el, i18n, render })`). All new UI strings must be added to `src/locales/en.json` (template) and all 5 translation files.
