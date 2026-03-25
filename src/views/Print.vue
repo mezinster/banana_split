@@ -26,7 +26,7 @@
         </span>
       </h2>
       <div v-if="numberEntered && needMoreShards">
-        <qrcode-stream @decode="onDecode" />
+        <ShardInput @decode="onDecode" />
       </div>
       <div v-else-if="numberEntered">
         <button id="printBtn" class="button-card" @click="print">
@@ -65,6 +65,7 @@
 <script lang="ts">
 import crypto, { Shard } from "../util/crypto";
 import ShardInfo from "../components/ShardInfo.vue";
+import ShardInput from "../components/ShardInput.vue";
 
 import Vue from "vue";
 
@@ -80,7 +81,7 @@ type PrintData = {
 
 export default Vue.extend({
   name: "Print",
-  components: { ShardInfo },
+  components: { ShardInfo, ShardInput },
   data(): PrintData {
     return {
       title: "",
@@ -161,11 +162,5 @@ export default Vue.extend({
 .remaining {
   filter: blur(5px);
   opacity: 0.5;
-}
-/* Flip video to make it easier to use */
-.qrcode-stream {
-  transform: scaleX(-1);
-  border-radius: 8px;
-  overflow: hidden;
 }
 </style>
