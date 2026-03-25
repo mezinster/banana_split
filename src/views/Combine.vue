@@ -8,7 +8,7 @@
         </span>
       </h2>
       <div v-if="needMoreShards">
-        <qrcode-stream @decode="onDecode" />
+        <ShardInput @decode="onDecode" />
       </div>
       <div v-else>
         <p>
@@ -61,6 +61,7 @@
 
 <script lang="ts">
 import crypto, { Shard } from "../util/crypto";
+import ShardInput from "../components/ShardInput.vue";
 import Vue from "vue";
 
 type CombineData = {
@@ -76,6 +77,7 @@ type CombineData = {
 
 export default Vue.extend({
   name: "Combine",
+  components: { ShardInput },
   data(): CombineData {
     return {
       title: "",
@@ -169,11 +171,5 @@ export default Vue.extend({
 .remaining {
   filter: blur(5px);
   opacity: 0.5;
-}
-/* Flip video to make it easier to use */
-.qrcode-stream {
-  transform: scaleX(-1);
-  border-radius: 8px;
-  overflow: hidden;
 }
 </style>
