@@ -62,6 +62,12 @@ Emits `decode(result: string)` once per successfully decoded shard. For multi-im
 
 The two fallback buttons always show the two non-active modes. Styled as `button-card` text links.
 
+### Implementation Notes
+
+- **`qrcode-stream` availability:** The `vue-qrcode-reader` plugin is registered globally in `main.ts` via `Vue.use()`, so `<qrcode-stream>` is available inside ShardInput without a local import.
+- **Camera lifecycle:** Camera mode uses `v-if`, so switching away destroys the `<qrcode-stream>` component (and its camera stream). Switching back re-initializes it. This matches the existing behavior in the views and is intentional — camera re-init takes ~1-2s but avoids leaving the stream open while unused.
+- **Feedback auto-clear:** Success feedback auto-clears after ~2s via `setTimeout`. The timeout ID is stored in component state and cleared on mode switch, new input, or component destroy to prevent stale feedback.
+
 ## Image Upload Flow
 
 1. Hidden `<input type="file" accept="image/*" multiple>` triggered by "Upload image" button
@@ -78,14 +84,14 @@ The two fallback buttons always show the two non-active modes. Styled as `button
    - Partial: "Decoded {success} of {total} images. {fail} could not be read."
    - All fail: "Could not decode QR code from image." (persists)
 
-jsqr is imported directly from `node_modules/jsqr` (already bundled via `vue-qrcode-reader`).
+**jsqr import:** `import jsQR from "jsqr";` — the package is already bundled via `vue-qrcode-reader` and provides TypeScript types. Canvas context requires a null guard since `getContext('2d')` can return `null` (project has `strictNullChecks` enabled).
 
 ## Paste Text Flow
 
 1. Multi-line textarea with placeholder "Paste shard JSON here..."
 2. "Submit" button triggers parsing
-3. Parser finds all `{...}` balanced JSON objects in the input text
-4. For each candidate: `JSON.parse()`, if valid emit `decode(jsonString)`
+3. **Parsing algorithm:** Split input by newlines, trim each line, attempt `JSON.parse()` on each non-empty line. This covers the two realistic use cases: one JSON per line, or a single JSON pasted alone. No balanced-brace parser needed.
+4. For each successful parse, emit `decode(jsonString)` to parent
 5. Inline feedback (same pattern as image upload):
    - All success: "Parsed {success} of {total} shards" (auto-clears)
    - Partial: "Parsed {success} of {total} entries. {fail} not valid."
