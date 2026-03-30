@@ -47,7 +47,7 @@
   "infoShamirLink": "schematowi dzielenia sekretu Shamira",
   "infoHowDoesItWork": "Jak to działa?",
   "infoHowBody1": "Po wpisaniu sekretu w Banana Split, zostanie on zaszyfrowany automatycznie wygenerowanym hasłem i podzielony na N kodów QR, gotowych do wydrukowania. Do odtworzenia sekretu potrzebujesz N/2+1 wydruków, a następnie hasła do odszyfrowania.",
-  "infoHowBody2": "Banana Split stara się chronić Twój sekret przed wektorami ataku typu „atakujący jest w stanie przechwycić wszystko, co wysyłasz do drukarki", dlatego hasło musisz wpisać na wydrukach ręcznie.",
+  "infoHowBody2": "Banana Split stara się chronić Twój sekret przed wektorami ataku typu \u201Eatakujący jest w stanie przechwycić wszystko, co wysyłasz do drukarki\u201D, dlatego hasło musisz wpisać na wydrukach ręcznie.",
   "infoHowBody3": "Oczywiście powinieneś zapieczętować wydruki w nieprzezroczystych kopertach i rozdzielić je w różnych miejscach, gdy tylko skończysz spisywanie frazy odzyskiwania — Banana Split jest bezpieczniejszy niż pojedyncza kartka z sekretem tylko dopóki sekrety nie mogą zostać utracone lub skradzione razem.",
   "infoHowBody4": "Wszystkie operacje powinny być wykonywane w trybie offline. Odtworzenie można przeprowadzić na dowolnym urządzeniu z kamerą — po prostu pokaż kody QR kamerze i śledź powiadomienia na ekranie.",
   "infoHowToUse": "Jak tego użyć?",
