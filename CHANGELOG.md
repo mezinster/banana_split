@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0] - 2026-03-30
+
+### Added
+
+- **Polish language support** (Web + Flutter): Full Polish (pl) translations for both apps — 69 web keys and 131 Flutter ARB keys. Registered in language selectors, i18n config, print locale dropdown, and Slavic pluralization rules. Polish flag (🇵🇱) added to all language pickers.
+
 ## [0.7.0] - 2026-03-25
 
 ### Added
