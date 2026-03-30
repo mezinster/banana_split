@@ -7,10 +7,11 @@ import tr from "./locales/tr.json";
 import be from "./locales/be.json";
 import ka from "./locales/ka.json";
 import uk from "./locales/uk.json";
+import pl from "./locales/pl.json";
 
 Vue.use(VueI18n);
 
-const SUPPORTED_LOCALES = ["en", "ru", "tr", "be", "ka", "uk"];
+const SUPPORTED_LOCALES = ["en", "ru", "tr", "be", "ka", "uk", "pl"];
 
 function detectLocale(): string {
   const browserLang = navigator.language ? navigator.language.split("-")[0] : "";
@@ -32,11 +33,12 @@ function slavicPlural(choice: number): number {
 const i18n = new VueI18n({
   locale: detectLocale(),
   fallbackLocale: "en",
-  messages: { en, ru, tr, be, ka, uk },
+  messages: { en, ru, tr, be, ka, uk, pl },
   pluralizationRules: {
     ru: slavicPlural,
     uk: slavicPlural,
-    be: slavicPlural
+    be: slavicPlural,
+    pl: slavicPlural
   }
 });
 

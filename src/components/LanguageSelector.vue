@@ -27,7 +27,8 @@ const LOCALES = [
   { code: "tr", flag: "🇹🇷", name: "Türkçe" },
   { code: "be", flag: "🇧🇾", name: "Беларуская" },
   { code: "ka", flag: "🇬🇪", name: "ქართული" },
-  { code: "uk", flag: "🇺🇦", name: "Українська" }
+  { code: "uk", flag: "🇺🇦", name: "Українська" },
+  { code: "pl", flag: "🇵🇱", name: "Polski" }
 ];
 
 export default Vue.extend({
