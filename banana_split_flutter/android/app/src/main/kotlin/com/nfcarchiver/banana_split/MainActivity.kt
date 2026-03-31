@@ -1,4 +1,4 @@
-package com.example.banana_split_flutter
+package com.nfcarchiver.banana_split
 
 import io.flutter.embedding.android.FlutterActivity
 
