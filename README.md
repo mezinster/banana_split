@@ -4,6 +4,8 @@
 [![Flutter CI](https://github.com/mezinster/banana_split/actions/workflows/flutter-ci.yml/badge.svg)](https://github.com/mezinster/banana_split/actions/workflows/flutter-ci.yml)
 [![Release](https://github.com/mezinster/banana_split/actions/workflows/release.yml/badge.svg)](https://github.com/mezinster/banana_split/actions/workflows/release.yml)
 
+> **Fork Notice:** This project is a fork of [banana_split](https://github.com/paritytech/banana_split) originally developed by [Parity Technologies](https://www.parity.io/). Original work © 2019–2020 Parity Technologies. This fork © 2026 Evgeny Mezin. Licensed under [GPLv3](LICENSE).
+
 Banana Split uses [Shamir's Secret Sharing](https://en.wikipedia.org/wiki/Shamir%27s_Secret_Sharing) to split secrets into QR-code shards. Any majority of shards can reconstruct the secret — fewer reveal nothing.
 
 **Any 3 of 5 will know everything; any 2 of 5 will know nothing.**
