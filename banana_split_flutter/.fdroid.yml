@@ -1,0 +1,11 @@
+Categories:
+  - Security
+  - Connectivity
+  - System
+
+AntiFeatures:
+  NonFreeDep:
+    en-US: |
+      Uses Google ML Kit (via mobile_scanner package) for QR code scanning on Android.
+      ML Kit is a proprietary Google library bundled in the APK.
+      A pure open-source alternative (zxing2) is used on Windows/Linux.
