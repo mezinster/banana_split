@@ -1,0 +1,1 @@
+Split secrets into QR-code shards using Shamir's Secret Sharing

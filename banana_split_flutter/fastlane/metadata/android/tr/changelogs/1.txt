@@ -1,0 +1,5 @@
+• Lehçe dil desteği — tüm 131 arayüz dizesinin tam çevirisi
+• Çok yöntemli parça girişi: kamera, galeri içe aktarma ve metin yapıştırma
+• Parçaları PNG veya PDF olarak kaydetme, Unicode yazı tipi desteği
+• 7 dil: İngilizce, Rusça, Türkçe, Belarusça, Gürcüce, Ukraynaca, Lehçe
+• Web uygulaması ile parça uyumluluğu

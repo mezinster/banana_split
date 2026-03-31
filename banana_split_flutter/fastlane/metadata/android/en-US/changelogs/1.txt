@@ -1,0 +1,5 @@
+• Polish language support — full translations for all 131 UI strings
+• Multi-method shard input: camera, gallery import, and paste text mode
+• Save shards as PNGs or PDF with Unicode font support
+• 7 languages: English, Russian, Turkish, Belarusian, Georgian, Ukrainian, Polish
+• Cross-platform shard compatibility with the web app

@@ -1,0 +1,32 @@
+Banana Split uses Shamir's Secret Sharing to split secrets into QR-code shards. Any majority of shards can reconstruct the secret — fewer reveal nothing.
+
+<b>How it works</b>
+
+1. Enter your secret (e.g., a seed phrase, private key, password).
+2. Choose how many shards to create and how many are required to reconstruct.
+3. Use the auto-generated passphrase or enter your own.
+4. Banana Split encrypts the secret with the passphrase, then splits the ciphertext into N QR codes using Shamir's scheme.
+5. Print or save the QR codes. Write the passphrase by hand on every sheet.
+
+To reconstruct: scan a majority of QR code shards, enter the passphrase, and your secret is restored.
+
+<b>Features</b>
+
+• Offline — all cryptography happens on-device, no server communication
+• Save shards as PNGs or PDF with full Unicode font support
+• Camera and gallery QR scanning with multi-file import
+• Custom or auto-generated passphrases
+• User-selectable quorum (how many shards needed)
+• 7 languages: English, Russian, Turkish, Belarusian, Georgian, Ukrainian, Polish
+• Cross-platform shard compatibility with the Banana Split web app
+
+<b>Security</b>
+
+Encryption: scrypt key derivation + NaCl secretbox (XSalsa20-Poly1305).
+Splitting: Shamir's Secret Sharing over GF(256).
+No data collection, no analytics, no trackers.
+
+<b>Open Source</b>
+
+This app is a fork of banana_split by Parity Technologies, licensed under GPLv3.
+Source code: https://github.com/mezinster/banana_split

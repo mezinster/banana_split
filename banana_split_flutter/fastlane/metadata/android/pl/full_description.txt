@@ -1,0 +1,32 @@
+Banana Split wykorzystuje schemat dzielenia sekretów Shamira do podziału sekretów na fragmenty QR. Większość fragmentów pozwala odtworzyć sekret — mniejsza liczba nie ujawnia niczego.
+
+<b>Jak to działa</b>
+
+1. Wprowadź sekret (np. frazę seed, klucz prywatny, hasło).
+2. Wybierz liczbę fragmentów i ile jest potrzebnych do odtworzenia.
+3. Użyj automatycznie wygenerowanego hasła lub wprowadź własne.
+4. Banana Split szyfruje sekret hasłem, a następnie dzieli szyfrogramu na N kodów QR za pomocą schematu Shamira.
+5. Wydrukuj lub zapisz kody QR. Napisz hasło ręcznie na każdej stronie.
+
+Aby odtworzyć: zeskanuj większość fragmentów QR, wprowadź hasło — sekret zostanie przywrócony.
+
+<b>Funkcje</b>
+
+• Offline — cała kryptografia odbywa się na urządzeniu, bez połączenia z serwerem
+• Zapisywanie fragmentów jako PNG lub PDF z obsługą czcionek Unicode
+• Skanowanie QR kamerą i import z galerii z obsługą wielu plików
+• Własne lub automatycznie generowane hasło
+• Konfigurowalny próg (ile fragmentów potrzeba)
+• 7 języków: angielski, rosyjski, turecki, białoruski, gruziński, ukraiński, polski
+• Kompatybilność fragmentów z aplikacją webową Banana Split
+
+<b>Bezpieczeństwo</b>
+
+Szyfrowanie: scrypt + NaCl secretbox (XSalsa20-Poly1305).
+Podział: schemat Shamira nad GF(256).
+Bez zbierania danych, analityki ani trackerów.
+
+<b>Otwarte źródło</b>
+
+Ta aplikacja jest forkiem banana_split autorstwa Parity Technologies, licencja GPLv3.
+Kod źródłowy: https://github.com/mezinster/banana_split

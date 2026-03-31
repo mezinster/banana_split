@@ -1,0 +1,5 @@
+• Obsługa języka polskiego — pełne tłumaczenie wszystkich 131 ciągów interfejsu
+• Wielometodowe wprowadzanie fragmentów: kamera, import z galerii, wklejanie tekstu
+• Zapisywanie fragmentów jako PNG lub PDF z obsługą czcionek Unicode
+• 7 języków: angielski, rosyjski, turecki, białoruski, gruziński, ukraiński, polski
+• Kompatybilność fragmentów z aplikacją webową

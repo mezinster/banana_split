@@ -1,0 +1,32 @@
+Banana Split, sırları QR kod parçalarına bölmek için Shamir'in Gizli Paylaşımı algoritmasını kullanır. Parçaların çoğunluğu sırrı yeniden oluşturabilir — daha azı hiçbir şey açığa çıkarmaz.
+
+<b>Nasıl çalışır</b>
+
+1. Sırrınızı girin (örn. tohum ifadesi, özel anahtar, şifre).
+2. Kaç parça oluşturulacağını ve yeniden oluşturma için kaç tane gerektiğini seçin.
+3. Otomatik oluşturulan parolayı kullanın veya kendinizinkini girin.
+4. Banana Split sırrı parolayla şifreler, ardından şifreli metni Shamir şeması ile N QR koduna böler.
+5. QR kodları yazdırın veya kaydedin. Parolayı her sayfaya elle yazın.
+
+Yeniden oluşturmak için: QR kod parçalarının çoğunluğunu tarayın, parolayı girin — sırrınız geri yüklenir.
+
+<b>Özellikler</b>
+
+• Çevrimdışı — tüm kriptografi cihazda gerçekleşir, sunucu bağlantısı yok
+• Parçaları PNG veya PDF olarak kaydetme, Unicode yazı tipi desteği
+• Kamera ve galeri QR tarama, çoklu dosya içe aktarma
+• Özel veya otomatik oluşturulan parola
+• Ayarlanabilir çoğunluk (kaç parça gerekli)
+• 7 dil: İngilizce, Rusça, Türkçe, Belarusça, Gürcüce, Ukraynaca, Lehçe
+• Banana Split web uygulaması ile parça uyumluluğu
+
+<b>Güvenlik</b>
+
+Şifreleme: scrypt + NaCl secretbox (XSalsa20-Poly1305).
+Bölme: GF(256) üzerinde Shamir'in Gizli Paylaşımı.
+Veri toplama, analitik veya izleyici yok.
+
+<b>Açık Kaynak</b>
+
+Bu uygulama Parity Technologies tarafından geliştirilen banana_split'in bir çatalıdır, GPLv3 lisansı altındadır.
+Kaynak kod: https://github.com/mezinster/banana_split

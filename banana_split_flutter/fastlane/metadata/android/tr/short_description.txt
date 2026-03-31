@@ -1,0 +1,1 @@
+Shamir'in Gizli Paylaşımı ile sırları QR kod parçalarına bölün
