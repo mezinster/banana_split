@@ -1,10 +1,12 @@
 # Banana Split Flutter
 
-A Flutter port of the Banana Split web app. Splits secrets into QR code shards using Shamir's Secret Sharing, and reconstructs them by scanning QR codes.
+> **Fork Notice:** This is the Flutter port from a fork of [banana_split](https://github.com/paritytech/banana_split) originally developed by [Parity Technologies](https://www.parity.io/). Original work © 2019–2020 Parity Technologies. This fork © 2026 Evgeny Mezin. Licensed under [GPLv3](../LICENSE).
+
+Splits secrets into QR code shards using Shamir's Secret Sharing, and reconstructs them by scanning QR codes.
 
 Platforms: Android, Windows, macOS, Linux (no iOS).
 
-Languages: English, Russian, Turkish, Belarusian, Georgian, Ukrainian.
+Languages: English, Russian, Turkish, Belarusian, Georgian, Ukrainian, Polish.
 
 ## How It Works
 
@@ -44,14 +46,13 @@ flutter analyze
 
 ## Shard Compatibility
 
-The Flutter app reads shards from all versions:
-| Version | Nonce | Shard data | Source |
-|---------|-------|------------|--------|
-| v0 | hex | raw hex | legacy web app |
-| v1 | base64 | bitfield + base64 | current web app |
-| v2 | base64 | bitfield + base64 | Flutter app |
+| Format | Encoding | Written by | Read by |
+|--------|----------|------------|---------|
+| v0 | hex nonce, hex data | legacy web app | both |
+| v1 | base64 nonce, base64 data | current web app | both |
+| v2 | base64 nonce, base64 data | Flutter app | both |
 
-The Flutter app writes v2 shards only. Note: the current web app does not handle v2 shards — they are forward-incompatible.
+v1 and v2 use identical encoding — the version field is only a provenance marker indicating which app created the shard. All formats are fully interoperable: shards created in either app can be reconstructed in either app.
 
 ## Windows
 
@@ -63,7 +64,7 @@ Saved QR shards go to: `C:\Users\<username>\Documents\banana_split\<title>\`
 
 CI workflows are in `.github/workflows/`:
 - **flutter-ci.yml** — Analyze + test on push/PR. On-demand debug APK and release Windows builds.
-- **flutter-release.yml** — Tag push (`v*.*.*`) or manual dispatch. Builds Android APK/AAB + Windows zip. Creates GitHub Release with SHA-256 checksums.
+- **release.yml** — Tag push (`v*.*.*`) or manual dispatch. Builds Android APK/AAB, Windows zip, and Web HTML. Creates GitHub Release with SHA-256 checksums.
 
 ## Project Structure
 
@@ -90,6 +91,7 @@ lib/
     app_be.arb              Belarusian
     app_ka.arb              Georgian
     app_uk.arb              Ukrainian
+    app_pl.arb              Polish
   widgets/
     qr_grid.dart            QR code display grid
     shard_scanner.dart      Camera + gallery scanner
@@ -111,4 +113,4 @@ tests/
 
 ## License
 
-See the repository root for license information.
+[GNU General Public License v3.0](../LICENSE)
