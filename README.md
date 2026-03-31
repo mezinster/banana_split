@@ -59,7 +59,7 @@ Native app for Android and Windows (also builds for macOS/Linux). Pure Dart impl
 **Additional features:**
 - Save shards as PNGs or PDF with full Unicode font support (Roboto + Noto Sans Georgian)
 - Files tab for browsing, sharing, and deleting saved exports
-- Language selector with 6 locales (EN, RU, TR, BE, KA, UK) persisted across sessions
+- Language selector with 7 locales (EN, RU, TR, BE, KA, UK, PL) persisted across sessions
 - Camera and gallery QR scanning with two-stage decode
 - Custom Banana Split app icon
 
@@ -118,13 +118,13 @@ The file is fully self-contained — no additional assets, no routing configurat
 
 ## Shard Compatibility
 
-| Format | Web App | Flutter App |
-|--------|---------|-------------|
-| v0 (hex) | Read/Write | Read only |
-| v1 (base64) | Read/Write | Read only |
-| v2 (base64, Dart) | Read only | Read/Write |
+| Format | Encoding | Written by | Read by |
+|--------|----------|------------|---------|
+| v0 | hex nonce, hex data | legacy web app | both |
+| v1 | base64 nonce, base64 data | current web app | both |
+| v2 | base64 nonce, base64 data | Flutter app | both |
 
-All shard formats are fully interoperable — shards created in either app can be reconstructed in either app.
+v1 and v2 use identical encoding — the version field is only a provenance marker indicating which app created the shard. All formats are fully interoperable: shards created in either app can be reconstructed in either app.
 
 ## License
 
