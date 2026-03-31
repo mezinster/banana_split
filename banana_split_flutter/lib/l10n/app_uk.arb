@@ -108,5 +108,9 @@
   "filesCancelButton": "Скасувати",
   "filesDeleted": "Файл видалено",
   "filesShareError": "Помилка при надсиланні файлу",
-  "filesDeleteError": "Помилка при видаленні файлу"
+  "filesDeleteError": "Помилка при видаленні файлу",
+  "aboutForkNotice": "Цей додаток є форком {repoName} від {author}.",
+  "@aboutForkNotice": { "placeholders": { "repoName": { "type": "String" }, "author": { "type": "String" } } },
+  "aboutForkCopyright": "Оригінал © 2019–2020 Parity Technologies.\nЦей форк © 2026 Євген Мезін.",
+  "aboutSourceCode": "Вихідний код"
 }

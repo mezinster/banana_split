@@ -108,5 +108,9 @@
   "filesCancelButton": "გაუქმება",
   "filesDeleted": "ფაილი წაიშალა",
   "filesShareError": "ფაილის გაზიარების შეცდომა",
-  "filesDeleteError": "ფაილის წაშლის შეცდომა"
+  "filesDeleteError": "ფაილის წაშლის შეცდომა",
+  "aboutForkNotice": "ეს აპლიკაცია არის {repoName}-ის ფორკი {author}-ისგან.",
+  "@aboutForkNotice": { "placeholders": { "repoName": { "type": "String" }, "author": { "type": "String" } } },
+  "aboutForkCopyright": "ორიგინალი © 2019–2020 Parity Technologies.\nეს ფორკი © 2026 ევგენი მეზინი.",
+  "aboutSourceCode": "წყაროს კოდი"
 }

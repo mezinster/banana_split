@@ -128,5 +128,9 @@
   "filesCancelButton": "Anuluj",
   "filesDeleted": "Plik usunięty",
   "filesShareError": "Błąd udostępniania pliku",
-  "filesDeleteError": "Błąd usuwania pliku"
+  "filesDeleteError": "Błąd usuwania pliku",
+  "aboutForkNotice": "Ta aplikacja jest forkiem {repoName} autorstwa {author}.",
+  "@aboutForkNotice": { "placeholders": { "repoName": { "type": "String" }, "author": { "type": "String" } } },
+  "aboutForkCopyright": "Oryginał © 2019–2020 Parity Technologies.\nTen fork © 2026 Evgeny Mezin.",
+  "aboutSourceCode": "Kod źródłowy"
 }

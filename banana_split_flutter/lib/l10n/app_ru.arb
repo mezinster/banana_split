@@ -108,5 +108,9 @@
   "filesCancelButton": "Отмена",
   "filesDeleted": "Файл удалён",
   "filesShareError": "Ошибка при отправке файла",
-  "filesDeleteError": "Ошибка при удалении файла"
+  "filesDeleteError": "Ошибка при удалении файла",
+  "aboutForkNotice": "Это приложение является форком {repoName} от {author}.",
+  "@aboutForkNotice": { "placeholders": { "repoName": { "type": "String" }, "author": { "type": "String" } } },
+  "aboutForkCopyright": "Оригинал © 2019–2020 Parity Technologies.\nЭтот форк © 2026 Евгений Мезин.",
+  "aboutSourceCode": "Исходный код"
 }

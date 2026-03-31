@@ -108,5 +108,9 @@
   "filesCancelButton": "Адмена",
   "filesDeleted": "Файл выдалены",
   "filesShareError": "Памылка пры адпраўцы файла",
-  "filesDeleteError": "Памылка пры выдаленні файла"
+  "filesDeleteError": "Памылка пры выдаленні файла",
+  "aboutForkNotice": "Гэта дадатак з'яўляецца форкам {repoName} ад {author}.",
+  "@aboutForkNotice": { "placeholders": { "repoName": { "type": "String" }, "author": { "type": "String" } } },
+  "aboutForkCopyright": "Арыгінал © 2019–2020 Parity Technologies.\nГэты форк © 2026 Яўген Мезін.",
+  "aboutSourceCode": "Зыходны код"
 }
