@@ -112,5 +112,6 @@
   "aboutForkNotice": "Это приложение является форком {repoName} от {author}.",
   "@aboutForkNotice": { "placeholders": { "repoName": { "type": "String" }, "author": { "type": "String" } } },
   "aboutForkCopyright": "Оригинал © 2019–2020 Parity Technologies.\nЭтот форк © 2026 Евгений Мезин.",
-  "aboutSourceCode": "Исходный код"
+  "aboutSourceCode": "Исходный код",
+  "aboutWebApp": "Веб-приложение"
 }

@@ -26,6 +26,11 @@ Yeniden oluşturmak için: QR kod parçalarının çoğunluğunu tarayın, parol
 Bölme: GF(256) üzerinde Shamir'in Gizli Paylaşımı.
 Veri toplama, analitik veya izleyici yok.
 
+<b>Web Uygulaması</b>
+
+Ayrıca web uygulaması olarak da kullanılabilir — kurulum gerekmez: https://nfcarchiver.com/banana/
+Uygulamada ve web sürümünde oluşturulan parçalar tamamen uyumludur.
+
 <b>Açık Kaynak</b>
 
 Bu uygulama Parity Technologies tarafından geliştirilen banana_split'in bir çatalıdır, GPLv3 lisansı altındadır.

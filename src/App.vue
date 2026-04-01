@@ -1,7 +1,7 @@
 <template>
   <div>
     <div id="app" class="measure">
-      <ForkMe url="https://github.com/paritytech/banana_split" />
+      <ForkMe url="https://github.com/mezinster/banana_split" />
       <nav>
         <div class="nav-top">
           <router-link id="logo" to="/">
@@ -44,10 +44,21 @@ export default Vue.extend({
   watch: {
     "$i18n.locale"(newLocale: string) {
       document.documentElement.lang = newLocale;
+      this.syncLangQuery(newLocale);
     }
   },
   created() {
     document.documentElement.lang = this.$i18n.locale;
+    this.syncLangQuery(this.$i18n.locale);
+  },
+  methods: {
+    syncLangQuery(lang: string) {
+      var query = Object.assign({}, this.$route.query);
+      if (query.lang !== lang) {
+        query.lang = lang;
+        this.$router.replace({ query: query }).catch(function() {});
+      }
+    }
   }
 });
 </script>

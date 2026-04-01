@@ -26,6 +26,11 @@ Encryption: scrypt key derivation + NaCl secretbox (XSalsa20-Poly1305).
 Splitting: Shamir's Secret Sharing over GF(256).
 No data collection, no analytics, no trackers.
 
+<b>Web App</b>
+
+Also available as a web app — no installation needed: https://nfcarchiver.com/banana/
+Shards created in the app and web version are fully compatible.
+
 <b>Open Source</b>
 
 This app is a fork of banana_split by Parity Technologies, licensed under GPLv3.

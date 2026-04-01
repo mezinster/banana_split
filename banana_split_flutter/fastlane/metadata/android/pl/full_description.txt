@@ -26,6 +26,11 @@ Szyfrowanie: scrypt + NaCl secretbox (XSalsa20-Poly1305).
 Podział: schemat Shamira nad GF(256).
 Bez zbierania danych, analityki ani trackerów.
 
+<b>Aplikacja webowa</b>
+
+Dostępna również jako aplikacja webowa — bez instalacji: https://nfcarchiver.com/banana/
+Fragmenty utworzone w aplikacji i wersji webowej są w pełni kompatybilne.
+
 <b>Otwarte źródło</b>
 
 Ta aplikacja jest forkiem banana_split autorstwa Parity Technologies, licencja GPLv3.

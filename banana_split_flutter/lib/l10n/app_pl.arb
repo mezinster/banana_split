@@ -132,5 +132,6 @@
   "aboutForkNotice": "Ta aplikacja jest forkiem {repoName} autorstwa {author}.",
   "@aboutForkNotice": { "placeholders": { "repoName": { "type": "String" }, "author": { "type": "String" } } },
   "aboutForkCopyright": "Oryginał © 2019–2020 Parity Technologies.\nTen fork © 2026 Evgeny Mezin.",
-  "aboutSourceCode": "Kod źródłowy"
+  "aboutSourceCode": "Kod źródłowy",
+  "aboutWebApp": "Aplikacja webowa"
 }

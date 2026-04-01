@@ -13,9 +13,24 @@ Vue.use(VueI18n);
 
 const SUPPORTED_LOCALES = ["en", "ru", "tr", "be", "ka", "uk", "pl"];
 
+function getQueryLang(): string {
+  // Parse lang from hash query: #/path?lang=xx
+  var hash = window.location.hash || "";
+  var qIndex = hash.indexOf("?");
+  if (qIndex === -1) return "";
+  var params = new URLSearchParams(hash.slice(qIndex));
+  var lang = params.get("lang") || "";
+  if (lang && SUPPORTED_LOCALES.indexOf(lang) !== -1) {
+    return lang;
+  }
+  return "";
+}
+
 function detectLocale(): string {
-  const browserLang = navigator.language ? navigator.language.split("-")[0] : "";
-  if (browserLang && SUPPORTED_LOCALES.includes(browserLang)) {
+  var urlLang = getQueryLang();
+  if (urlLang) return urlLang;
+  var browserLang = navigator.language ? navigator.language.split("-")[0] : "";
+  if (browserLang && SUPPORTED_LOCALES.indexOf(browserLang) !== -1) {
     return browserLang;
   }
   return "en";

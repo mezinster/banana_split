@@ -112,5 +112,6 @@
   "aboutForkNotice": "Bu uygulama {author} tarafından geliştirilen {repoName} projesinin bir çatalıdır.",
   "@aboutForkNotice": { "placeholders": { "repoName": { "type": "String" }, "author": { "type": "String" } } },
   "aboutForkCopyright": "Orijinal eser © 2019–2020 Parity Technologies.\nBu çatal © 2026 Evgeny Mezin.",
-  "aboutSourceCode": "Kaynak Kod"
+  "aboutSourceCode": "Kaynak Kod",
+  "aboutWebApp": "Web Uygulaması"
 }

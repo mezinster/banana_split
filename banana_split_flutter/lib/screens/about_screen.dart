@@ -99,6 +99,16 @@ class AboutScreen extends StatelessWidget {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.language),
+            title: Text(l10n.aboutWebApp),
+            subtitle: const Text('nfcarchiver.com/banana'),
+            trailing: const Icon(Icons.open_in_new),
+            onTap: () => launchUrl(
+              Uri.parse('https://nfcarchiver.com/banana/'),
+              mode: LaunchMode.externalApplication,
+            ),
+          ),
+          ListTile(
             leading: const Icon(Icons.code),
             title: Text(l10n.aboutSourceCode),
             trailing: const Icon(Icons.open_in_new),
