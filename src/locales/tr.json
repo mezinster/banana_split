@@ -32,6 +32,7 @@
   "errorTitleMismatch": "Başlık uyuşmazlığı!",
   "errorNonceMismatch": "Nonce uyuşmazlığı!",
   "errorRequiredMismatch": "Gerekli parça uyuşmazlığı",
+  "errorDecryptionFailed": "Sır çözülemedi. Yanlış parola veya bozuk veri.",
   "printTitle": "Parçaları yazdır",
   "printShardsLabel": "Parçalar",
   "printShardsQuestion": "Kaç parça oluşturdunuz?",

@@ -32,6 +32,7 @@
   "errorTitleMismatch": "niezgodność nazwy!",
   "errorNonceMismatch": "niezgodność nonce!",
   "errorRequiredMismatch": "niezgodność wymaganej liczby fragmentów",
+  "errorDecryptionFailed": "Nie udało się odszyfrować sekretu. Nieprawidłowe hasło lub uszkodzone dane.",
   "printTitle": "Drukowanie fragmentów",
   "printShardsLabel": "Fragmenty",
   "printShardsQuestion": "Ile fragmentów wygenerowałeś?",

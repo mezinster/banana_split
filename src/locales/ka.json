@@ -32,6 +32,7 @@
   "errorTitleMismatch": "სახელის შეუსაბამობა!",
   "errorNonceMismatch": "Nonce შეუსაბამობა!",
   "errorRequiredMismatch": "საჭირო ფრაგმენტების რაოდენობის შეუსაბამობა",
+  "errorDecryptionFailed": "საიდუმლოს გაშიფვრა ვერ მოხერხდა. არასწორი პაროლი ან დაზიანებული მონაცემები.",
   "printTitle": "ფრაგმენტების დაბეჭდვა",
   "printShardsLabel": "ფრაგმენტები",
   "printShardsQuestion": "რამდენი ფრაგმენტი გენერირეთ?",

@@ -32,6 +32,7 @@
   "errorTitleMismatch": "Несоответствие названия!",
   "errorNonceMismatch": "Несоответствие nonce!",
   "errorRequiredMismatch": "Несоответствие количества необходимых фрагментов",
+  "errorDecryptionFailed": "Не удалось расшифровать секрет. Неверная парольная фраза или повреждённые данные.",
   "printTitle": "Печать фрагментов",
   "printShardsLabel": "Фрагменты",
   "printShardsQuestion": "Сколько фрагментов вы сгенерировали?",

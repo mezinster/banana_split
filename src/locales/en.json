@@ -32,6 +32,7 @@
   "errorTitleMismatch": "title mismatch!",
   "errorNonceMismatch": "nonce mismatch!",
   "errorRequiredMismatch": "requiredShards mismatch",
+  "errorDecryptionFailed": "Unable to decrypt the secret. Wrong passphrase or corrupted data.",
   "printTitle": "Print shards",
   "printShardsLabel": "Shards",
   "printShardsQuestion": "How many shards have you generated?",

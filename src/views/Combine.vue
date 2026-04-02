@@ -160,7 +160,7 @@ export default Vue.extend({
       try {
         this.recoveredSecret = crypto.reconstruct(shards, this.passphrase);
       } catch (error) {
-        this.$eventHub.$emit("showError", error);
+        this.$eventHub.$emit("showError", this.$t('errorDecryptionFailed'));
       }
     }
   }
