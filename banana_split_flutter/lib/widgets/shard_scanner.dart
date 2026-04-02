@@ -64,6 +64,17 @@ class _ShardScannerState extends State<ShardScanner>
   }
 
   @override
+  void didUpdateWidget(ShardScanner oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Clear seen codes when parent resets (scannedCount drops to 0)
+    // so previously scanned shards can be re-scanned after "Start Over"
+    if (widget.scannedCount == 0 && oldWidget.scannedCount > 0) {
+      _seenCodes.clear();
+      _lastScanTime = DateTime(0);
+    }
+  }
+
+  @override
   void dispose() {
     _disposed = true;
     WidgetsBinding.instance.removeObserver(this);

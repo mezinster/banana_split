@@ -243,9 +243,8 @@ export default Vue.extend({
 .shard-input__modes button + button {
   margin-left: 1rem;
 }
-/* Camera mirror + rounded corners (moved from view-level CSS) */
+/* Camera rounded corners (moved from view-level CSS) */
 .shard-input__camera .qrcode-stream {
-  transform: scaleX(-1);
   border-radius: 8px;
   overflow: hidden;
 }

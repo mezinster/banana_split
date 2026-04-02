@@ -40,7 +40,7 @@ export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh" && yarn test:unit
 
 **Views** (`src/views/`): Four routes — Info (landing), Share (split a secret), Print (QR code printout), Combine (scan QR codes to reconstruct).
 
-**ShardInput** (`src/components/ShardInput.vue`): Shared input component used by Combine and Print views. Provides three shard entry modes: camera (default, uses `qrcode-stream`), upload image (multi-file, decodes via `jsqr` through `src/util/qrDecode.ts`), and paste text (multi-line JSON). Emits `decode(string)` for each successfully read shard, matching the `qrcode-stream` event interface. Includes inline feedback (success/error/partial) with auto-clear timer. Camera mirror CSS is scoped within this component.
+**ShardInput** (`src/components/ShardInput.vue`): Shared input component used by Combine and Print views. Provides three shard entry modes: camera (default, uses `qrcode-stream`), upload image (multi-file, decodes via `jsqr` through `src/util/qrDecode.ts`), and paste text (multi-line JSON). Emits `decode(string)` for each successfully read shard, matching the `qrcode-stream` event interface. Includes inline feedback (success/error/partial) with auto-clear timer. Camera CSS (rounded corners) is scoped within this component.
 
 **Build** (`vue.config.js`): Uses `html-webpack-inline-source-plugin` to inline all assets into a single HTML file. Injects git revision via `DefinePlugin`.
 
