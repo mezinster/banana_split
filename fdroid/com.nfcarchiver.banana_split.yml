@@ -12,15 +12,15 @@ RepoType: git
 Repo: https://github.com/mezinster/banana_split.git
 
 Builds:
-  - versionName: 0.8.0
-    versionCode: 1
-    commit: TBD
+  - versionName: 0.8.2
+    versionCode: 2
+    commit: v0.8.2
     subdir: banana_split_flutter
     sudo:
-      - echo 'deb http://deb.debian.org/debian bookworm main' > /etc/apt/sources.list.d/bookworm.list
+      - echo "deb https://deb.debian.org/debian bookworm main" > /etc/apt/sources.list.d/bookworm.list
       - apt-get update
-      - apt-get install -y openjdk-17-jdk-headless
-      - update-java-alternatives -a
+      - apt-get install -y -t bookworm openjdk-17-jdk-headless
+      - update-java-alternatives -s java-1.17.0-openjdk-amd64
     output: build/app/outputs/flutter-apk/app-release.apk
     srclibs:
       - flutter@stable
@@ -51,5 +51,5 @@ AntiFeatures:
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 UpdateCheckData: banana_split_flutter/pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
-CurrentVersion: 0.8.0
-CurrentVersionCode: 1
+CurrentVersion: 0.8.2
+CurrentVersionCode: 2

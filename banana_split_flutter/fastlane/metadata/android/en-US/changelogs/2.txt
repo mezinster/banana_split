@@ -1,0 +1,4 @@
+• F-Droid preparation — metadata, screenshots, and build recipe
+• Fork attribution and source code link on About screen
+• Fix scanner state reset on "Start Over"
+• Localization fixes and fastlane metadata for all 7 languages

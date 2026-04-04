@@ -1,0 +1,4 @@
+• Przygotowanie do F-Droid — metadane, zrzuty ekranu i przepis budowania
+• Informacja o forku i link do kodu źródłowego na ekranie „O aplikacji"
+• Naprawienie resetowania stanu skanera przy „Zacznij od nowa"
+• Poprawki lokalizacji i metadane fastlane dla wszystkich 7 języków

@@ -1,0 +1,4 @@
+• F-Droid hazırlığı — meta veriler, ekran görüntüleri ve derleme tarifi
+• Çatal atıf bilgisi ve Hakkında ekranında kaynak kodu bağlantısı
+• "Baştan Başla" sırasında tarayıcı durumu sıfırlama düzeltmesi
+• Yerelleştirme düzeltmeleri ve tüm 7 dil için fastlane meta verileri

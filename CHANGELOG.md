@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.2] - 2026-04-04
+
+### Added
+
+- **F-Droid preparation**: Fastlane metadata (screenshots, icon, feature graphic), build recipe, and anti-features declaration for F-Droid submission.
+- **Fork attribution**: Source code link and fork notice on the About screen, with localized strings in all 7 languages.
+
+### Fixed
+
+- **Scanner state reset**: Scanner now properly resets when pressing "Start Over" in the web app.
+- **Localization fixes**: Localized "Unable to decrypt" error in web app Combine view. Renamed fastlane locale directories to BCP 47 format.
+
 ## [0.8.0] - 2026-03-30
 
 ### Added
