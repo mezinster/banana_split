@@ -14,7 +14,7 @@ Repo: https://github.com/mezinster/banana_split.git
 Builds:
   - versionName: 0.8.2
     versionCode: 2
-    commit: v0.8.2
+    commit: 623cccae3fcb7ceed543ee2be5c4ee846441c42a
     subdir: banana_split_flutter
     sudo:
       - echo "deb https://deb.debian.org/debian bookworm main" > /etc/apt/sources.list.d/bookworm.list
