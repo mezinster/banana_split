@@ -24,8 +24,6 @@ Builds:
     output: build/app/outputs/flutter-apk/app-release.apk
     srclibs:
       - flutter@stable
-    rm:
-      - banana_split_flutter/ios
     prebuild:
       - flutterVersion=$(sed -n -E "s/.*FLUTTER_VERSION:\ '(.*)'/\1/p" ../.github/workflows/release.yml)
       - '[[ $flutterVersion ]]'
@@ -34,7 +32,7 @@ Builds:
       - $$flutter$$/bin/flutter config --no-analytics
       - $$flutter$$/bin/flutter pub get
     scandelete:
-      - .pub-cache
+      - banana_split_flutter/.pub-cache
     build:
       - export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
       - export PUB_CACHE=$(pwd)/.pub-cache
