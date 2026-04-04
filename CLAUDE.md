@@ -102,6 +102,7 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 - Test wrapper (`tests/run_all.sh`) uses `flutter test --reporter json` piped through a Python3 parser for clean CLI output.
 - All new UI strings must be added to `lib/l10n/app_en.arb` (template) and all 6 translation files. Run `flutter gen-l10n` after editing ARB files. Use `AppLocalizations.of(context)!.keyName` in widgets.
 - Camera scanner is platform-conditional: `mobile_scanner` on Android/iOS/macOS (ML Kit/Vision), `camera` package on Windows (periodic `takePicture()` every 800ms + `zxing2` decode). Uses `WidgetsBindingObserver` for lifecycle handling — disposes camera on background, re-inits on resume. `_disposed` flag prevents use-after-dispose in async callbacks. `_isPickingFile` guard prevents camera disposal during file picker dialogs (Windows file dialogs trigger `paused`/`inactive` lifecycle states). `_cameraInitialized` flag tracks first successful init for smart auto-recovery. Manual retry button shown when camera is unavailable.
+- **F-Droid scanner variant** (`lib/widgets/shard_scanner.dart.fdroid`): FOSS-only version of `ShardScanner` that uses `camera` + `zxing2` on all platforms (no `mobile_scanner` / Google ML Kit). F-Droid's build swaps this in via prebuild (`mv shard_scanner.dart.fdroid shard_scanner.dart`) and strips `mobile_scanner` from `pubspec.yaml`. **When modifying `shard_scanner.dart`, always check if the same change needs to be applied to `shard_scanner.dart.fdroid`** — the two files must stay in sync.
 - Gallery QR import supports bulk multi-file selection (`FilePicker.allowMultiple` on Windows, `ImagePicker.pickMultiImage` on mobile). Two-stage decode per file: `mobile_scanner.analyzeImage()` first (native, mobile), then `zxing2` QRCodeReader fallback (pure Dart, all platforms). Pixel values normalized via `rNormalized` (0.0-1.0) to handle any image bit depth.
 - Windows builds include `launch.bat` — checks for VC++ Runtime and offers to download/install if missing.
 - `LanguageSelectorButton` uses `PopupMenuButton<Locale>` with Dart records for locale data. Normalizes locale with `Locale(currentLocale.languageCode)` to match `initialValue` (avoids `Locale('en', 'US') != Locale('en')` gotcha).
@@ -114,6 +115,14 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 - **Flutter CI** (`.github/workflows/flutter-ci.yml`): Analyze + test on push/PR (scoped to `banana_split_flutter/`). On-demand debug APK and release Windows builds via `workflow_dispatch`.
 - **Release** (`.github/workflows/release.yml`): Triggered by tag push (`v*.*.*`) or manual dispatch. Builds Android (APK + AAB), Windows (zip), and Web (single HTML file) in parallel. Creates GitHub Release with all artifacts and checksums.
 - **Web App CI** (`.github/workflows/web-ci.yml`): Lint, unit tests, E2E tests, CodeQL, Trivy scan. Skips Flutter-only changes via `paths-ignore`.
+
+### F-Droid
+
+- **Metadata** (`fdroid/com.nfcarchiver.banana_split.yml`): Local copy of the fdroiddata metadata YAML. The canonical version lives in the `fdroiddata` repo at `metadata/com.nfcarchiver.banana_split.yml` (fork: `gitlab.com/mezinster/fdroiddata`).
+- **FOSS build**: F-Droid prebuild strips `mobile_scanner` (proprietary Google ML Kit) and swaps in `shard_scanner.dart.fdroid` which uses only `camera` + `zxing2` (pure Dart, FOSS). QR scanning works via periodic `takePicture()` every 800ms — same approach as the Windows build.
+- **Two binaries per release**: GitHub Release builds include `mobile_scanner` (ML Kit, fast native scanning). F-Droid builds use the FOSS variant (slightly slower but fully open-source). Both are functionally identical.
+- **Version workflow**: Bump `pubspec.yaml` version+code → commit → tag → push. GitHub Actions builds the ML Kit version. F-Droid's `AutoUpdateMode: Version` auto-detects new tags, but a maintainer or update MR still sets the commit hash in `fdroiddata`.
+- **Fastlane changelogs** (`fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt`): Named by `versionCode` (the `+N` in pubspec), not version name. Must be created for all 7 locales on each release.
 
 ### Deployment
 
