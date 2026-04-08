@@ -109,9 +109,9 @@ class _HomeShellState extends State<HomeShell> {
   int _selectedIndex = 0;
   final _filesKey = GlobalKey<FilesScreenState>();
 
-  late final List<Widget> _screens = [
+  List<Widget> _buildScreens() => [
     const CreateScreen(),
-    const RestoreScreen(),
+    RestoreScreen(isActive: _selectedIndex == 1),
     FilesScreen(key: _filesKey),
     const AboutScreen(),
   ];
@@ -127,7 +127,7 @@ class _HomeShellState extends State<HomeShell> {
       ),
       body: IndexedStack(
         index: _selectedIndex,
-        children: _screens,
+        children: _buildScreens(),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,

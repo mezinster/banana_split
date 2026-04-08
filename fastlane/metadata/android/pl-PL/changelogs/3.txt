@@ -1,0 +1,3 @@
+• Wolny skaner kamery dla F-Droid — bez zależności od Google ML Kit
+• Naprawiono aktywację kamery przy uruchomieniu aplikacji zamiast tylko na karcie „Przywróć"
+• Przeniesienie metadanych fastlane do katalogu głównego repozytorium

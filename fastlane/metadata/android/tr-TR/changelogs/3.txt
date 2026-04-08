@@ -1,0 +1,3 @@
+• F-Droid için özgür kamera tarayıcı — Google ML Kit bağımlılığı kaldırıldı
+• Kameranın yalnızca Geri Yükle sekmesinde değil uygulama başlangıcında etkinleşme hatası düzeltildi
+• Fastlane meta verileri depo köküne taşındı

@@ -1,0 +1,3 @@
+• FOSS camera scanner for F-Droid — no more Google ML Kit dependency
+• Fix camera activating at app launch instead of only on the Restore tab
+• Move fastlane metadata to repo root

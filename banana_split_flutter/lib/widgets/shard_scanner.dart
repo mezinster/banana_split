@@ -19,12 +19,14 @@ class ShardScanner extends StatefulWidget {
   final ShardError? Function(String rawData, {bool isBatch}) onScanned;
   final int scannedCount;
   final int? requiredCount;
+  final bool isActive;
 
   const ShardScanner({
     super.key,
     required this.onScanned,
     required this.scannedCount,
     this.requiredCount,
+    this.isActive = true,
   });
 
   @override
@@ -57,7 +59,9 @@ class _ShardScannerState extends State<ShardScanner>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initCamera();
+    if (widget.isActive) {
+      _initCamera();
+    }
     _pasteController.addListener(() {
       if (_mode == _InputMode.paste) setState(() {});
     });
@@ -71,6 +75,15 @@ class _ShardScannerState extends State<ShardScanner>
     if (widget.scannedCount == 0 && oldWidget.scannedCount > 0) {
       _seenCodes.clear();
       _lastScanTime = DateTime(0);
+    }
+    if (widget.isActive != oldWidget.isActive) {
+      if (widget.isActive) {
+        if (_mode == _InputMode.camera) {
+          _initCamera();
+        }
+      } else {
+        _disposeCamera();
+      }
     }
   }
 
@@ -93,7 +106,7 @@ class _ShardScannerState extends State<ShardScanner>
         _disposeCamera();
         break;
       case AppLifecycleState.resumed:
-        _retryCamera();
+        if (widget.isActive) _retryCamera();
         break;
       default:
         break;

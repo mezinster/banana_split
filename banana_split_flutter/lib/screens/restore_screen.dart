@@ -21,7 +21,9 @@ String _localizeError(AppLocalizations l10n, ShardError error) {
 }
 
 class RestoreScreen extends StatelessWidget {
-  const RestoreScreen({super.key});
+  final bool isActive;
+
+  const RestoreScreen({super.key, this.isActive = true});
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +46,7 @@ class RestoreScreen extends StatelessWidget {
               if (notifier.recoveredSecret != null)
                 _RecoveredView(notifier: notifier)
               else if (notifier.needMoreShards)
-                _ScannerView(notifier: notifier)
+                _ScannerView(notifier: notifier, isActive: isActive)
               else
                 _PassphraseView(notifier: notifier),
 
@@ -65,14 +67,16 @@ class RestoreScreen extends StatelessWidget {
 }
 
 class _ScannerView extends StatelessWidget {
-  const _ScannerView({required this.notifier});
+  const _ScannerView({required this.notifier, this.isActive = true});
 
   final RestoreNotifier notifier;
+  final bool isActive;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return ShardScanner(
+      isActive: isActive,
       scannedCount: notifier.scannedCount,
       requiredCount: notifier.requiredCount > 0 ? notifier.requiredCount : null,
       onScanned: (rawData, {isBatch = false}) {
