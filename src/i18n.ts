@@ -8,10 +8,11 @@ import be from "./locales/be.json";
 import ka from "./locales/ka.json";
 import uk from "./locales/uk.json";
 import pl from "./locales/pl.json";
+import es from "./locales/es.json";
 
 Vue.use(VueI18n);
 
-const SUPPORTED_LOCALES = ["en", "ru", "tr", "be", "ka", "uk", "pl"];
+const SUPPORTED_LOCALES = ["en", "ru", "tr", "be", "ka", "uk", "pl", "es"];
 
 function getQueryLang(): string {
   // Parse lang from hash query: #/path?lang=xx
@@ -48,7 +49,7 @@ function slavicPlural(choice: number): number {
 const i18n = new VueI18n({
   locale: detectLocale(),
   fallbackLocale: "en",
-  messages: { en, ru, tr, be, ka, uk, pl },
+  messages: { en, ru, tr, be, ka, uk, pl, es },
   pluralizationRules: {
     ru: slavicPlural,
     uk: slavicPlural,
