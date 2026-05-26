@@ -111,7 +111,7 @@
   "aboutHowItWorksBody": "1. Ingresa un secreto y una frase de acceso.\n2. El secreto se cifra con su frase de acceso usando NaCl secretbox (XSalsa20-Poly1305).\n3. Los datos cifrados se dividen en N fragmentos usando el Esquema de Compartición de Secretos de Shamir sobre GF(256).\n4. Cada fragmento se codifica como un código QR que puede imprimir o distribuir a custodios de confianza.\n5. Para recuperar el secreto, escanee al menos K fragmentos e ingrese la frase de acceso. Los fragmentos se recombinan y los datos se descifran.",
   "aboutSecurityNotes": "Notas de seguridad",
   "aboutSecurityNotesBody": "• Todas las operaciones criptográficas ocurren en el dispositivo. Nunca se transmiten datos a un servidor.\n• La frase de acceso añade una capa adicional de protección: incluso si suficientes fragmentos se ven comprometidos, el atacante aún necesita la frase de acceso para descifrar el secreto.\n• Guarde los fragmentos por separado y en lugares físicamente seguros.",
-  "aboutVersion": "Versión {version} (Build {build})",
+  "aboutVersion": "Versión {version} (Compilación {build})",
   "@aboutVersion": { "placeholders": { "version": { "type": "String" }, "build": { "type": "String" } } },
   "aboutPrivacyPolicy": "Política de privacidad",
   "aboutLicenses": "Licencias de código abierto",
