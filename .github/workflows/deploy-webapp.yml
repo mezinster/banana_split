@@ -8,14 +8,21 @@ on:
         description: 'Print the S3 upload plan and stop — uploads nothing'
         type: boolean
         default: false
+      force_fail_verify:
+        description: 'Deploy for real, then force verification to fail — exercises the rollback path'
+        type: boolean
+        default: false
 
 # No ambient permissions anywhere. The deploy job opts in to id-token below.
 permissions: {}
 
 concurrency:
   # Queue, never cancel: a run cancelled mid-deploy could strand the prefix.
-  # The group name is distinct from nfcarchiver's so the two apps sharing this
-  # bucket do not block each other.
+  # This serialises THIS repository's own deploys against each other, so two
+  # dispatches cannot interleave a snapshot with another run's upload.
+  # It offers no protection against the sibling app that shares this bucket:
+  # concurrency groups are scoped to a repository, so nfcarchiver's runs were
+  # never in this group's scope regardless of what it is named.
   group: deploy-banana-webapp
   cancel-in-progress: false
 
@@ -64,11 +71,21 @@ jobs:
 
       - name: Compute build revision
         id: stamp
-        # Mirrors vue.config.js:7-12 exactly, fallback included, so the string
-        # we search for is the string the build baked in.
+        # Mirrors vue.config.js:7-12, but WITHOUT its short-SHA fallback, and
+        # that divergence is deliberate. vue.config.js keeps the fallback so a
+        # local `yarn build` works in a clone with no tags. This workflow must
+        # refuse what local development may tolerate: a bare 7-hex-character
+        # needle can occur by coincidence inside the 1.2 MB bundle, and the
+        # healthcheck's `indexOf` would then match an unrelated hex run and wave
+        # a stale deploy through. `git describe --long --tags` output has a
+        # `vN.N.N-N-g<sha>` shape that cannot occur by accident, so it is the
+        # only safe needle. If there is no reachable tag, we stop.
         run: |
           set -euo pipefail
-          revision="$(git describe --long --tags 2>/dev/null || git rev-parse --short HEAD)"
+          if ! revision="$(git describe --long --tags 2>/dev/null)"; then
+            echo "::error::git describe --long --tags failed — no reachable tag. Refusing to deploy: the fallback short SHA is a 7-hex needle that can collide with unrelated constants in the bundle and wave a stale deploy through. Fetch tags, or deploy from a ref with an ancestor tag."
+            exit 1
+          fi
           echo "revision=${revision}" >> "$GITHUB_OUTPUT"
           echo "build revision: ${revision}"
 
@@ -125,10 +142,19 @@ jobs:
       - name: Verify the compiled healthcheck starts
         # Proves the artifact loads under Node before the credentialed job
         # depends on it. Bad usage must exit 2.
+        #
+        # The `|| code=$?` form is REQUIRED, not stylistic. GitHub Actions runs
+        # every `run:` body as `bash -e {0}`, so errexit is already on before
+        # the first line executes, and `set -uo pipefail` cannot remove it — it
+        # only adds -u and pipefail. This step originally shipped as a bare
+        # `node ...` followed by `code=$?`; because the node call exits 2 BY
+        # DESIGN, errexit aborted the script at that line, `code=$?` was never
+        # reached, and the step failed with exit 2 on every single run. Do not
+        # "simplify" this back.
         run: |
           set -uo pipefail
-          node tools/healthcheck-cli.js >/dev/null 2>&1
-          code=$?
+          code=0
+          node tools/healthcheck-cli.js >/dev/null 2>&1 || code=$?
           if [ "$code" -ne 2 ]; then
             echo "::error::compiled healthcheck did not start correctly (exit ${code}, want 2)"
             exit 1
@@ -207,6 +233,16 @@ jobs:
             banana/) ;;
             *) echo "::error::refusing to deploy to prefix '${PREFIX}' — this workflow only deploys to banana/"; missing=1 ;;
           esac
+          # SITE_BASE_URL must name the prefix this run actually deploys to.
+          # If it points anywhere else — most plausibly the sibling app at
+          # /app/, which returns 200 and text/html — every deploy would upload
+          # to banana/, healthcheck a page that can never carry this revision,
+          # fail, and roll banana/ back. Silently, run after run, with an error
+          # naming CloudFront rather than the variable.
+          case "${BASE_URL}" in
+            https://*/"${PREFIX}") ;;
+            *) echo "::error::SITE_BASE_URL ('${BASE_URL}') must be an https URL ending in '/${PREFIX}' — otherwise the healthcheck verifies a different page than the one this run deployed"; missing=1 ;;
+          esac
           [ "$missing" -eq 0 ] || exit 1
           echo "target s3://${BUCKET}/${PREFIX} | distribution ${DIST_ID} | build ${REVISION}"
 
@@ -266,18 +302,41 @@ jobs:
                  --query 'Invalidation.Id' --output text)
           echo "invalidation=${id}" >> "$GITHUB_OUTPUT"
           echo "created invalidation ${id} for /${PREFIX}*"
-          # The healthcheck must not run before propagation finishes, or it
-          # would test the old edge copy and trigger a spurious rollback.
-          aws cloudfront wait invalidation-completed \
-            --distribution-id "${DIST_ID}" --id "${id}"
-          echo "invalidation ${id} completed"
+          # Wait so the healthcheck does not test a stale edge copy — but a
+          # slow wait must NOT fail the step. `aws cloudfront wait` polls
+          # 20s x 30 and exits non-zero at ~10 minutes; under `set -e` that
+          # would fire failure(), and rollback would overwrite a perfectly good
+          # deploy on nothing worse than a slow invalidation. The healthcheck
+          # is the real arbiter, and it retries ~62s of its own.
+          if aws cloudfront wait invalidation-completed \
+               --distribution-id "${DIST_ID}" --id "${id}"; then
+            echo "invalidation ${id} completed"
+          else
+            echo "::warning::invalidation ${id} did not complete within the CLI wait cap; continuing to the healthcheck, which is the real arbiter. The object is served no-cache, so edges revalidate against S3 regardless."
+          fi
 
       - name: Verify the live site serves this build
         id: verify
         if: ${{ !inputs.dry_run }}
-        run: node tools/healthcheck-cli.js "${BASE_URL}" "${REVISION}"
+        # force_fail_verify exists so the rollback path can be exercised
+        # deliberately, without repointing SITE_BASE_URL at another application.
+        # (Repointing it is now refused by the config check anyway, and if the
+        # operator forgot to set it back every later deploy would roll itself
+        # back.) The forced run still takes ~62s — that is the CLI's real
+        # backoff schedule, and it is intended.
+        run: |
+          set -euo pipefail
+          if [ "${FORCE_FAIL}" = "true" ]; then
+            echo "::warning::force_fail_verify is set — using a revision that cannot match, to exercise rollback"
+            node tools/healthcheck-cli.js "${BASE_URL}" "force-fail-verify-no-such-revision"
+          else
+            node tools/healthcheck-cli.js "${BASE_URL}" "${REVISION}"
+          fi
+        env:
+          FORCE_FAIL: ${{ inputs.force_fail_verify }}
 
       - name: Roll back to the previous version
+        id: rollback
         # Runs only when something after the snapshot failed. Guarded on the
         # snapshot having actually captured a file — on a first deploy there is
         # nothing to restore — and on the upload having been attempted.
@@ -292,35 +351,61 @@ jobs:
                           --distribution-id "${DIST_ID}" \
                           --paths "/${PREFIX}*" \
                           --query 'Invalidation.Id' --output text)
-          aws cloudfront wait invalidation-completed \
-            --distribution-id "${DIST_ID}" --id "${rollback_id}"
-          echo "rolled back; invalidation ${rollback_id} completed"
+          # Same treatment as the forward invalidation: the restore itself has
+          # already succeeded by this point, so a slow invalidation must not
+          # report the rollback as failed.
+          if aws cloudfront wait invalidation-completed \
+               --distribution-id "${DIST_ID}" --id "${rollback_id}"; then
+            echo "rolled back; invalidation ${rollback_id} completed"
+          else
+            echo "::warning::rolled back, but invalidation ${rollback_id} did not complete within the CLI wait cap. The restored object is served no-cache, so edges revalidate against S3 regardless."
+          fi
 
       - name: Report that rollback was not possible
         if: ${{ failure() && !inputs.dry_run && steps.snapshot.outputs.captured != 'true' && steps.upload.outcome != 'skipped' }}
+        # Via env:, like every other value in this file — the step outcome is a
+        # GitHub-controlled enum rather than attacker input, but the rule that
+        # nothing is interpolated into a run body on a credentialed runner is
+        # worth keeping exceptionless.
+        env:
+          UPLOAD: ${{ steps.upload.outcome }}
         run: |
-          if [ "${{ steps.upload.outcome }}" = "success" ]; then
+          if [ "${UPLOAD}" = "success" ]; then
             echo "::error::Deploy failed and there was no previous version to restore (first deploy). The prefix now holds build ${REVISION}, unverified."
           else
             echo "::error::Deploy failed before the upload completed and there was no previous version to restore (first deploy). The prefix may hold nothing."
           fi
 
       - name: Summary
-        if: ${{ always() && !inputs.dry_run }}
+        # `always()` with no dry_run condition: a dry run is precisely the run
+        # whose purpose is to show the plan, so it must produce a summary too.
+        # On a dry run the invalidate/verify/rollback steps are skipped, so
+        # their cells read `skipped`/`n/a` — which is the correct and
+        # informative answer, not a gap.
+        #
+        # Values reach the script through env:, never by interpolating ${{ }}
+        # into the body. github.ref_name is attacker-influenced — git permits
+        # `$`, `(` and `)` in ref names — and this step runs with if: always()
+        # on a runner holding credentials for two production prefixes.
+        if: ${{ always() }}
         env:
           REF: ${{ github.ref_name }}
+          MODE: ${{ inputs.dry_run && 'dry run (nothing uploaded)' || 'deploy' }}
           INVALIDATION: ${{ steps.invalidate.outputs.invalidation }}
           VERIFY: ${{ steps.verify.outcome }}
+          ROLLBACK: ${{ steps.rollback.outcome }}
         run: |
           {
             echo "### Banana Split web app deploy"
             echo ""
             echo "| field | value |"
             echo "|---|---|"
+            echo "| mode | ${MODE} |"
             echo "| build | \`${REVISION}\` |"
             echo "| ref | \`${REF}\` |"
             echo "| target | \`s3://${BUCKET}/${PREFIX}index.html\` |"
             echo "| url | ${BASE_URL} |"
             echo "| invalidation | \`${INVALIDATION:-n/a}\` |"
             echo "| verify | ${VERIFY:-did not run} |"
+            echo "| rollback | ${ROLLBACK:-did not run} |"
           } >> "$GITHUB_STEP_SUMMARY"

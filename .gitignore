@@ -2,7 +2,13 @@
 node_modules
 /dist
 
-# deploy pipeline staging directories
+# Deploy pipeline staging directories, both build output of
+# .github/workflows/deploy-webapp.yml:
+#   /site   — the single dist/index.html staged for upload
+#   /tools  — the compiled healthcheck (tsc output of scripts/healthcheck*.ts)
+# `/tools` is a generic name. If a real, source-controlled tools/ directory is
+# ever added to this repo it would be silently ignored by this line — change
+# the compiler's --outDir instead of deleting the rule.
 /site
 /tools
 

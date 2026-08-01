@@ -147,4 +147,52 @@ describe("healthcheck", () => {
     expect(result.ok).toBe(true);
     expect(hits).toBe(2);
   });
+
+  // The only test that constrains the rollback trigger. Without it, changing
+  // healthcheck()'s final `return last;` to `return { ok: true, failures: [] }`
+  // leaves every other test green while reporting every deploy healthy and
+  // disabling rollback permanently.
+  it("reports failure after exhausting every attempt", async () => {
+    responses = [
+      {
+        status: 200,
+        contentType: "text/html; charset=utf-8",
+        body: "<html>build v0.8.3-4-gca75a75</html>"
+      }
+    ];
+
+    const result = await healthcheck(baseUrl, REVISION, {
+      attempts: 3,
+      sleep: () => Promise.resolve()
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.failures.join(" ")).toContain(REVISION);
+    expect(hits).toBe(3);
+  });
+
+  it("normalises a base url with no trailing slash", async () => {
+    responses = [
+      {
+        status: 200,
+        contentType: "text/html; charset=utf-8",
+        body: "<html>build " + REVISION + "</html>"
+      }
+    ];
+
+    const noSlash = baseUrl.replace(/\/$/, "");
+    const result = await checkOnce(noSlash, REVISION);
+
+    expect(result.failures).toEqual([]);
+    expect(result.ok).toBe(true);
+  });
+
+  it("reports a connection failure rather than throwing", async () => {
+    await new Promise<void>(resolve => server.close(() => resolve()));
+
+    const result = await checkOnce(baseUrl, REVISION);
+
+    expect(result.ok).toBe(false);
+    expect(result.failures.join(" ")).toContain("failed");
+  });
 });

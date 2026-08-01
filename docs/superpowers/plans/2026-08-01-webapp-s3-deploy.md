@@ -34,6 +34,73 @@ scripts` step (Task 3), because `scripts/` sits outside vue-cli-service's
 default lint glob and would otherwise never be linted; and two extra tests
 (Task 1) covering failure accumulation and the empty-revision guard.
 
+### Second wave: final whole-branch review, 2026-08-01
+
+A review of the completed branch found one blocking defect and ten smaller ones.
+All are fixed; the code blocks in Tasks 1, 3, 4 and 5 above are **superseded by
+the shipped files** wherever they disagree.
+
+1. **BLOCKING — the pipeline could not complete a single run.** Task 3's
+   `Verify the compiled healthcheck starts` step opened with `set -uo pipefail`
+   and then ran `node tools/healthcheck-cli.js` followed by `code=$?`. GitHub
+   Actions invokes every `run:` body as `bash -e {0}`, and `set -uo pipefail`
+   *adds* `-u` and `pipefail` without clearing the inherited `-e`. The `node`
+   call exits `2` by design, so errexit aborted on that line, `code=$?` was never
+   reached, and the step failed with exit 2 on **every** run. Now
+   `code=0; node … || code=$?`. Audited every other `run:` block for the same
+   class of bug; this was the only instance.
+2. **A slow invalidation reverted a good build.** `aws cloudfront wait
+   invalidation-completed` exits non-zero at ~10 minutes; under `set -e` that
+   fired `failure()` and rolled back a perfectly good deploy. The wait (in both
+   the forward and the rollback step) is now wrapped in an `if` and logs a
+   warning on timeout. The object is served `no-cache`, so edges revalidate
+   against S3 regardless, and the healthcheck's own ~62 s retry is the real
+   arbiter. A failure of `create-invalidation` itself is still fatal.
+3. **`SITE_BASE_URL` could silently point at the sibling app.** It was only
+   checked non-empty. The config step now asserts it is an `https://` URL ending
+   in `/${PREFIX}`, so a value like `https://nfcarchiver.com/app/` fails closed
+   instead of causing every deploy to healthcheck the other application's page,
+   fail, and roll `banana/` back.
+4. **The documented rollback drill was the trap in (3).** Both the spec and this
+   plan told the operator to temporarily repoint `SITE_BASE_URL` at
+   `https://nfcarchiver.com/app/`; a forgotten reset would have rolled back every
+   later deploy, silently, with an error naming CloudFront rather than the
+   variable. Replaced by a `force_fail_verify` dispatch input that deploys for
+   real and then verifies against an impossible revision. The drill text in the
+   spec, this plan, `README.md` and `CLAUDE.md` is updated.
+5. **The revision fallback reintroduced a known-bad needle.** The step fell back
+   to `git rev-parse --short HEAD`, a bare 7-hex string — precisely the shape
+   that forced nfcarchiver to invent a synthetic build marker, because it
+   collides with unrelated hex constants in the bundle. The workflow now fails
+   loudly instead. It deliberately diverges from `vue.config.js`, which keeps its
+   fallback for local development.
+6. **The rollback outcome was absent from the summary** — after a red run, the
+   single fact an operator most needs. The step now carries `id: rollback` and
+   the table gains a `rollback` row, passed via `env:` like every other value.
+7. **A dry run produced no summary at all**, its guard being
+   `always() && !inputs.dry_run` — the one run whose entire purpose is to show
+   the plan. The guard is now `always()`, with a `mode` row and `skipped`/`n/a`
+   cells for the steps a dry run does not reach.
+8. **The rollback trigger was unconstrained by any test.** Only one test called
+   `healthcheck()`, and it succeeded on attempt 2, so replacing the final
+   `return last;` with `return { ok: true, failures: [] };` left all 7 tests
+   green while disabling rollback permanently. Added a test for the
+   exhausted-attempts path and verified it against exactly that mutation; it is
+   the only test that fails. Two further tests cover base-URL normalisation and a
+   refused connection. **10 tests now, not 5** — the counts in the spec are
+   updated.
+9. **The `concurrency` comment described a safety property that does not
+   exist**, claiming the group name kept the two apps from blocking each other.
+   Concurrency groups are repository-scoped, so a collision with nfcarchiver was
+   never possible. Corrected to state what the group actually does: serialise
+   this repository's own deploys.
+10. **`.gitignore` ignored a bare `/tools`** with no explanation — a name a
+    future real `tools/` directory would silently inherit. Commented.
+11. **The spec had drifted.** The `banana/` value pin, the `SITE_BASE_URL`
+    assertion, the `Lint deploy scripts` and `Verify the compiled healthcheck
+    starts` steps, and the CLI's exit code `2` were all undocumented; the
+    component table said "Exit 0/1". All corrected.
+
 ## Global Constraints
 
 - **Spec:** `docs/superpowers/specs/2026-08-01-webapp-s3-deploy-design.md`. Read it before starting.
@@ -231,6 +298,54 @@ describe("healthcheck", () => {
     expect(result.ok).toBe(true);
     expect(hits).toBe(2);
   });
+
+  // The only test that constrains the rollback trigger. Without it, changing
+  // healthcheck()'s final `return last;` to `return { ok: true, failures: [] }`
+  // leaves every other test green while reporting every deploy healthy and
+  // disabling rollback permanently.
+  it("reports failure after exhausting every attempt", async () => {
+    responses = [
+      {
+        status: 200,
+        contentType: "text/html; charset=utf-8",
+        body: "<html>build v0.8.3-4-gca75a75</html>"
+      }
+    ];
+
+    const result = await healthcheck(baseUrl, REVISION, {
+      attempts: 3,
+      sleep: () => Promise.resolve()
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.failures.join(" ")).toContain(REVISION);
+    expect(hits).toBe(3);
+  });
+
+  it("normalises a base url with no trailing slash", async () => {
+    responses = [
+      {
+        status: 200,
+        contentType: "text/html; charset=utf-8",
+        body: "<html>build " + REVISION + "</html>"
+      }
+    ];
+
+    const noSlash = baseUrl.replace(/\/$/, "");
+    const result = await checkOnce(noSlash, REVISION);
+
+    expect(result.failures).toEqual([]);
+    expect(result.ok).toBe(true);
+  });
+
+  it("reports a connection failure rather than throwing", async () => {
+    await new Promise<void>(resolve => server.close(() => resolve()));
+
+    const result = await checkOnce(baseUrl, REVISION);
+
+    expect(result.ok).toBe(false);
+    expect(result.failures.join(" ")).toContain("failed");
+  });
 });
 ```
 
@@ -413,7 +528,7 @@ export async function healthcheck(
 export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh" && yarn test:unit --testPathPattern=healthcheck
 ```
 
-Expected: PASS — 5 passed.
+Expected: PASS — 10 passed.
 
 - [ ] **Step 5: Run lint and the full suite**
 
@@ -523,7 +638,13 @@ healthcheck(baseUrl, expectedRevision)
 Add to `.gitignore`, after the existing `/dist` line:
 
 ```gitignore
-# deploy pipeline staging directories
+# Deploy pipeline staging directories, both build output of
+# .github/workflows/deploy-webapp.yml:
+#   /site   — the single dist/index.html staged for upload
+#   /tools  — the compiled healthcheck (tsc output of scripts/healthcheck*.ts)
+# `/tools` is a generic name. If a real, source-controlled tools/ directory is
+# ever added to this repo it would be silently ignored by this line — change
+# the compiler's --outDir instead of deleting the rule.
 /site
 /tools
 ```
@@ -594,14 +715,21 @@ on:
         description: 'Print the S3 upload plan and stop — uploads nothing'
         type: boolean
         default: false
+      force_fail_verify:
+        description: 'Deploy for real, then force verification to fail — exercises the rollback path'
+        type: boolean
+        default: false
 
 # No ambient permissions anywhere. The deploy job opts in to id-token below.
 permissions: {}
 
 concurrency:
   # Queue, never cancel: a run cancelled mid-deploy could strand the prefix.
-  # The group name is distinct from nfcarchiver's so the two apps sharing this
-  # bucket do not block each other.
+  # This serialises THIS repository's own deploys against each other, so two
+  # dispatches cannot interleave a snapshot with another run's upload.
+  # It offers no protection against the sibling app that shares this bucket:
+  # concurrency groups are scoped to a repository, so nfcarchiver's runs were
+  # never in this group's scope regardless of what it is named.
   group: deploy-banana-webapp
   cancel-in-progress: false
 
@@ -650,11 +778,21 @@ jobs:
 
       - name: Compute build revision
         id: stamp
-        # Mirrors vue.config.js:7-12 exactly, fallback included, so the string
-        # we search for is the string the build baked in.
+        # Mirrors vue.config.js:7-12, but WITHOUT its short-SHA fallback, and
+        # that divergence is deliberate. vue.config.js keeps the fallback so a
+        # local `yarn build` works in a clone with no tags. This workflow must
+        # refuse what local development may tolerate: a bare 7-hex-character
+        # needle can occur by coincidence inside the 1.2 MB bundle, and the
+        # healthcheck's `indexOf` would then match an unrelated hex run and wave
+        # a stale deploy through. `git describe --long --tags` output has a
+        # `vN.N.N-N-g<sha>` shape that cannot occur by accident, so it is the
+        # only safe needle. If there is no reachable tag, we stop.
         run: |
           set -euo pipefail
-          revision="$(git describe --long --tags 2>/dev/null || git rev-parse --short HEAD)"
+          if ! revision="$(git describe --long --tags 2>/dev/null)"; then
+            echo "::error::git describe --long --tags failed — no reachable tag. Refusing to deploy: the fallback short SHA is a 7-hex needle that can collide with unrelated constants in the bundle and wave a stale deploy through. Fetch tags, or deploy from a ref with an ancestor tag."
+            exit 1
+          fi
           echo "revision=${revision}" >> "$GITHUB_OUTPUT"
           echo "build revision: ${revision}"
 
@@ -711,10 +849,19 @@ jobs:
       - name: Verify the compiled healthcheck starts
         # Proves the artifact loads under Node before the credentialed job
         # depends on it. Bad usage must exit 2.
+        #
+        # The `|| code=$?` form is REQUIRED, not stylistic. GitHub Actions runs
+        # every `run:` body as `bash -e {0}`, so errexit is already on before
+        # the first line executes, and `set -uo pipefail` cannot remove it — it
+        # only adds -u and pipefail. This step originally shipped as a bare
+        # `node ...` followed by `code=$?`; because the node call exits 2 BY
+        # DESIGN, errexit aborted the script at that line, `code=$?` was never
+        # reached, and the step failed with exit 2 on every single run. Do not
+        # "simplify" this back.
         run: |
           set -uo pipefail
-          node tools/healthcheck-cli.js >/dev/null 2>&1
-          code=$?
+          code=0
+          node tools/healthcheck-cli.js >/dev/null 2>&1 || code=$?
           if [ "$code" -ne 2 ]; then
             echo "::error::compiled healthcheck did not start correctly (exit ${code}, want 2)"
             exit 1
@@ -754,7 +901,7 @@ Confirms the three bundle checks pass against a real build before relying on the
 
 ```bash
 export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh" && yarn build && \
-REVISION="$(git describe --long --tags 2>/dev/null || git rev-parse --short HEAD)" && \
+REVISION="$(git describe --long --tags)" && \
 f=dist/index.html && \
 [ -s "$f" ] && echo "non-empty ok" && \
 grep -qF "$REVISION" "$f" && echo "revision ${REVISION} present" && \
@@ -851,14 +998,19 @@ Add to `.github/workflows/deploy-webapp.yml`, at the same indentation as `build:
             */) ;;
             *) echo "::error::S3_PREFIX must end with a slash (got '${PREFIX}')"; missing=1 ;;
           esac
-          # Shape is not enough. The deploy role can also write to the sibling
-          # application's app/ prefix in this bucket, and CloudFront invalidation
-          # paths cannot be IAM-restricted at all — so this variable's VALUE is
-          # the only thing protecting the other production app. A mistyped
-          # `app/` would pass every check above.
           case "${PREFIX}" in
             banana/) ;;
             *) echo "::error::refusing to deploy to prefix '${PREFIX}' — this workflow only deploys to banana/"; missing=1 ;;
+          esac
+          # SITE_BASE_URL must name the prefix this run actually deploys to.
+          # If it points anywhere else — most plausibly the sibling app at
+          # /app/, which returns 200 and text/html — every deploy would upload
+          # to banana/, healthcheck a page that can never carry this revision,
+          # fail, and roll banana/ back. Silently, run after run, with an error
+          # naming CloudFront rather than the variable.
+          case "${BASE_URL}" in
+            https://*/"${PREFIX}") ;;
+            *) echo "::error::SITE_BASE_URL ('${BASE_URL}') must be an https URL ending in '/${PREFIX}' — otherwise the healthcheck verifies a different page than the one this run deployed"; missing=1 ;;
           esac
           [ "$missing" -eq 0 ] || exit 1
           echo "target s3://${BUCKET}/${PREFIX} | distribution ${DIST_ID} | build ${REVISION}"
@@ -919,18 +1071,41 @@ Add to `.github/workflows/deploy-webapp.yml`, at the same indentation as `build:
                  --query 'Invalidation.Id' --output text)
           echo "invalidation=${id}" >> "$GITHUB_OUTPUT"
           echo "created invalidation ${id} for /${PREFIX}*"
-          # The healthcheck must not run before propagation finishes, or it
-          # would test the old edge copy and trigger a spurious rollback.
-          aws cloudfront wait invalidation-completed \
-            --distribution-id "${DIST_ID}" --id "${id}"
-          echo "invalidation ${id} completed"
+          # Wait so the healthcheck does not test a stale edge copy — but a
+          # slow wait must NOT fail the step. `aws cloudfront wait` polls
+          # 20s x 30 and exits non-zero at ~10 minutes; under `set -e` that
+          # would fire failure(), and rollback would overwrite a perfectly good
+          # deploy on nothing worse than a slow invalidation. The healthcheck
+          # is the real arbiter, and it retries ~62s of its own.
+          if aws cloudfront wait invalidation-completed \
+               --distribution-id "${DIST_ID}" --id "${id}"; then
+            echo "invalidation ${id} completed"
+          else
+            echo "::warning::invalidation ${id} did not complete within the CLI wait cap; continuing to the healthcheck, which is the real arbiter. The object is served no-cache, so edges revalidate against S3 regardless."
+          fi
 
       - name: Verify the live site serves this build
         id: verify
         if: ${{ !inputs.dry_run }}
-        run: node tools/healthcheck-cli.js "${BASE_URL}" "${REVISION}"
+        # force_fail_verify exists so the rollback path can be exercised
+        # deliberately, without repointing SITE_BASE_URL at another application.
+        # (Repointing it is now refused by the config check anyway, and if the
+        # operator forgot to set it back every later deploy would roll itself
+        # back.) The forced run still takes ~62s — that is the CLI's real
+        # backoff schedule, and it is intended.
+        run: |
+          set -euo pipefail
+          if [ "${FORCE_FAIL}" = "true" ]; then
+            echo "::warning::force_fail_verify is set — using a revision that cannot match, to exercise rollback"
+            node tools/healthcheck-cli.js "${BASE_URL}" "force-fail-verify-no-such-revision"
+          else
+            node tools/healthcheck-cli.js "${BASE_URL}" "${REVISION}"
+          fi
+        env:
+          FORCE_FAIL: ${{ inputs.force_fail_verify }}
 
       - name: Roll back to the previous version
+        id: rollback
         # Runs only when something after the snapshot failed. Guarded on the
         # snapshot having actually captured a file — on a first deploy there is
         # nothing to restore — and on the upload having been attempted.
@@ -945,41 +1120,63 @@ Add to `.github/workflows/deploy-webapp.yml`, at the same indentation as `build:
                           --distribution-id "${DIST_ID}" \
                           --paths "/${PREFIX}*" \
                           --query 'Invalidation.Id' --output text)
-          aws cloudfront wait invalidation-completed \
-            --distribution-id "${DIST_ID}" --id "${rollback_id}"
-          echo "rolled back; invalidation ${rollback_id} completed"
+          # Same treatment as the forward invalidation: the restore itself has
+          # already succeeded by this point, so a slow invalidation must not
+          # report the rollback as failed.
+          if aws cloudfront wait invalidation-completed \
+               --distribution-id "${DIST_ID}" --id "${rollback_id}"; then
+            echo "rolled back; invalidation ${rollback_id} completed"
+          else
+            echo "::warning::rolled back, but invalidation ${rollback_id} did not complete within the CLI wait cap. The restored object is served no-cache, so edges revalidate against S3 regardless."
+          fi
 
       - name: Report that rollback was not possible
         if: ${{ failure() && !inputs.dry_run && steps.snapshot.outputs.captured != 'true' && steps.upload.outcome != 'skipped' }}
+        # Via env:, like every other value in this file — the step outcome is a
+        # GitHub-controlled enum rather than attacker input, but the rule that
+        # nothing is interpolated into a run body on a credentialed runner is
+        # worth keeping exceptionless.
+        env:
+          UPLOAD: ${{ steps.upload.outcome }}
         run: |
-          if [ "${{ steps.upload.outcome }}" = "success" ]; then
+          if [ "${UPLOAD}" = "success" ]; then
             echo "::error::Deploy failed and there was no previous version to restore (first deploy). The prefix now holds build ${REVISION}, unverified."
           else
             echo "::error::Deploy failed before the upload completed and there was no previous version to restore (first deploy). The prefix may hold nothing."
           fi
 
       - name: Summary
-        if: ${{ always() && !inputs.dry_run }}
+        # `always()` with no dry_run condition: a dry run is precisely the run
+        # whose purpose is to show the plan, so it must produce a summary too.
+        # On a dry run the invalidate/verify/rollback steps are skipped, so
+        # their cells read `skipped`/`n/a` — which is the correct and
+        # informative answer, not a gap.
+        #
         # Values reach the script through env:, never by interpolating ${{ }}
         # into the body. github.ref_name is attacker-influenced — git permits
         # `$`, `(` and `)` in ref names — and this step runs with if: always()
         # on a runner holding credentials for two production prefixes.
+        if: ${{ always() }}
         env:
           REF: ${{ github.ref_name }}
+          MODE: ${{ inputs.dry_run && 'dry run (nothing uploaded)' || 'deploy' }}
           INVALIDATION: ${{ steps.invalidate.outputs.invalidation }}
           VERIFY: ${{ steps.verify.outcome }}
+          ROLLBACK: ${{ steps.rollback.outcome }}
         run: |
           {
             echo "### Banana Split web app deploy"
             echo ""
             echo "| field | value |"
             echo "|---|---|"
+            echo "| mode | ${MODE} |"
             echo "| build | \`${REVISION}\` |"
             echo "| ref | \`${REF}\` |"
             echo "| target | \`s3://${BUCKET}/${PREFIX}index.html\` |"
             echo "| url | ${BASE_URL} |"
             echo "| invalidation | \`${INVALIDATION:-n/a}\` |"
             echo "| verify | ${VERIFY:-did not run} |"
+            echo "| rollback | ${ROLLBACK:-did not run} |"
           } >> "$GITHUB_STEP_SUMMARY"
 ```
 
@@ -1039,21 +1236,30 @@ app, so --delete has no work to do and only adds blast radius."
 Append this section to `README.md`:
 
 ````markdown
-## Deploying the web app
+## Deploying the Web App
 
 The web app is deployed to `https://nfcarchiver.com/banana/` by the
 **Deploy web app** workflow (`.github/workflows/deploy-webapp.yml`). It is
 **manual only** — it never runs on push or tag.
 
-Actions → Deploy web app → Run workflow. Pick a ref, optionally tick
-**dry_run** to print the upload plan without uploading anything.
+Actions → Deploy web app → Run workflow. Pick a ref, then optionally tick either
+input:
+
+| Input | Effect |
+|---|---|
+| `dry_run` | Print the upload plan and stop. Uploads nothing. |
+| `force_fail_verify` | Deploy for real, then force verification to fail, exercising the rollback path. Takes ~62 s at the verify step — that is the healthcheck's real backoff schedule. |
+
+The ref must have a reachable tag: the workflow stamps the build with
+`git describe --long --tags` and **refuses to deploy** if that fails, rather than
+falling back to a short SHA that could collide with unrelated hex in the bundle.
 
 The workflow builds and verifies the bundle in a job with no AWS access, then
 uploads, invalidates CloudFront, and checks that the live URL serves the exact
 build it produced. If that check fails it restores the previous version
 automatically and fails the run.
 
-### One-time setup
+### One-Time Setup
 
 **Repository → Settings → Secrets and variables → Actions**
 
@@ -1062,7 +1268,7 @@ automatically and fails the run.
 | Secret | `AWS_DEPLOY_ROLE_ARN` | the deploy role ARN (secret, so the account ID is masked in logs) |
 | Variable | `AWS_REGION` | the bucket's region |
 | Variable | `S3_BUCKET` | `nfcarchiver.com` |
-| Variable | `S3_PREFIX` | `banana/` (must end with a slash) |
+| Variable | `S3_PREFIX` | `banana/` — the workflow refuses to run for any other value, since the deploy role can also write to the sibling app's `app/` prefix in the same bucket. Changing the deploy target requires editing the workflow, not just this variable. |
 | Variable | `CLOUDFRONT_DISTRIBUTION_ID` | `EPIRQ7CFJKRDQ` |
 | Variable | `SITE_BASE_URL` | `https://nfcarchiver.com/banana/` |
 
@@ -1077,7 +1283,7 @@ section *AWS setup*. In short: the trust policy's `sub` condition gains
 `repo:mezinster/banana_split:environment:production`, and the permission policy
 gains the `banana/` prefix for objects and for `ListBucket`.
 
-### Before the first real deploy
+### Before the First Real Deploy
 
 Two things live outside the role's policy and will produce a successful-looking
 deploy that serves a broken page. Check both — see the spec's *pre-flight checks*
@@ -1090,10 +1296,17 @@ for the exact commands:
 
 Run once with **dry_run** ticked before the first real deploy.
 
-### Manual rollback
+### Manual Rollback
 
 Re-run the workflow from the last good tag or commit. One click, and it is the
 same path automatic rollback uses.
+
+To rehearse *automatic* rollback without an incident, dispatch once with
+**force_fail_verify** ticked, after a successful deploy so there is a previous
+version to restore. Nothing needs to be reset afterwards. Do **not** rehearse it
+by repointing `SITE_BASE_URL` at another application — the workflow now asserts
+that `SITE_BASE_URL` is an https URL ending in `/banana/` and refuses otherwise,
+because a forgotten reset would silently roll back every later deploy.
 ````
 
 - [ ] **Step 2: Update `CLAUDE.md`**
@@ -1109,7 +1322,10 @@ served at `https://nfcarchiver.com/banana/`. Two jobs: an uncredentialed build
 (lint, test, build, bundle sanity checks) and a credentialed deploy that assumes
 an AWS role via GitHub OIDC, uploads, invalidates CloudFront, verifies the live
 page carries the build's `git describe` revision, and restores the previous
-version if it does not. Design and AWS setup:
+version if it does not. The deploy job refuses to run unless the `S3_PREFIX`
+variable is exactly `banana/` — the same deploy role can also write to the
+sibling app's `app/` prefix in this bucket, so changing the deploy target
+requires editing the workflow, not just the variable. Design and AWS setup:
 `docs/superpowers/specs/2026-08-01-webapp-s3-deploy-design.md`.
 
 Only `dist/index.html` is deployed. `yarn build` also emits `dist/js/*.js`,
@@ -1118,7 +1334,18 @@ those files are dead output and must never be uploaded.
 
 The build requires `fetch-depth: 0`: `vue.config.js` stamps the bundle with
 `git describe --long --tags` and silently falls back to a short SHA without
-tags, which would break the deploy's revision check.
+tags, which would break the deploy's revision check. The workflow's own revision
+step deliberately does **not** mirror that fallback — it fails the run instead.
+`vue.config.js` keeps its fallback so a local `yarn build` works in a clone with
+no tags, but the workflow must refuse what local development tolerates: a bare
+7-hex SHA is a needle that can collide with unrelated hex constants in the 1.2 MB
+bundle, letting the healthcheck wave a stale deploy through.
+
+The rollback path is exercised with the `force_fail_verify` dispatch input, which
+deploys for real and then forces verification to fail. Never exercise it by
+repointing `SITE_BASE_URL` at another application — the deploy job now asserts
+that `SITE_BASE_URL` is an https URL ending in `/${S3_PREFIX}` and refuses
+otherwise.
 
 `scripts/healthcheck.ts` (logic, unit-tested in `tests/unit/healthcheck.spec.ts`)
 and `scripts/healthcheck-cli.ts` (entry point) are compiled standalone by the
@@ -1166,4 +1393,4 @@ These are not code and cannot be done from this repository. Do them in order.
 3. Run the two pre-flight checks (bucket policy OAC scope; `/banana/` index resolution).
 4. Dispatch with **dry_run: true**; read the `--dryrun` plan.
 5. Dispatch for real.
-6. **Exercise rollback once**, after step 5 has succeeded so there is a previous version to restore: temporarily set `SITE_BASE_URL` to `https://nfcarchiver.com/app/` and dispatch. That URL returns 200 and `text/html` but carries no Banana Split revision, so check 3 fails alone while every other step succeeds — exactly the condition rollback exists for. Confirm the restore runs, then set the variable back.
+6. **Exercise rollback once**, after step 5 has succeeded so there is a previous version to restore: dispatch with **`force_fail_verify: true`**. The deploy runs for real and the verify step then searches for a revision that cannot exist, so check 3 fails alone while every other step succeeds — exactly the condition rollback exists for. Confirm the restore runs and the site stays on the previous version. Nothing needs resetting: the input defaults to `false` on the next dispatch. The verify step takes ~62 s, which is the healthcheck's real backoff schedule. **Do not** rehearse this by repointing `SITE_BASE_URL` at `https://nfcarchiver.com/app/` as an earlier version of this plan advised — a forgotten reset would roll every later deploy back silently, and the workflow now rejects that variable value outright.

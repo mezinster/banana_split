@@ -110,8 +110,17 @@ The web app is deployed to `https://nfcarchiver.com/banana/` by the
 **Deploy web app** workflow (`.github/workflows/deploy-webapp.yml`). It is
 **manual only** — it never runs on push or tag.
 
-Actions → Deploy web app → Run workflow. Pick a ref, optionally tick
-**dry_run** to print the upload plan without uploading anything.
+Actions → Deploy web app → Run workflow. Pick a ref, then optionally tick either
+input:
+
+| Input | Effect |
+|---|---|
+| `dry_run` | Print the upload plan and stop. Uploads nothing. |
+| `force_fail_verify` | Deploy for real, then force verification to fail, exercising the rollback path. Takes ~62 s at the verify step — that is the healthcheck's real backoff schedule. |
+
+The ref must have a reachable tag: the workflow stamps the build with
+`git describe --long --tags` and **refuses to deploy** if that fails, rather than
+falling back to a short SHA that could collide with unrelated hex in the bundle.
 
 The workflow builds and verifies the bundle in a job with no AWS access, then
 uploads, invalidates CloudFront, and checks that the live URL serves the exact
@@ -159,6 +168,13 @@ Run once with **dry_run** ticked before the first real deploy.
 
 Re-run the workflow from the last good tag or commit. One click, and it is the
 same path automatic rollback uses.
+
+To rehearse *automatic* rollback without an incident, dispatch once with
+**force_fail_verify** ticked, after a successful deploy so there is a previous
+version to restore. Nothing needs to be reset afterwards. Do **not** rehearse it
+by repointing `SITE_BASE_URL` at another application — the workflow now asserts
+that `SITE_BASE_URL` is an https URL ending in `/banana/` and refuses otherwise,
+because a forgotten reset would silently roll back every later deploy.
 
 ## Shard Compatibility
 

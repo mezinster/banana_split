@@ -144,7 +144,18 @@ those files are dead output and must never be uploaded.
 
 The build requires `fetch-depth: 0`: `vue.config.js` stamps the bundle with
 `git describe --long --tags` and silently falls back to a short SHA without
-tags, which would break the deploy's revision check.
+tags, which would break the deploy's revision check. The workflow's own revision
+step deliberately does **not** mirror that fallback — it fails the run instead.
+`vue.config.js` keeps its fallback so a local `yarn build` works in a clone with
+no tags, but the workflow must refuse what local development tolerates: a bare
+7-hex SHA is a needle that can collide with unrelated hex constants in the 1.2 MB
+bundle, letting the healthcheck wave a stale deploy through.
+
+The rollback path is exercised with the `force_fail_verify` dispatch input, which
+deploys for real and then forces verification to fail. Never exercise it by
+repointing `SITE_BASE_URL` at another application — the deploy job now asserts
+that `SITE_BASE_URL` is an https URL ending in `/${S3_PREFIX}` and refuses
+otherwise.
 
 `scripts/healthcheck.ts` (logic, unit-tested in `tests/unit/healthcheck.spec.ts`)
 and `scripts/healthcheck-cli.ts` (entry point) are compiled standalone by the
