@@ -1,0 +1,151 @@
+name: Deploy web app
+
+# Manual only. Never on push or tag.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Print the S3 upload plan and stop — uploads nothing'
+        type: boolean
+        default: false
+
+# No ambient permissions anywhere. The deploy job opts in to id-token below.
+permissions: {}
+
+concurrency:
+  # Queue, never cancel: a run cancelled mid-deploy could strand the prefix.
+  # The group name is distinct from nfcarchiver's so the two apps sharing this
+  # bucket do not block each other.
+  group: deploy-banana-webapp
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build & verify bundle
+    runs-on: ubuntu-latest
+    # This job runs `yarn install`, which executes third-party package code. It
+    # holds no AWS credential, so a compromised dependency cannot reach S3.
+    permissions: {}
+    outputs:
+      revision: ${{ steps.stamp.outputs.revision }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Tags are REQUIRED. vue.config.js:7-12 stamps the build with
+          # `git describe --long --tags` and falls back to a short SHA when it
+          # throws. A shallow clone has no tags, so the fallback would fire and
+          # the build would carry a different string than this workflow expects.
+          fetch-depth: 0
+
+      - name: Read .nvmrc
+        run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_ENV
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NVMRC }}
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Lint
+        run: yarn lint --max-warnings 0
+
+      - name: Lint deploy scripts
+        # `yarn lint` uses vue-cli-service's default glob (src, tests, *.js),
+        # which does not include scripts/. Without this step the code that
+        # gates a production rollback is never linted.
+        run: yarn lint --no-fix --max-warnings 0 scripts/healthcheck.ts scripts/healthcheck-cli.ts
+
+      - name: Unit tests
+        run: yarn test:unit
+
+      - name: Compute build revision
+        id: stamp
+        # Mirrors vue.config.js:7-12 exactly, fallback included, so the string
+        # we search for is the string the build baked in.
+        run: |
+          set -euo pipefail
+          revision="$(git describe --long --tags 2>/dev/null || git rev-parse --short HEAD)"
+          echo "revision=${revision}" >> "$GITHUB_OUTPUT"
+          echo "build revision: ${revision}"
+
+      - name: Build
+        run: yarn build
+
+      - name: Verify the bundle
+        env:
+          REVISION: ${{ steps.stamp.outputs.revision }}
+        # Three checks, all while no credential is in scope and nothing has been
+        # touched. Check 3 is load-bearing: if html-webpack-inline-source-plugin
+        # ever silently stops inlining, the build still "succeeds" but emits an
+        # index.html referencing dist/js/*.js — files this workflow deliberately
+        # does not upload — and production would serve a blank page.
+        run: |
+          set -euo pipefail
+          f=dist/index.html
+          [ -s "$f" ] || { echo "::error::$f is missing or empty"; exit 1; }
+
+          grep -qF "$REVISION" "$f" || {
+            echo "::error::$f does not contain revision ${REVISION} — either DefinePlugin did not run, or this workflow and vue.config.js disagree about the revision"
+            exit 1
+          }
+
+          if grep -qE '(src|href)="(\./)?(js|css)/' "$f"; then
+            echo "::error::$f references external assets — the inline-source plugin did not inline them"
+            grep -oE '(src|href)="(\./)?(js|css)/[^"]*"' "$f" | sort -u
+            exit 1
+          fi
+
+          echo "bundle ok: $(wc -c < "$f") bytes, revision ${REVISION}, fully inlined"
+
+      - name: Stage the deployable file
+        # ONLY index.html. `yarn build` also emits dist/js/*.js (~1.2 MB), which
+        # the plugin has already inlined into the HTML; uploading them would
+        # publish dead bundles at /banana/js/.
+        run: |
+          set -euo pipefail
+          mkdir -p site
+          cp dist/index.html site/index.html
+
+      - name: Compile the healthcheck
+        # Explicit file list, so tsc ignores tsconfig.json — the project sets
+        # "module": "esnext", which is wrong for a Node CLI.
+        run: |
+          set -euo pipefail
+          npx tsc scripts/healthcheck.ts scripts/healthcheck-cli.ts \
+            --outDir tools --module commonjs --target es2019 \
+            --strict --esModuleInterop --skipLibCheck
+
+      - name: Verify the compiled healthcheck starts
+        # Proves the artifact loads under Node before the credentialed job
+        # depends on it. Bad usage must exit 2.
+        run: |
+          set -uo pipefail
+          node tools/healthcheck-cli.js >/dev/null 2>&1
+          code=$?
+          if [ "$code" -ne 2 ]; then
+            echo "::error::compiled healthcheck did not start correctly (exit ${code}, want 2)"
+            exit 1
+          fi
+          echo "healthcheck binary ok"
+
+      - name: Upload deployable site
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: site/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload healthcheck tool
+        # Shipped as its own artifact so the credentialed job can verify the
+        # deploy without checking out the repo or running `yarn install`.
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-tools
+          path: tools/
+          if-no-files-found: error
+          retention-days: 7
