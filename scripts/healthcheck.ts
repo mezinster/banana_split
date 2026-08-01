@@ -41,6 +41,14 @@ export interface HealthcheckOptions {
 
 const REQUEST_TIMEOUT_MS = 30000;
 
+/** Node's http/https modules send NO User-Agent by default — unlike fetch,
+ *  curl, or any browser. A request without one is blocked outright by common
+ *  WAF rulesets (AWSManagedRulesCommonRuleSet's NoUserAgent_HEADER returns
+ *  403), which made this healthcheck structurally incapable of ever returning
+ *  200 against the deploy target: it reported UNHEALTHY and rolled back two
+ *  perfectly good deploys before the cause was found. Identify ourselves. */
+export const USER_AGENT = "banana-split-deploy-healthcheck/1 (+https://github.com/mezinster/banana_split)";
+
 /** Redirects are deliberately NOT followed: the deploy target is a directory
  *  URL that must resolve to index.html at the edge, so a 301 here is a real
  *  finding about CloudFront configuration, not something to paper over. */
@@ -54,7 +62,11 @@ export function fetchPage(url: string): Promise<FetchedPage> {
         hostname: target.hostname,
         port: target.port,
         path: target.pathname + target.search,
-        headers: { "cache-control": "no-cache", pragma: "no-cache" }
+        headers: {
+          "cache-control": "no-cache",
+          pragma: "no-cache",
+          "user-agent": USER_AGENT
+        }
       },
       response => {
         let body = "";
