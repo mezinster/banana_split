@@ -8,6 +8,32 @@
 
 **Tech Stack:** GitHub Actions, AWS CLI v2 (preinstalled on `ubuntu-latest`), OIDC federation via `aws-actions/configure-aws-credentials`, TypeScript 4.4.3 (already a dependency), Jest + ts-jest 26 (already configured), Node 14 for the build (`.nvmrc`), Node 20 for the deploy job.
 
+## Amendments (2026-08-01, after implementation)
+
+This plan has been revised to match what actually shipped. Code review during
+execution found four defects in the code blocks below as originally written, all
+of which were transcribed faithfully before being caught:
+
+1. **Task 2's argv guard rejected only `undefined`, not `""`.** Because
+   `"".indexOf()` returns `0` for any string, an empty revision made the
+   healthcheck match every possible body — reporting healthy and suppressing the
+   rollback it exists to trigger. Fixed in the CLI, plus a defence-in-depth
+   guard in `checkOnce` (Task 1).
+2. **Task 3's inline-check regex could not match the failure it guards.** Vue
+   CLI's default `publicPath` is `/`, so a failed inline emits root-relative
+   `src="/js/…"`, which the original `(\./)?(js|css)/` pattern missed entirely.
+3. **Task 4's Summary step interpolated `${{ github.ref_name }}` into a shell
+   body** — a script-injection vector on a runner holding credentials for two
+   production prefixes.
+4. **Task 4's config check validated `S3_PREFIX`'s shape but not its value**, so
+   a mistyped `app/` would have overwritten a different production application
+   in the same bucket. The prefix is now pinned.
+
+Two further steps were added that the original plan omitted: a `Lint deploy
+scripts` step (Task 3), because `scripts/` sits outside vue-cli-service's
+default lint glob and would otherwise never be linted; and two extra tests
+(Task 1) covering failure accumulation and the empty-revision guard.
+
 ## Global Constraints
 
 - **Spec:** `docs/superpowers/specs/2026-08-01-webapp-s3-deploy-design.md`. Read it before starting.
@@ -154,6 +180,35 @@ describe("healthcheck", () => {
     expect(result.failures.join(" ")).toContain("application/xml");
   });
 
+  it("collects every failure in one pass rather than stopping at the first", async () => {
+    responses = [
+      { status: 500, contentType: "application/xml", body: "<Error/>" }
+    ];
+
+    const result = await checkOnce(baseUrl, REVISION);
+
+    expect(result.ok).toBe(false);
+    expect(result.failures.length).toBe(2);
+    expect(result.failures.join(" ")).toContain("500");
+    expect(result.failures.join(" ")).toContain("application/xml");
+  });
+
+  it("refuses an empty expected revision instead of matching everything", async () => {
+    responses = [
+      {
+        status: 200,
+        contentType: "text/html; charset=utf-8",
+        body: "<html>build v0.8.3-4-gca75a75</html>"
+      }
+    ];
+
+    const result = await checkOnce(baseUrl, "");
+
+    expect(result.ok).toBe(false);
+    expect(result.failures.join(" ")).toContain("empty");
+    expect(hits).toBe(0);
+  });
+
   it("retries a stale edge and passes once the new build appears", async () => {
     responses = [
       {
@@ -217,6 +272,7 @@ export interface FetchedPage {
   body: string;
 }
 
+// eslint-disable-next-line no-unused-vars
 export type Fetcher = (url: string) => Promise<FetchedPage>;
 
 export interface CheckResult {
@@ -228,6 +284,7 @@ export interface HealthcheckOptions {
   attempts?: number;
   firstDelayMs?: number;
   fetcher?: Fetcher;
+  // eslint-disable-next-line no-unused-vars
   sleep?: (ms: number) => Promise<void>;
 }
 
@@ -278,6 +335,13 @@ export async function checkOnce(
   expectedRevision: string,
   fetcher: Fetcher = fetchPage
 ): Promise<CheckResult> {
+  // An empty revision would match every possible body: "".indexOf() returns 0
+  // for any string, so the check below could never fail and the healthcheck
+  // would wave through any deploy. Refuse before issuing a request.
+  if (expectedRevision === "") {
+    return { ok: false, failures: ["expectedRevision is empty — refusing to treat any response as a match"] };
+  }
+
   const base = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
 
   let page: FetchedPage;
@@ -328,8 +392,11 @@ export async function healthcheck(
       return last;
     }
     if (attempt < attempts) {
+      // eslint-disable-next-line no-console
       console.error("attempt " + attempt + "/" + attempts + " failed:");
+      // eslint-disable-next-line no-console
       last.failures.forEach(failure => console.error("  - " + failure));
+      // eslint-disable-next-line no-console
       console.error("retrying in " + delay + "ms");
       await sleep(delay);
       delay *= 2;
@@ -406,26 +473,49 @@ const args = process.argv.slice(2);
 const baseUrl = args[0];
 const expectedRevision = args[1];
 
-if (baseUrl === undefined || expectedRevision === undefined) {
+// Empty strings must be rejected, not just undefined. An unset workflow
+// variable arrives as "", and an empty expectedRevision would make checkOnce
+// match every possible body — reporting healthy and suppressing the rollback
+// this CLI exists to trigger.
+if (
+  baseUrl === undefined ||
+  baseUrl === "" ||
+  expectedRevision === undefined ||
+  expectedRevision === ""
+) {
+  // eslint-disable-next-line no-console
   console.error("usage: node healthcheck-cli.js <baseUrl> <expectedRevision>");
   process.exit(2);
 }
 
-healthcheck(baseUrl, expectedRevision).then(
-  result => {
+// Chained .then().catch() rather than the two-argument .then(ok, err) form:
+// the two-argument form does not catch exceptions thrown inside its own
+// success handler, and the two Node versions this repo straddles disagree
+// about what an unhandled rejection means (Node 14 warns and exits 0 —
+// reporting "healthy"; Node 20 exits 1).
+//
+// process.exitCode rather than process.exit(): calling exit() immediately
+// after console output can truncate it on the non-blocking piped streams a CI
+// runner uses, and the dropped lines would be the rollback diagnostics.
+healthcheck(baseUrl, expectedRevision)
+  .then(result => {
     if (result.ok) {
+      // eslint-disable-next-line no-console
       console.log("healthy: " + baseUrl + " is serving build " + expectedRevision);
-      process.exit(0);
+      process.exitCode = 0;
+      return;
     }
+    // eslint-disable-next-line no-console
     console.error("UNHEALTHY:");
+    // eslint-disable-next-line no-console
     result.failures.forEach(failure => console.error("  - " + failure));
-    process.exit(1);
-  },
-  error => {
+    process.exitCode = 1;
+  })
+  .catch(error => {
+    // eslint-disable-next-line no-console
     console.error("healthcheck crashed: " + String(error));
-    process.exit(1);
-  }
-);
+    process.exitCode = 1;
+  });
 ```
 
 - [ ] **Step 2: Ignore the staging directories**
@@ -549,6 +639,12 @@ jobs:
       - name: Lint
         run: yarn lint --max-warnings 0
 
+      - name: Lint deploy scripts
+        # `yarn lint` uses vue-cli-service's default glob (src, tests, *.js),
+        # which does not include scripts/. Without this step the code that
+        # gates a production rollback is never linted.
+        run: yarn lint --no-fix --max-warnings 0 scripts/healthcheck.ts scripts/healthcheck-cli.ts
+
       - name: Unit tests
         run: yarn test:unit
 
@@ -572,7 +668,10 @@ jobs:
         # touched. Check 3 is load-bearing: if html-webpack-inline-source-plugin
         # ever silently stops inlining, the build still "succeeds" but emits an
         # index.html referencing dist/js/*.js — files this workflow deliberately
-        # does not upload — and production would serve a blank page.
+        # does not upload — and production would serve a blank page. The pattern
+        # must match root-relative paths (src="/js/...") too, since Vue CLI's
+        # default publicPath is "/" — a bare "js/" or "./js/" prefix is not the
+        # only shape a failed inline can take.
         run: |
           set -euo pipefail
           f=dist/index.html
@@ -583,9 +682,9 @@ jobs:
             exit 1
           }
 
-          if grep -qE '(src|href)="(\./)?(js|css)/' "$f"; then
+          if grep -qE '(src|href)="[^"]*\.(js|css)"' "$f"; then
             echo "::error::$f references external assets — the inline-source plugin did not inline them"
-            grep -oE '(src|href)="(\./)?(js|css)/[^"]*"' "$f" | sort -u
+            grep -oE '(src|href)="[^"]*\.(js|css)"' "$f" | sort -u
             exit 1
           fi
 
@@ -659,10 +758,17 @@ REVISION="$(git describe --long --tags 2>/dev/null || git rev-parse --short HEAD
 f=dist/index.html && \
 [ -s "$f" ] && echo "non-empty ok" && \
 grep -qF "$REVISION" "$f" && echo "revision ${REVISION} present" && \
-! grep -qE '(src|href)="(\./)?(js|css)/' "$f" && echo "fully inlined ok"
+! grep -qE '(src|href)="[^"]*\.(js|css)"' "$f" && echo "fully inlined ok"
 ```
 
 Expected: `non-empty ok`, `revision <something> present`, `fully inlined ok`.
+
+A passing run proves only that the check does not *false-fail* on a good build.
+To prove it can actually catch a broken one, temporarily disable `inlineSource`
+in `vue.config.js`, rebuild, confirm the same `grep` now matches
+`src="/js/chunk-vendors.*.js"`, then restore `vue.config.js` and rebuild. The
+original version of this check passed both directions of that test only by
+accident — it matched nothing either way.
 
 - [ ] **Step 4: Commit**
 
@@ -744,6 +850,15 @@ Add to `.github/workflows/deploy-webapp.yml`, at the same indentation as `build:
           case "${PREFIX}" in
             */) ;;
             *) echo "::error::S3_PREFIX must end with a slash (got '${PREFIX}')"; missing=1 ;;
+          esac
+          # Shape is not enough. The deploy role can also write to the sibling
+          # application's app/ prefix in this bucket, and CloudFront invalidation
+          # paths cannot be IAM-restricted at all — so this variable's VALUE is
+          # the only thing protecting the other production app. A mistyped
+          # `app/` would pass every check above.
+          case "${PREFIX}" in
+            banana/) ;;
+            *) echo "::error::refusing to deploy to prefix '${PREFIX}' — this workflow only deploys to banana/"; missing=1 ;;
           esac
           [ "$missing" -eq 0 ] || exit 1
           echo "target s3://${BUCKET}/${PREFIX} | distribution ${DIST_ID} | build ${REVISION}"
@@ -837,10 +952,22 @@ Add to `.github/workflows/deploy-webapp.yml`, at the same indentation as `build:
       - name: Report that rollback was not possible
         if: ${{ failure() && !inputs.dry_run && steps.snapshot.outputs.captured != 'true' && steps.upload.outcome != 'skipped' }}
         run: |
-          echo "::error::Deploy failed and there was no previous version to restore (first deploy). The prefix now holds build ${REVISION}, unverified."
+          if [ "${{ steps.upload.outcome }}" = "success" ]; then
+            echo "::error::Deploy failed and there was no previous version to restore (first deploy). The prefix now holds build ${REVISION}, unverified."
+          else
+            echo "::error::Deploy failed before the upload completed and there was no previous version to restore (first deploy). The prefix may hold nothing."
+          fi
 
       - name: Summary
         if: ${{ always() && !inputs.dry_run }}
+        # Values reach the script through env:, never by interpolating ${{ }}
+        # into the body. github.ref_name is attacker-influenced — git permits
+        # `$`, `(` and `)` in ref names — and this step runs with if: always()
+        # on a runner holding credentials for two production prefixes.
+        env:
+          REF: ${{ github.ref_name }}
+          INVALIDATION: ${{ steps.invalidate.outputs.invalidation }}
+          VERIFY: ${{ steps.verify.outcome }}
         run: |
           {
             echo "### Banana Split web app deploy"
@@ -848,11 +975,11 @@ Add to `.github/workflows/deploy-webapp.yml`, at the same indentation as `build:
             echo "| field | value |"
             echo "|---|---|"
             echo "| build | \`${REVISION}\` |"
-            echo "| ref | \`${{ github.ref_name }}\` |"
+            echo "| ref | \`${REF}\` |"
             echo "| target | \`s3://${BUCKET}/${PREFIX}index.html\` |"
             echo "| url | ${BASE_URL} |"
-            echo "| invalidation | \`${{ steps.invalidate.outputs.invalidation || 'n/a' }}\` |"
-            echo "| verify | ${{ steps.verify.outcome || 'did not run' }} |"
+            echo "| invalidation | \`${INVALIDATION:-n/a}\` |"
+            echo "| verify | ${VERIFY:-did not run} |"
           } >> "$GITHUB_STEP_SUMMARY"
 ```
 
