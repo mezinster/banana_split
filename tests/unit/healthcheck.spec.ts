@@ -109,6 +109,22 @@ describe("healthcheck", () => {
     expect(result.failures.join(" ")).toContain("application/xml");
   });
 
+  it("refuses an empty expected revision instead of matching everything", async () => {
+    responses = [
+      {
+        status: 200,
+        contentType: "text/html; charset=utf-8",
+        body: "<html>build v0.8.3-4-gca75a75</html>"
+      }
+    ];
+
+    const result = await checkOnce(baseUrl, "");
+
+    expect(result.ok).toBe(false);
+    expect(result.failures.join(" ")).toContain("empty");
+    expect(hits).toBe(0);
+  });
+
   it("retries a stale edge and passes once the new build appears", async () => {
     responses = [
       {

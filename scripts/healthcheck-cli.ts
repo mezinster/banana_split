@@ -16,28 +16,33 @@ const args = process.argv.slice(2);
 const baseUrl = args[0];
 const expectedRevision = args[1];
 
-if (baseUrl === undefined || expectedRevision === undefined) {
+if (
+  baseUrl === undefined ||
+  baseUrl === "" ||
+  expectedRevision === undefined ||
+  expectedRevision === ""
+) {
   // eslint-disable-next-line no-console
   console.error("usage: node healthcheck-cli.js <baseUrl> <expectedRevision>");
   process.exit(2);
 }
 
-healthcheck(baseUrl, expectedRevision).then(
-  result => {
+healthcheck(baseUrl, expectedRevision)
+  .then(result => {
     if (result.ok) {
       // eslint-disable-next-line no-console
       console.log("healthy: " + baseUrl + " is serving build " + expectedRevision);
-      process.exit(0);
+      process.exitCode = 0;
+      return;
     }
     // eslint-disable-next-line no-console
     console.error("UNHEALTHY:");
     // eslint-disable-next-line no-console
     result.failures.forEach(failure => console.error("  - " + failure));
-    process.exit(1);
-  },
-  error => {
+    process.exitCode = 1;
+  })
+  .catch(error => {
     // eslint-disable-next-line no-console
     console.error("healthcheck crashed: " + String(error));
-    process.exit(1);
-  }
-);
+    process.exitCode = 1;
+  });

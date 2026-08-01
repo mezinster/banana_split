@@ -86,6 +86,10 @@ export async function checkOnce(
   expectedRevision: string,
   fetcher: Fetcher = fetchPage
 ): Promise<CheckResult> {
+  if (expectedRevision === "") {
+    return { ok: false, failures: ["expectedRevision is empty — refusing to treat any response as a match"] };
+  }
+
   const base = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
 
   let page: FetchedPage;
