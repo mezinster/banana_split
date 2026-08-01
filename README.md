@@ -106,15 +106,75 @@ flutter analyze                    # Static analysis
 
 ## Deploying the Web App
 
-Download the HTML file from a GitHub Release and upload to your hosting:
+The web app is deployed to `https://nfcarchiver.com/banana/` by the
+**Deploy web app** workflow (`.github/workflows/deploy-webapp.yml`). It is
+**manual only** — it never runs on push or tag.
 
-```bash
-# S3 example
-aws s3 cp banana-split-web-X.Y.Z.html s3://YOUR-BUCKET/index.html \
-  --content-type "text/html"
-```
+Actions → Deploy web app → Run workflow. Pick a ref, then optionally tick either
+input:
 
-The file is fully self-contained — no additional assets, no routing configuration, no backend required.
+| Input | Effect |
+|---|---|
+| `dry_run` | Print the upload plan and stop. Uploads nothing. |
+| `force_fail_verify` | Deploy for real, then force verification to fail, exercising the rollback path. Takes ~62 s at the verify step — that is the healthcheck's real backoff schedule. |
+
+The ref must have a reachable tag: the workflow stamps the build with
+`git describe --long --tags` and **refuses to deploy** if that fails, rather than
+falling back to a short SHA that could collide with unrelated hex in the bundle.
+
+The workflow builds and verifies the bundle in a job with no AWS access, then
+uploads, invalidates CloudFront, and checks that the live URL serves the exact
+build it produced. If that check fails it restores the previous version
+automatically and fails the run.
+
+### One-Time Setup
+
+**Repository → Settings → Secrets and variables → Actions**
+
+| Kind | Name | Value |
+|---|---|---|
+| Secret | `AWS_DEPLOY_ROLE_ARN` | the deploy role ARN (secret, so the account ID is masked in logs) |
+| Variable | `AWS_REGION` | the bucket's region |
+| Variable | `S3_BUCKET` | `nfcarchiver.com` |
+| Variable | `S3_PREFIX` | `banana/` — the workflow refuses to run for any other value, since the deploy role can also write to the sibling app's `app/` prefix in the same bucket. Changing the deploy target requires editing the workflow, not just this variable. |
+| Variable | `CLOUDFRONT_DISTRIBUTION_ID` | `EPIRQ7CFJKRDQ` |
+| Variable | `SITE_BASE_URL` | `https://nfcarchiver.com/banana/` |
+
+**Repository → Settings → Environments → New environment `production`**
+Required reviewers: **none**. Deployment branches: **selected branches → `master`**.
+
+**AWS.** The OIDC provider and the deploy role already exist, shared with the
+`nfcarchiver` repository. Both of the role's policies need updating — the exact
+JSON is in
+[`docs/superpowers/specs/2026-08-01-webapp-s3-deploy-design.md`](docs/superpowers/specs/2026-08-01-webapp-s3-deploy-design.md),
+section *AWS setup*. In short: the trust policy's `sub` condition gains
+`repo:mezinster/banana_split:environment:production`, and the permission policy
+gains the `banana/` prefix for objects and for `ListBucket`.
+
+### Before the First Real Deploy
+
+Two things live outside the role's policy and will produce a successful-looking
+deploy that serves a broken page. Check both — see the spec's *pre-flight checks*
+for the exact commands:
+
+1. Does CloudFront's Origin Access Control grant cover `banana/`, or was it
+   scoped to `app/*`? If scoped, every visitor gets a 403.
+2. Does `/banana/` resolve to `/banana/index.html` at the edge? Depends on
+   whether the origin is an S3 website endpoint or REST + OAC.
+
+Run once with **dry_run** ticked before the first real deploy.
+
+### Manual Rollback
+
+Re-run the workflow from the last good tag or commit. One click, and it is the
+same path automatic rollback uses.
+
+To rehearse *automatic* rollback without an incident, dispatch once with
+**force_fail_verify** ticked, after a successful deploy so there is a previous
+version to restore. Nothing needs to be reset afterwards. Do **not** rehearse it
+by repointing `SITE_BASE_URL` at another application — the workflow now asserts
+that `SITE_BASE_URL` is an https URL ending in `/banana/` and refuses otherwise,
+because a forgotten reset would silently roll back every later deploy.
 
 ## Shard Compatibility
 

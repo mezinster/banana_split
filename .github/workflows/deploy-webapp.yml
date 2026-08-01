@@ -1,0 +1,411 @@
+name: Deploy web app
+
+# Manual only. Never on push or tag.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Print the S3 upload plan and stop — uploads nothing'
+        type: boolean
+        default: false
+      force_fail_verify:
+        description: 'Deploy for real, then force verification to fail — exercises the rollback path'
+        type: boolean
+        default: false
+
+# No ambient permissions anywhere. The deploy job opts in to id-token below.
+permissions: {}
+
+concurrency:
+  # Queue, never cancel: a run cancelled mid-deploy could strand the prefix.
+  # This serialises THIS repository's own deploys against each other, so two
+  # dispatches cannot interleave a snapshot with another run's upload.
+  # It offers no protection against the sibling app that shares this bucket:
+  # concurrency groups are scoped to a repository, so nfcarchiver's runs were
+  # never in this group's scope regardless of what it is named.
+  group: deploy-banana-webapp
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build & verify bundle
+    runs-on: ubuntu-latest
+    # This job runs `yarn install`, which executes third-party package code. It
+    # holds no AWS credential, so a compromised dependency cannot reach S3.
+    permissions: {}
+    outputs:
+      revision: ${{ steps.stamp.outputs.revision }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Tags are REQUIRED. vue.config.js:7-12 stamps the build with
+          # `git describe --long --tags` and falls back to a short SHA when it
+          # throws. A shallow clone has no tags, so the fallback would fire and
+          # the build would carry a different string than this workflow expects.
+          fetch-depth: 0
+
+      - name: Read .nvmrc
+        run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_ENV
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NVMRC }}
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Lint
+        run: yarn lint --max-warnings 0
+
+      - name: Lint deploy scripts
+        # `yarn lint` uses vue-cli-service's default glob (src, tests, *.js),
+        # which does not include scripts/. Without this step the code that
+        # gates a production rollback is never linted.
+        run: yarn lint --no-fix --max-warnings 0 scripts/healthcheck.ts scripts/healthcheck-cli.ts
+
+      - name: Unit tests
+        run: yarn test:unit
+
+      - name: Compute build revision
+        id: stamp
+        # Mirrors vue.config.js:7-12, but WITHOUT its short-SHA fallback, and
+        # that divergence is deliberate. vue.config.js keeps the fallback so a
+        # local `yarn build` works in a clone with no tags. This workflow must
+        # refuse what local development may tolerate: a bare 7-hex-character
+        # needle can occur by coincidence inside the 1.2 MB bundle, and the
+        # healthcheck's `indexOf` would then match an unrelated hex run and wave
+        # a stale deploy through. `git describe --long --tags` output has a
+        # `vN.N.N-N-g<sha>` shape that cannot occur by accident, so it is the
+        # only safe needle. If there is no reachable tag, we stop.
+        run: |
+          set -euo pipefail
+          if ! revision="$(git describe --long --tags 2>/dev/null)"; then
+            echo "::error::git describe --long --tags failed — no reachable tag. Refusing to deploy: the fallback short SHA is a 7-hex needle that can collide with unrelated constants in the bundle and wave a stale deploy through. Fetch tags, or deploy from a ref with an ancestor tag."
+            exit 1
+          fi
+          echo "revision=${revision}" >> "$GITHUB_OUTPUT"
+          echo "build revision: ${revision}"
+
+      - name: Build
+        run: yarn build
+
+      - name: Verify the bundle
+        env:
+          REVISION: ${{ steps.stamp.outputs.revision }}
+        # Three checks, all while no credential is in scope and nothing has been
+        # touched. Check 3 is load-bearing: if html-webpack-inline-source-plugin
+        # ever silently stops inlining, the build still "succeeds" but emits an
+        # index.html referencing dist/js/*.js — files this workflow deliberately
+        # does not upload — and production would serve a blank page. The pattern
+        # must match root-relative paths (src="/js/...") too, since Vue CLI's
+        # default publicPath is "/" — a bare "js/" or "./js/" prefix is not the
+        # only shape a failed inline can take.
+        run: |
+          set -euo pipefail
+          f=dist/index.html
+          [ -s "$f" ] || { echo "::error::$f is missing or empty"; exit 1; }
+
+          grep -qF "$REVISION" "$f" || {
+            echo "::error::$f does not contain revision ${REVISION} — either DefinePlugin did not run, or this workflow and vue.config.js disagree about the revision"
+            exit 1
+          }
+
+          if grep -qE '(src|href)="[^"]*\.(js|css)"' "$f"; then
+            echo "::error::$f references external assets — the inline-source plugin did not inline them"
+            grep -oE '(src|href)="[^"]*\.(js|css)"' "$f" | sort -u
+            exit 1
+          fi
+
+          echo "bundle ok: $(wc -c < "$f") bytes, revision ${REVISION}, fully inlined"
+
+      - name: Stage the deployable file
+        # ONLY index.html. `yarn build` also emits dist/js/*.js (~1.2 MB), which
+        # the plugin has already inlined into the HTML; uploading them would
+        # publish dead bundles at /banana/js/.
+        run: |
+          set -euo pipefail
+          mkdir -p site
+          cp dist/index.html site/index.html
+
+      - name: Compile the healthcheck
+        # Explicit file list, so tsc ignores tsconfig.json — the project sets
+        # "module": "esnext", which is wrong for a Node CLI.
+        run: |
+          set -euo pipefail
+          npx tsc scripts/healthcheck.ts scripts/healthcheck-cli.ts \
+            --outDir tools --module commonjs --target es2019 \
+            --strict --esModuleInterop --skipLibCheck
+
+      - name: Verify the compiled healthcheck starts
+        # Proves the artifact loads under Node before the credentialed job
+        # depends on it. Bad usage must exit 2.
+        #
+        # The `|| code=$?` form is REQUIRED, not stylistic. GitHub Actions runs
+        # every `run:` body as `bash -e {0}`, so errexit is already on before
+        # the first line executes, and `set -uo pipefail` cannot remove it — it
+        # only adds -u and pipefail. This step originally shipped as a bare
+        # `node ...` followed by `code=$?`; because the node call exits 2 BY
+        # DESIGN, errexit aborted the script at that line, `code=$?` was never
+        # reached, and the step failed with exit 2 on every single run. Do not
+        # "simplify" this back.
+        run: |
+          set -uo pipefail
+          code=0
+          node tools/healthcheck-cli.js >/dev/null 2>&1 || code=$?
+          if [ "$code" -ne 2 ]; then
+            echo "::error::compiled healthcheck did not start correctly (exit ${code}, want 2)"
+            exit 1
+          fi
+          echo "healthcheck binary ok"
+
+      - name: Upload deployable site
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: site/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload healthcheck tool
+        # Shipped as its own artifact so the credentialed job can verify the
+        # deploy without checking out the repo or running `yarn install`.
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-tools
+          path: tools/
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    name: Deploy to S3 + CloudFront
+    needs: build
+    runs-on: ubuntu-latest
+    # Zero required reviewers — this exists to pin the OIDC trust policy on
+    # `environment:production` and to restrict deploys to master.
+    environment: production
+    permissions:
+      id-token: write   # mint the OIDC token used to assume the AWS role
+      contents: read
+    env:
+      BUCKET: ${{ vars.S3_BUCKET }}
+      PREFIX: ${{ vars.S3_PREFIX }}
+      DIST_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+      BASE_URL: ${{ vars.SITE_BASE_URL }}
+      REVISION: ${{ needs.build.outputs.revision }}
+    steps:
+      - name: Download deployable site
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: site
+
+      - name: Download healthcheck tool
+        uses: actions/download-artifact@v4
+        with:
+          name: deploy-tools
+          path: tools
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check configuration is present
+        # Fail loudly and early rather than letting an empty variable turn into
+        # `s3:///` or a masked-out path deep in an upload command.
+        run: |
+          set -euo pipefail
+          missing=0
+          for v in BUCKET PREFIX DIST_ID BASE_URL REVISION; do
+            if [ -z "${!v:-}" ]; then
+              echo "::error::$v is empty — check the repository variables"
+              missing=1
+            fi
+          done
+          case "${PREFIX}" in
+            */) ;;
+            *) echo "::error::S3_PREFIX must end with a slash (got '${PREFIX}')"; missing=1 ;;
+          esac
+          case "${PREFIX}" in
+            banana/) ;;
+            *) echo "::error::refusing to deploy to prefix '${PREFIX}' — this workflow only deploys to banana/"; missing=1 ;;
+          esac
+          # SITE_BASE_URL must name the prefix this run actually deploys to.
+          # If it points anywhere else — most plausibly the sibling app at
+          # /app/, which returns 200 and text/html — every deploy would upload
+          # to banana/, healthcheck a page that can never carry this revision,
+          # fail, and roll banana/ back. Silently, run after run, with an error
+          # naming CloudFront rather than the variable.
+          case "${BASE_URL}" in
+            https://*/"${PREFIX}") ;;
+            *) echo "::error::SITE_BASE_URL ('${BASE_URL}') must be an https URL ending in '/${PREFIX}' — otherwise the healthcheck verifies a different page than the one this run deployed"; missing=1 ;;
+          esac
+          [ "$missing" -eq 0 ] || exit 1
+          echo "target s3://${BUCKET}/${PREFIX} | distribution ${DIST_ID} | build ${REVISION}"
+
+      - name: Assume the AWS deploy role via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gha-banana-deploy-${{ github.run_id }}
+
+      - name: Show what would be uploaded, then stop
+        if: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          aws s3 cp ./site/index.html "s3://${BUCKET}/${PREFIX}index.html" --dryrun \
+            --content-type 'text/html; charset=utf-8' \
+            --cache-control 'no-cache'
+          echo "dry_run: nothing was uploaded."
+
+      - name: Snapshot the live file for rollback
+        id: snapshot
+        if: ${{ !inputs.dry_run }}
+        # `sync` rather than `cp`: a first deploy against an empty prefix must
+        # succeed, not error on a missing key.
+        run: |
+          set -euo pipefail
+          mkdir -p previous
+          aws s3 sync "s3://${BUCKET}/${PREFIX}" ./previous/ --exclude '*' --include 'index.html'
+          if [ -f ./previous/index.html ]; then
+            echo "captured=true" >> "$GITHUB_OUTPUT"
+            echo "snapshot: $(wc -c < ./previous/index.html) bytes"
+          else
+            echo "captured=false" >> "$GITHUB_OUTPUT"
+            echo "no object at s3://${BUCKET}/${PREFIX}index.html — first deploy, nothing to roll back to"
+          fi
+
+      - name: Upload the page
+        id: upload
+        if: ${{ !inputs.dry_run }}
+        # One object, fixed key. No --delete: it has no work to do here and
+        # would only add blast radius on a bucket shared with another app.
+        # Content type explicit — S3's guessing is not trusted.
+        run: |
+          set -euo pipefail
+          aws s3 cp ./site/index.html "s3://${BUCKET}/${PREFIX}index.html" \
+            --content-type 'text/html; charset=utf-8' \
+            --cache-control 'no-cache'
+
+      - name: Invalidate the prefix and wait
+        id: invalidate
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          id=$(aws cloudfront create-invalidation \
+                 --distribution-id "${DIST_ID}" \
+                 --paths "/${PREFIX}*" \
+                 --query 'Invalidation.Id' --output text)
+          echo "invalidation=${id}" >> "$GITHUB_OUTPUT"
+          echo "created invalidation ${id} for /${PREFIX}*"
+          # Wait so the healthcheck does not test a stale edge copy — but a
+          # slow wait must NOT fail the step. `aws cloudfront wait` polls
+          # 20s x 30 and exits non-zero at ~10 minutes; under `set -e` that
+          # would fire failure(), and rollback would overwrite a perfectly good
+          # deploy on nothing worse than a slow invalidation. The healthcheck
+          # is the real arbiter, and it retries ~62s of its own.
+          if aws cloudfront wait invalidation-completed \
+               --distribution-id "${DIST_ID}" --id "${id}"; then
+            echo "invalidation ${id} completed"
+          else
+            echo "::warning::invalidation ${id} did not complete within the CLI wait cap; continuing to the healthcheck, which is the real arbiter. The object is served no-cache, so edges revalidate against S3 regardless."
+          fi
+
+      - name: Verify the live site serves this build
+        id: verify
+        if: ${{ !inputs.dry_run }}
+        # force_fail_verify exists so the rollback path can be exercised
+        # deliberately, without repointing SITE_BASE_URL at another application.
+        # (Repointing it is now refused by the config check anyway, and if the
+        # operator forgot to set it back every later deploy would roll itself
+        # back.) The forced run still takes ~62s — that is the CLI's real
+        # backoff schedule, and it is intended.
+        run: |
+          set -euo pipefail
+          if [ "${FORCE_FAIL}" = "true" ]; then
+            echo "::warning::force_fail_verify is set — using a revision that cannot match, to exercise rollback"
+            node tools/healthcheck-cli.js "${BASE_URL}" "force-fail-verify-no-such-revision"
+          else
+            node tools/healthcheck-cli.js "${BASE_URL}" "${REVISION}"
+          fi
+        env:
+          FORCE_FAIL: ${{ inputs.force_fail_verify }}
+
+      - name: Roll back to the previous version
+        id: rollback
+        # Runs only when something after the snapshot failed. Guarded on the
+        # snapshot having actually captured a file — on a first deploy there is
+        # nothing to restore — and on the upload having been attempted.
+        if: ${{ failure() && !inputs.dry_run && steps.snapshot.outputs.captured == 'true' && steps.upload.outcome != 'skipped' }}
+        run: |
+          set -euo pipefail
+          echo "::error::Deploy verification failed — restoring the previous version."
+          aws s3 cp ./previous/index.html "s3://${BUCKET}/${PREFIX}index.html" \
+            --content-type 'text/html; charset=utf-8' \
+            --cache-control 'no-cache'
+          rollback_id=$(aws cloudfront create-invalidation \
+                          --distribution-id "${DIST_ID}" \
+                          --paths "/${PREFIX}*" \
+                          --query 'Invalidation.Id' --output text)
+          # Same treatment as the forward invalidation: the restore itself has
+          # already succeeded by this point, so a slow invalidation must not
+          # report the rollback as failed.
+          if aws cloudfront wait invalidation-completed \
+               --distribution-id "${DIST_ID}" --id "${rollback_id}"; then
+            echo "rolled back; invalidation ${rollback_id} completed"
+          else
+            echo "::warning::rolled back, but invalidation ${rollback_id} did not complete within the CLI wait cap. The restored object is served no-cache, so edges revalidate against S3 regardless."
+          fi
+
+      - name: Report that rollback was not possible
+        if: ${{ failure() && !inputs.dry_run && steps.snapshot.outputs.captured != 'true' && steps.upload.outcome != 'skipped' }}
+        # Via env:, like every other value in this file — the step outcome is a
+        # GitHub-controlled enum rather than attacker input, but the rule that
+        # nothing is interpolated into a run body on a credentialed runner is
+        # worth keeping exceptionless.
+        env:
+          UPLOAD: ${{ steps.upload.outcome }}
+        run: |
+          if [ "${UPLOAD}" = "success" ]; then
+            echo "::error::Deploy failed and there was no previous version to restore (first deploy). The prefix now holds build ${REVISION}, unverified."
+          else
+            echo "::error::Deploy failed before the upload completed and there was no previous version to restore (first deploy). The prefix may hold nothing."
+          fi
+
+      - name: Summary
+        # `always()` with no dry_run condition: a dry run is precisely the run
+        # whose purpose is to show the plan, so it must produce a summary too.
+        # On a dry run the invalidate/verify/rollback steps are skipped, so
+        # their cells read `skipped`/`n/a` — which is the correct and
+        # informative answer, not a gap.
+        #
+        # Values reach the script through env:, never by interpolating ${{ }}
+        # into the body. github.ref_name is attacker-influenced — git permits
+        # `$`, `(` and `)` in ref names — and this step runs with if: always()
+        # on a runner holding credentials for two production prefixes.
+        if: ${{ always() }}
+        env:
+          REF: ${{ github.ref_name }}
+          MODE: ${{ inputs.dry_run && 'dry run (nothing uploaded)' || 'deploy' }}
+          INVALIDATION: ${{ steps.invalidate.outputs.invalidation }}
+          VERIFY: ${{ steps.verify.outcome }}
+          ROLLBACK: ${{ steps.rollback.outcome }}
+        run: |
+          {
+            echo "### Banana Split web app deploy"
+            echo ""
+            echo "| field | value |"
+            echo "|---|---|"
+            echo "| mode | ${MODE} |"
+            echo "| build | \`${REVISION}\` |"
+            echo "| ref | \`${REF}\` |"
+            echo "| target | \`s3://${BUCKET}/${PREFIX}index.html\` |"
+            echo "| url | ${BASE_URL} |"
+            echo "| invalidation | \`${INVALIDATION:-n/a}\` |"
+            echo "| verify | ${VERIFY:-did not run} |"
+            echo "| rollback | ${ROLLBACK:-did not run} |"
+          } >> "$GITHUB_STEP_SUMMARY"

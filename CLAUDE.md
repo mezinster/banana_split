@@ -126,4 +126,38 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 
 ### Deployment
 
-**Web app to S3:** Download `banana-split-web-X.Y.Z.html` from GitHub Release, upload as `index.html` to an S3 bucket with static website hosting enabled. The HTML file is fully self-contained (all JS/CSS inlined) — no other assets needed.
+**Web app to S3:** deployed by the manual **Deploy web app** workflow
+(`.github/workflows/deploy-webapp.yml`) to `s3://nfcarchiver.com/banana/`,
+served at `https://nfcarchiver.com/banana/`. Two jobs: an uncredentialed build
+(lint, test, build, bundle sanity checks) and a credentialed deploy that assumes
+an AWS role via GitHub OIDC, uploads, invalidates CloudFront, verifies the live
+page carries the build's `git describe` revision, and restores the previous
+version if it does not. The deploy job refuses to run unless the `S3_PREFIX`
+variable is exactly `banana/` — the same deploy role can also write to the
+sibling app's `app/` prefix in this bucket, so changing the deploy target
+requires editing the workflow, not just the variable. Design and AWS setup:
+`docs/superpowers/specs/2026-08-01-webapp-s3-deploy-design.md`.
+
+Only `dist/index.html` is deployed. `yarn build` also emits `dist/js/*.js`,
+which `html-webpack-inline-source-plugin` has already inlined into the HTML —
+those files are dead output and must never be uploaded.
+
+The build requires `fetch-depth: 0`: `vue.config.js` stamps the bundle with
+`git describe --long --tags` and silently falls back to a short SHA without
+tags, which would break the deploy's revision check. The workflow's own revision
+step deliberately does **not** mirror that fallback — it fails the run instead.
+`vue.config.js` keeps its fallback so a local `yarn build` works in a clone with
+no tags, but the workflow must refuse what local development tolerates: a bare
+7-hex SHA is a needle that can collide with unrelated hex constants in the 1.2 MB
+bundle, letting the healthcheck wave a stale deploy through.
+
+The rollback path is exercised with the `force_fail_verify` dispatch input, which
+deploys for real and then forces verification to fail. Never exercise it by
+repointing `SITE_BASE_URL` at another application — the deploy job now asserts
+that `SITE_BASE_URL` is an https URL ending in `/${S3_PREFIX}` and refuses
+otherwise.
+
+`scripts/healthcheck.ts` (logic, unit-tested in `tests/unit/healthcheck.spec.ts`)
+and `scripts/healthcheck-cli.ts` (entry point) are compiled standalone by the
+workflow with explicit `tsc` flags — not under the project `tsconfig.json`,
+whose `"module": "esnext"` is wrong for a Node CLI.
