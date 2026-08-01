@@ -152,3 +152,163 @@ jobs:
           path: tools/
           if-no-files-found: error
           retention-days: 7
+
+  deploy:
+    name: Deploy to S3 + CloudFront
+    needs: build
+    runs-on: ubuntu-latest
+    # Zero required reviewers — this exists to pin the OIDC trust policy on
+    # `environment:production` and to restrict deploys to master.
+    environment: production
+    permissions:
+      id-token: write   # mint the OIDC token used to assume the AWS role
+      contents: read
+    env:
+      BUCKET: ${{ vars.S3_BUCKET }}
+      PREFIX: ${{ vars.S3_PREFIX }}
+      DIST_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+      BASE_URL: ${{ vars.SITE_BASE_URL }}
+      REVISION: ${{ needs.build.outputs.revision }}
+    steps:
+      - name: Download deployable site
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: site
+
+      - name: Download healthcheck tool
+        uses: actions/download-artifact@v4
+        with:
+          name: deploy-tools
+          path: tools
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check configuration is present
+        # Fail loudly and early rather than letting an empty variable turn into
+        # `s3:///` or a masked-out path deep in an upload command.
+        run: |
+          set -euo pipefail
+          missing=0
+          for v in BUCKET PREFIX DIST_ID BASE_URL REVISION; do
+            if [ -z "${!v:-}" ]; then
+              echo "::error::$v is empty — check the repository variables"
+              missing=1
+            fi
+          done
+          case "${PREFIX}" in
+            */) ;;
+            *) echo "::error::S3_PREFIX must end with a slash (got '${PREFIX}')"; missing=1 ;;
+          esac
+          [ "$missing" -eq 0 ] || exit 1
+          echo "target s3://${BUCKET}/${PREFIX} | distribution ${DIST_ID} | build ${REVISION}"
+
+      - name: Assume the AWS deploy role via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gha-banana-deploy-${{ github.run_id }}
+
+      - name: Show what would be uploaded, then stop
+        if: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          aws s3 cp ./site/index.html "s3://${BUCKET}/${PREFIX}index.html" --dryrun \
+            --content-type 'text/html; charset=utf-8' \
+            --cache-control 'no-cache'
+          echo "dry_run: nothing was uploaded."
+
+      - name: Snapshot the live file for rollback
+        id: snapshot
+        if: ${{ !inputs.dry_run }}
+        # `sync` rather than `cp`: a first deploy against an empty prefix must
+        # succeed, not error on a missing key.
+        run: |
+          set -euo pipefail
+          mkdir -p previous
+          aws s3 sync "s3://${BUCKET}/${PREFIX}" ./previous/ --exclude '*' --include 'index.html'
+          if [ -f ./previous/index.html ]; then
+            echo "captured=true" >> "$GITHUB_OUTPUT"
+            echo "snapshot: $(wc -c < ./previous/index.html) bytes"
+          else
+            echo "captured=false" >> "$GITHUB_OUTPUT"
+            echo "no object at s3://${BUCKET}/${PREFIX}index.html — first deploy, nothing to roll back to"
+          fi
+
+      - name: Upload the page
+        id: upload
+        if: ${{ !inputs.dry_run }}
+        # One object, fixed key. No --delete: it has no work to do here and
+        # would only add blast radius on a bucket shared with another app.
+        # Content type explicit — S3's guessing is not trusted.
+        run: |
+          set -euo pipefail
+          aws s3 cp ./site/index.html "s3://${BUCKET}/${PREFIX}index.html" \
+            --content-type 'text/html; charset=utf-8' \
+            --cache-control 'no-cache'
+
+      - name: Invalidate the prefix and wait
+        id: invalidate
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          id=$(aws cloudfront create-invalidation \
+                 --distribution-id "${DIST_ID}" \
+                 --paths "/${PREFIX}*" \
+                 --query 'Invalidation.Id' --output text)
+          echo "invalidation=${id}" >> "$GITHUB_OUTPUT"
+          echo "created invalidation ${id} for /${PREFIX}*"
+          # The healthcheck must not run before propagation finishes, or it
+          # would test the old edge copy and trigger a spurious rollback.
+          aws cloudfront wait invalidation-completed \
+            --distribution-id "${DIST_ID}" --id "${id}"
+          echo "invalidation ${id} completed"
+
+      - name: Verify the live site serves this build
+        id: verify
+        if: ${{ !inputs.dry_run }}
+        run: node tools/healthcheck-cli.js "${BASE_URL}" "${REVISION}"
+
+      - name: Roll back to the previous version
+        # Runs only when something after the snapshot failed. Guarded on the
+        # snapshot having actually captured a file — on a first deploy there is
+        # nothing to restore — and on the upload having been attempted.
+        if: ${{ failure() && !inputs.dry_run && steps.snapshot.outputs.captured == 'true' && steps.upload.outcome != 'skipped' }}
+        run: |
+          set -euo pipefail
+          echo "::error::Deploy verification failed — restoring the previous version."
+          aws s3 cp ./previous/index.html "s3://${BUCKET}/${PREFIX}index.html" \
+            --content-type 'text/html; charset=utf-8' \
+            --cache-control 'no-cache'
+          rollback_id=$(aws cloudfront create-invalidation \
+                          --distribution-id "${DIST_ID}" \
+                          --paths "/${PREFIX}*" \
+                          --query 'Invalidation.Id' --output text)
+          aws cloudfront wait invalidation-completed \
+            --distribution-id "${DIST_ID}" --id "${rollback_id}"
+          echo "rolled back; invalidation ${rollback_id} completed"
+
+      - name: Report that rollback was not possible
+        if: ${{ failure() && !inputs.dry_run && steps.snapshot.outputs.captured != 'true' && steps.upload.outcome != 'skipped' }}
+        run: |
+          echo "::error::Deploy failed and there was no previous version to restore (first deploy). The prefix now holds build ${REVISION}, unverified."
+
+      - name: Summary
+        if: ${{ always() && !inputs.dry_run }}
+        run: |
+          {
+            echo "### Banana Split web app deploy"
+            echo ""
+            echo "| field | value |"
+            echo "|---|---|"
+            echo "| build | \`${REVISION}\` |"
+            echo "| ref | \`${{ github.ref_name }}\` |"
+            echo "| target | \`s3://${BUCKET}/${PREFIX}index.html\` |"
+            echo "| url | ${BASE_URL} |"
+            echo "| invalidation | \`${{ steps.invalidate.outputs.invalidation || 'n/a' }}\` |"
+            echo "| verify | ${{ steps.verify.outcome || 'did not run' }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
