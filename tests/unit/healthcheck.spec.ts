@@ -3,7 +3,7 @@
  */
 import * as http from "http";
 import { AddressInfo } from "net";
-import { checkOnce, healthcheck } from "../../scripts/healthcheck";
+import { checkOnce, healthcheck, USER_AGENT } from "../../scripts/healthcheck";
 
 interface StubResponse {
   status: number;
@@ -18,12 +18,15 @@ describe("healthcheck", () => {
   let responses: StubResponse[];
   let hits: number;
   let baseUrl: string;
+  let lastHeaders: http.IncomingHttpHeaders;
 
   beforeEach(async () => {
     hits = 0;
     responses = [];
+    lastHeaders = {};
     server = http.createServer((_req, res) => {
       // Serve each queued response once, then repeat the last one forever.
+      lastHeaders = _req.headers;
       const index = hits < responses.length ? hits : responses.length - 1;
       hits += 1;
       // eslint-disable-next-line security/detect-object-injection
@@ -53,6 +56,24 @@ describe("healthcheck", () => {
 
     expect(result.failures).toEqual([]);
     expect(result.ok).toBe(true);
+  });
+
+  it("identifies itself with a User-Agent on every request", async () => {
+    responses = [
+      {
+        status: 200,
+        contentType: "text/html; charset=utf-8",
+        body: "<html>build " + REVISION + "</html>"
+      }
+    ];
+
+    await checkOnce(baseUrl, REVISION);
+
+    // Node's http/https send no User-Agent by default, and WAF rulesets such as
+    // AWSManagedRulesCommonRuleSet reject that with a 403 — which once caused
+    // this healthcheck to roll back two good deploys.
+    expect(lastHeaders["user-agent"]).toBe(USER_AGENT);
+    expect(lastHeaders["cache-control"]).toBe("no-cache");
   });
 
   it("fails when the served page carries an older revision", async () => {
