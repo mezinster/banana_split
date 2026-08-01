@@ -203,6 +203,10 @@ jobs:
             */) ;;
             *) echo "::error::S3_PREFIX must end with a slash (got '${PREFIX}')"; missing=1 ;;
           esac
+          case "${PREFIX}" in
+            banana/) ;;
+            *) echo "::error::refusing to deploy to prefix '${PREFIX}' — this workflow only deploys to banana/"; missing=1 ;;
+          esac
           [ "$missing" -eq 0 ] || exit 1
           echo "target s3://${BUCKET}/${PREFIX} | distribution ${DIST_ID} | build ${REVISION}"
 
@@ -295,10 +299,18 @@ jobs:
       - name: Report that rollback was not possible
         if: ${{ failure() && !inputs.dry_run && steps.snapshot.outputs.captured != 'true' && steps.upload.outcome != 'skipped' }}
         run: |
-          echo "::error::Deploy failed and there was no previous version to restore (first deploy). The prefix now holds build ${REVISION}, unverified."
+          if [ "${{ steps.upload.outcome }}" = "success" ]; then
+            echo "::error::Deploy failed and there was no previous version to restore (first deploy). The prefix now holds build ${REVISION}, unverified."
+          else
+            echo "::error::Deploy failed before the upload completed and there was no previous version to restore (first deploy). The prefix may hold nothing."
+          fi
 
       - name: Summary
         if: ${{ always() && !inputs.dry_run }}
+        env:
+          REF: ${{ github.ref_name }}
+          INVALIDATION: ${{ steps.invalidate.outputs.invalidation }}
+          VERIFY: ${{ steps.verify.outcome }}
         run: |
           {
             echo "### Banana Split web app deploy"
@@ -306,9 +318,9 @@ jobs:
             echo "| field | value |"
             echo "|---|---|"
             echo "| build | \`${REVISION}\` |"
-            echo "| ref | \`${{ github.ref_name }}\` |"
+            echo "| ref | \`${REF}\` |"
             echo "| target | \`s3://${BUCKET}/${PREFIX}index.html\` |"
             echo "| url | ${BASE_URL} |"
-            echo "| invalidation | \`${{ steps.invalidate.outputs.invalidation || 'n/a' }}\` |"
-            echo "| verify | ${{ steps.verify.outcome || 'did not run' }} |"
+            echo "| invalidation | \`${INVALIDATION:-n/a}\` |"
+            echo "| verify | ${VERIFY:-did not run} |"
           } >> "$GITHUB_STEP_SUMMARY"
