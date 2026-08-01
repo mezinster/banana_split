@@ -2,6 +2,10 @@
 node_modules
 /dist
 
+# deploy pipeline staging directories
+/site
+/tools
+
 # local env files
 .env.local
 .env.*.local
