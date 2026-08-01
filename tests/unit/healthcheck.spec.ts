@@ -96,6 +96,19 @@ describe("healthcheck", () => {
     expect(result.failures.join(" ")).toContain("application/xml");
   });
 
+  it("collects every failure in one pass rather than stopping at the first", async () => {
+    responses = [
+      { status: 500, contentType: "application/xml", body: "<Error/>" }
+    ];
+
+    const result = await checkOnce(baseUrl, REVISION);
+
+    expect(result.ok).toBe(false);
+    expect(result.failures.length).toBe(2);
+    expect(result.failures.join(" ")).toContain("500");
+    expect(result.failures.join(" ")).toContain("application/xml");
+  });
+
   it("retries a stale edge and passes once the new build appears", async () => {
     responses = [
       {

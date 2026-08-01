@@ -23,6 +23,7 @@ export interface FetchedPage {
   body: string;
 }
 
+// eslint-disable-next-line no-unused-vars
 export type Fetcher = (url: string) => Promise<FetchedPage>;
 
 export interface CheckResult {
@@ -34,6 +35,7 @@ export interface HealthcheckOptions {
   attempts?: number;
   firstDelayMs?: number;
   fetcher?: Fetcher;
+  // eslint-disable-next-line no-unused-vars
   sleep?: (ms: number) => Promise<void>;
 }
 
@@ -134,8 +136,11 @@ export async function healthcheck(
       return last;
     }
     if (attempt < attempts) {
+      // eslint-disable-next-line no-console
       console.error("attempt " + attempt + "/" + attempts + " failed:");
+      // eslint-disable-next-line no-console
       last.failures.forEach(failure => console.error("  - " + failure));
+      // eslint-disable-next-line no-console
       console.error("retrying in " + delay + "ms");
       await sleep(delay);
       delay *= 2;
