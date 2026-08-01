@@ -219,9 +219,18 @@ Compiled standalone with explicit flags (`--module commonjs --target es2019`)
 rather than under the project `tsconfig.json`, whose `"module": "esnext"` is
 wrong for a Node CLI.
 
-`node tools/healthcheck.js <baseUrl> <expectedRevision>`, run after invalidation
-completes, against the **public domain** — exercising DNS → CloudFront → S3
-rather than just the origin:
+Split into two files. `scripts/healthcheck.ts` holds the logic and is
+**side-effect free** — importing it performs no I/O and never reads
+`process.argv`, so the test file gets the functions with nothing else running.
+`scripts/healthcheck-cli.ts` is a trivial entry point that parses arguments and
+sets the exit code. This avoids a `require.main === module` guard, whose
+behaviour depends on the module system the file happens to be compiled under —
+and this project compiles the same source two ways (ts-jest for tests, explicit
+`tsc` flags for the workflow).
+
+`node tools/healthcheck-cli.js <baseUrl> <expectedRevision>`, run after
+invalidation completes, against the **public domain** — exercising DNS →
+CloudFront → S3 rather than just the origin:
 
 1. `GET https://nfcarchiver.com/banana/` → 200
 2. `content-type` starts with `text/html`
@@ -438,11 +447,12 @@ question is not reopened.
 | # | File | Change |
 |---|---|---|
 | 1 | `.github/workflows/deploy-webapp.yml` | new — the pipeline |
-| 2 | `scripts/healthcheck.ts` | new — post-deploy verification |
-| 3 | `tests/unit/healthcheck.spec.ts` | new — 5 cases against a local server stub |
-| 4 | `.gitignore` | ignore the `site/` and `tools/` staging directories |
-| 5 | `README.md` | document the deploy workflow and the setup values |
-| 6 | `CLAUDE.md` | note the pipeline in the web app section; correct the manual-upload deployment note |
+| 2 | `scripts/healthcheck.ts` | new — post-deploy verification logic, side-effect free |
+| 3 | `scripts/healthcheck-cli.ts` | new — command-line entry point |
+| 4 | `tests/unit/healthcheck.spec.ts` | new — 5 cases against a local server stub |
+| 5 | `.gitignore` | ignore the `site/` and `tools/` staging directories |
+| 6 | `README.md` | document the deploy workflow and the setup values |
+| 7 | `CLAUDE.md` | note the pipeline in the web app section; correct the manual-upload deployment note |
 
 ## Testing strategy
 
