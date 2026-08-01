@@ -82,7 +82,10 @@ jobs:
         # touched. Check 3 is load-bearing: if html-webpack-inline-source-plugin
         # ever silently stops inlining, the build still "succeeds" but emits an
         # index.html referencing dist/js/*.js — files this workflow deliberately
-        # does not upload — and production would serve a blank page.
+        # does not upload — and production would serve a blank page. The pattern
+        # must match root-relative paths (src="/js/...") too, since Vue CLI's
+        # default publicPath is "/" — a bare "js/" or "./js/" prefix is not the
+        # only shape a failed inline can take.
         run: |
           set -euo pipefail
           f=dist/index.html
@@ -93,9 +96,9 @@ jobs:
             exit 1
           }
 
-          if grep -qE '(src|href)="(\./)?(js|css)/' "$f"; then
+          if grep -qE '(src|href)="[^"]*\.(js|css)"' "$f"; then
             echo "::error::$f references external assets — the inline-source plugin did not inline them"
-            grep -oE '(src|href)="(\./)?(js|css)/[^"]*"' "$f" | sort -u
+            grep -oE '(src|href)="[^"]*\.(js|css)"' "$f" | sort -u
             exit 1
           fi
 
