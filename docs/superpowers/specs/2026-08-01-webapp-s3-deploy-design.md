@@ -403,7 +403,18 @@ empty prefix, decides every file needs uploading, then 403s on `PutObject`.
 either repository's `production` environment can write to both prefixes. A second
 role would isolate them. Recorded, not relitigated.
 
-### 3. Two pre-flight checks — blocking the first real deploy
+### 3. Two pre-flight checks — RESOLVED 2026-08-01
+
+**Status: both confirmed by the operator; neither blocks the first deploy.**
+`/banana/` resolves to `/banana/index.html`, exactly as `/app/` does, so check
+(b) passes. The IAM trust and permission policy changes below have been applied.
+The `production` environment restricts deployments to `master`. The distribution
+has **no custom error pages**, which matters for the healthcheck: a missing key
+returns a genuine 403/404 rather than a 200 carrying an error document, so the
+healthcheck's status and content-type checks mean what they say.
+
+The reasoning is retained below for the next person who adds a prefix to this
+bucket — the checks are not obsolete, they are answered for `banana/`.
 
 Both concern layers *outside* this role's policy, and both produce the same
 symptom — "the deploy succeeded and the page is broken" — so they must be checked
