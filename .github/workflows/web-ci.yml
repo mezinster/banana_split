@@ -1,23 +1,73 @@
 name: Web App CI
 
+# No workflow-level `paths:` / `paths-ignore:` filter, deliberately. A workflow
+# filtered out that way never reports its checks at all, so the moment any of
+# these jobs becomes a required status check, every Flutter-only PR would sit
+# forever on "Expected — waiting for status". A job skipped by `if:` still posts
+# its check run with conclusion "skipped", which rulesets accept. Scoping is
+# therefore done per job, against the `changes` job below.
 on:
   push:
     branches: [master]
-    paths-ignore:
-      - 'banana_split_flutter/**'
-      - '.github/workflows/flutter-*'
   pull_request:
     branches: [master]
-    paths-ignore:
-      - 'banana_split_flutter/**'
-      - '.github/workflows/flutter-*'
   schedule:
     - cron: '30 23 * * 5'
 
 jobs:
+  changes:
+    name: Detect changed areas
+    runs-on: ubuntu-latest
+    outputs:
+      webapp: ${{ steps.filter.outputs.webapp }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so the base commit of the diff is present locally.
+          fetch-depth: 0
+
+      - name: Classify changed paths
+        id: filter
+        env:
+          # Interpolated into the environment, not into the script body.
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+
+          # Branch creation, a force-pushed base, or a scheduled run means we
+          # cannot tell what changed. Fail open and run everything — a wasted
+          # run costs minutes, a wrongly skipped one ships untested code.
+          if [ -z "$BASE_SHA" ] || ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            echo "Base commit unavailable ($BASE_SHA) — running all jobs."
+            echo "webapp=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Three-dot: diff against the merge base, so commits that landed on
+          # master after this PR opened are not counted as our changes.
+          files=$(git diff --name-only "${BASE_SHA}...${HEAD_SHA}")
+          echo "Changed files:"
+          echo "$files" | sed 's/^/  /'
+
+          webapp=false
+
+          # This workflow appears in the set: a change to the pipeline must be
+          # validated by every job the pipeline runs. deploy-webapp.yml builds
+          # and healthchecks the same bundle, and compiles scripts/healthcheck*.
+          if grep -qE '^(src|public|tests|scripts)/|^(package\.json|yarn\.lock|vue\.config\.js|jest\.config\.js|tsconfig\.json|playwright\.config\.ts|\.babelrc|\.eslintrc\.js|\.nvmrc)$|^\.github/workflows/(web-ci|deploy-webapp)\.yml$' <<< "$files"; then
+            webapp=true
+          fi
+
+          echo "webapp=$webapp" >> "$GITHUB_OUTPUT"
+          echo "webapp=\`$webapp\`" >> "$GITHUB_STEP_SUMMARY"
+
   lint-and-test:
     name: Lint & Unit Tests
     runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.webapp == 'true'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,7 +93,8 @@ jobs:
 
   e2e-test:
     name: E2E Tests
-    needs: lint-and-test
+    needs: [changes, lint-and-test]
+    if: needs.changes.outputs.webapp == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -74,6 +125,8 @@ jobs:
   codeql:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.webapp == 'true'
     permissions:
       actions: read
       contents: read
@@ -93,6 +146,8 @@ jobs:
   trivy:
     name: Trivy Vulnerability Scan
     runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.webapp == 'true'
     permissions:
       actions: read
       contents: read
