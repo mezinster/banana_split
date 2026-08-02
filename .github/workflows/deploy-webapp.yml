@@ -136,7 +136,7 @@ jobs:
         run: |
           set -euo pipefail
           npx tsc scripts/healthcheck.ts scripts/healthcheck-cli.ts \
-            --outDir tools --module commonjs --target es2019 \
+            --outDir healthcheck-dist --module commonjs --target es2019 \
             --strict --esModuleInterop --skipLibCheck
 
       - name: Verify the compiled healthcheck starts
@@ -154,7 +154,7 @@ jobs:
         run: |
           set -uo pipefail
           code=0
-          node tools/healthcheck-cli.js >/dev/null 2>&1 || code=$?
+          node healthcheck-dist/healthcheck-cli.js >/dev/null 2>&1 || code=$?
           if [ "$code" -ne 2 ]; then
             echo "::error::compiled healthcheck did not start correctly (exit ${code}, want 2)"
             exit 1
@@ -175,7 +175,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: deploy-tools
-          path: tools/
+          path: healthcheck-dist/
           if-no-files-found: error
           retention-days: 7
 
@@ -206,7 +206,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: deploy-tools
-          path: tools
+          path: healthcheck-dist
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -328,9 +328,9 @@ jobs:
           set -euo pipefail
           if [ "${FORCE_FAIL}" = "true" ]; then
             echo "::warning::force_fail_verify is set — using a revision that cannot match, to exercise rollback"
-            node tools/healthcheck-cli.js "${BASE_URL}" "force-fail-verify-no-such-revision"
+            node healthcheck-dist/healthcheck-cli.js "${BASE_URL}" "force-fail-verify-no-such-revision"
           else
-            node tools/healthcheck-cli.js "${BASE_URL}" "${REVISION}"
+            node healthcheck-dist/healthcheck-cli.js "${BASE_URL}" "${REVISION}"
           fi
         env:
           FORCE_FAIL: ${{ inputs.force_fail_verify }}
