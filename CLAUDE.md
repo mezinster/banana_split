@@ -112,9 +112,40 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 
 ### CI/CD
 
-- **Flutter CI** (`.github/workflows/flutter-ci.yml`): Analyze + test on push/PR (scoped to `banana_split_flutter/`). On-demand debug APK and release Windows builds via `workflow_dispatch`.
+- **Flutter CI** (`.github/workflows/flutter-ci.yml`): Analyze + test, plus store-metadata validation. On-demand debug APK and release Windows builds via `workflow_dispatch`.
 - **Release** (`.github/workflows/release.yml`): Triggered by tag push (`v*.*.*`) or manual dispatch. Builds Android (APK + AAB), Windows (zip), and Web (single HTML file) in parallel. Creates GitHub Release with all artifacts and checksums.
-- **Web App CI** (`.github/workflows/web-ci.yml`): Lint, unit tests, E2E tests, CodeQL, Trivy scan. Skips Flutter-only changes via `paths-ignore`.
+- **Web App CI** (`.github/workflows/web-ci.yml`): Lint, unit tests, E2E tests, CodeQL, Trivy scan.
+
+**Path scoping.** Both CI workflows run on every push/PR and scope themselves
+per job with `if: needs.changes.outputs.<area> == 'true'`, never with a
+workflow-level `paths:` / `paths-ignore:` filter. This is deliberate: a workflow
+excluded by `paths:` never reports its checks at all, so any job that is a
+required status check would leave unrelated PRs stuck on "Expected — waiting for
+status" forever. A job skipped by `if:` still posts a check run with conclusion
+`skipped`, which rulesets accept. The `changes` job diffs three-dot against the
+merge base and **fails open** — an unavailable base commit (branch creation,
+force-push, scheduled run, manual dispatch) runs everything. Changing a
+classifier regex is a correctness change: it can silently stop testing an area.
+
+The Windows build runners are pinned to `windows-2022`. Flutter 3.24.5 cannot
+detect Visual Studio on the image `windows-latest` now resolves to and falls
+back to the VS 2019 CMake generator. Unpin only alongside a `FLUTTER_VERSION`
+bump — and note F-Droid greps `FLUTTER_VERSION` out of `release.yml`, so that
+bump reaches the F-Droid build too.
+
+`release.yml` refuses to release a version the committed `pubspec.yaml`
+disagrees with. The build jobs rewrite pubspec from the tag, so artifacts are
+always correctly versioned — which is exactly what hid the v0.8.4 failure, where
+the release shipped as `0.8.4+364` while the committed pubspec still read
+`0.8.3+3` and F-Droid, which parses the committed file, never saw the update.
+
+**Store metadata** (`tools/validate_store_metadata.py`, run by Flutter CI on
+`fastlane/`, `fdroid/`, `tools/`, `pubspec.yaml`, and `lib/l10n/` changes):
+checks the F-Droid recipe parses and pins full 40-char commits, that every
+fastlane locale has title/short/full description, that a changelog exists for
+the current `versionCode` in every locale and fits F-Droid's 500-char limit, and
+that **every `app_<locale>.arb` has a matching store listing** — the check that
+catches shipping a language with no store page. Run it locally the same way.
 
 ### F-Droid
 

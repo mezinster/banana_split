@@ -4,13 +4,14 @@ node_modules
 
 # Deploy pipeline staging directories, both build output of
 # .github/workflows/deploy-webapp.yml:
-#   /site   — the single dist/index.html staged for upload
-#   /tools  — the compiled healthcheck (tsc output of scripts/healthcheck*.ts)
-# `/tools` is a generic name. If a real, source-controlled tools/ directory is
-# ever added to this repo it would be silently ignored by this line — change
-# the compiler's --outDir instead of deleting the rule.
+#   /site             — the single dist/index.html staged for upload
+#   /healthcheck-dist — compiled healthcheck (tsc output of scripts/healthcheck*.ts)
+# This was `/tools`, whose generic name would have silently ignored the real,
+# source-controlled tools/ directory that now holds the store-metadata
+# validator. Per the note that used to live here, the compiler's --outDir was
+# repointed rather than the rule deleted. Keep this name specific.
 /site
-/tools
+/healthcheck-dist
 
 # local env files
 .env.local

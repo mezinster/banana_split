@@ -68,6 +68,32 @@ jobs:
           echo "Build Number: ${BUILD_NUMBER}"
           echo "Branch: ${BRANCH}"
 
+      # The build jobs below rewrite pubspec.yaml from VERSION+BUILD_NUMBER, so
+      # the artifacts are correctly versioned no matter what is committed. That
+      # is exactly what made this failure invisible for v0.8.4: the release
+      # shipped as 0.8.4+364 while the committed pubspec still read 0.8.3+3.
+      # F-Droid's UpdateCheckData parses the *committed* pubspec, so it never
+      # saw a new versionCode and could not offer the update to anyone.
+      - name: Refuse to release a version the committed pubspec disagrees with
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          pubspec_version="$(sed -n -E 's/^version:[[:space:]]*([^+]+)\+([0-9]+)[[:space:]]*$/\1/p' banana_split_flutter/pubspec.yaml)"
+          pubspec_code="$(sed -n -E 's/^version:[[:space:]]*([^+]+)\+([0-9]+)[[:space:]]*$/\2/p' banana_split_flutter/pubspec.yaml)"
+
+          if [ -z "$pubspec_version" ] || [ -z "$pubspec_code" ]; then
+            echo "::error::banana_split_flutter/pubspec.yaml has no 'version: <name>+<code>' line"
+            exit 1
+          fi
+
+          echo "committed pubspec: ${pubspec_version}+${pubspec_code} | releasing: ${VERSION}"
+
+          if [ "$pubspec_version" != "$VERSION" ]; then
+            echo "::error::Releasing ${VERSION} but the committed pubspec.yaml says ${pubspec_version}+${pubspec_code}. F-Droid reads the committed pubspec to detect releases, so it would never offer this build. Bump banana_split_flutter/pubspec.yaml (version AND the +versionCode) and commit before releasing."
+            exit 1
+          fi
+
   test:
     name: Run Tests
     runs-on: ubuntu-latest
