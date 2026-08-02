@@ -214,7 +214,14 @@ jobs:
   build-windows:
     name: Build Windows
     needs: [version, test]
-    runs-on: windows-latest
+    # Pinned, not windows-latest. Flutter 3.24.5 locates Visual Studio with a
+    # vswhere query that finds nothing on the image windows-latest now points
+    # at; it then falls back to the "Visual Studio 16 2019" CMake generator and
+    # fails with "could not find any instance of Visual Studio". v0.8.4 built
+    # here fine on 2026-05-26, so this is runner-image drift, not a code change.
+    # Unpin only together with a FLUTTER_VERSION bump — and note F-Droid greps
+    # FLUTTER_VERSION out of this file, so that bump reaches the F-Droid build.
+    runs-on: windows-2022
     defaults:
       run:
         working-directory: banana_split_flutter
