@@ -70,7 +70,7 @@ Builds:
 
   - versionName: 0.8.5
     versionCode: 4
-    commit: df7464f3a88d900745367f47865e9bc90f5b541c
+    commit: ee9308a556bc5201364fb5d6dbc48894147bcaf6
     subdir: banana_split_flutter
     sudo:
       - echo "deb https://deb.debian.org/debian bookworm main" > /etc/apt/sources.list.d/bookworm.list
