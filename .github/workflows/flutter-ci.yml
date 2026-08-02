@@ -90,7 +90,9 @@ jobs:
     name: Build Windows
     needs: analyze-and-test
     if: github.event_name == 'workflow_dispatch' && inputs.build_windows
-    runs-on: windows-latest
+    # Pinned for the same reason as release.yml's build-windows job: Flutter
+    # 3.24.5 cannot detect Visual Studio on the current windows-latest image.
+    runs-on: windows-2022
     defaults:
       run:
         working-directory: banana_split_flutter
