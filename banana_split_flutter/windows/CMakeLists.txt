@@ -53,6 +53,28 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 add_subdirectory("runner")
 
 
+# Workaround for Baseflow/flutter-permission-handler#1534.
+#
+# permission_handler_windows passes the legacy /await flag in its own
+# windows/CMakeLists.txt even though it already requests cxx_std_20. That drags
+# in <experimental/coroutine>, which the MSVC 14.51 STL shipped with VS 18
+# hard-errors on (STL1011), so the plugin cannot compile on the current
+# windows-latest runner image.
+#
+# The upstream fix is to delete that one line — reported 2026-05-21, root cause
+# identified 2026-05-24, still unreleased as of permission_handler_windows
+# 0.2.2 (2026-07-31). Until then this suppression lets the plugin build.
+#
+# Must precede generated_plugins.cmake: the plugin targets are created there.
+#
+# This is deliberately temporary. It silences a deprecation whose own text says
+# the headers "will be REMOVED SOON" — when MSVC actually removes them the
+# suppression stops working and the plugin breaks for everyone, which is what
+# will force the upstream fix. Drop this block once the plugin no longer passes
+# /await; verify with a `flutter-ci` workflow_dispatch (build_windows=true),
+# because PR CI never runs the Windows job.
+add_compile_definitions(_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
+
 # Generated plugin build rules, which manage building the plugins and adding
 # them to the application.
 include(flutter/generated_plugins.cmake)
