@@ -246,12 +246,23 @@ jobs:
   build-windows:
     name: Build Windows
     needs: [version, test]
-    # Unpinned again as of Flutter 3.44.8. This was pinned to windows-2022
-    # because Flutter 3.24.5 could not locate Visual Studio on the image
-    # windows-latest points at, falling back to the "Visual Studio 16 2019"
-    # CMake generator and failing. Removing that pin was the concrete payoff of
-    # the SDK bump; re-pin only if a runner image regresses again.
-    runs-on: windows-latest
+    # Still pinned, but for a different reason than before.
+    #
+    # Originally: Flutter 3.24.5 could not locate Visual Studio on the current
+    # windows-latest image and fell back to the VS 2019 CMake generator. The
+    # 3.44.8 bump fixed that — VS is now found correctly.
+    #
+    # Now: windows-latest ships VS 18 / MSVC 14.51, whose STL hard-errors on
+    # <experimental/coroutine> (STL1011). permission_handler_windows passes the
+    # legacy `/await` flag in its own CMakeLists, so it cannot compile there:
+    #   error C2338: static assertion failed: 'error STL1011: ... /await ...'
+    # This is upstream, not ours, and 0.2.2 (2026-07-31, latest) still does it.
+    #
+    # Unpin once permission_handler_windows drops `/await` for C++20
+    # <coroutine>. Verify with a `flutter-ci` workflow_dispatch on a branch
+    # (build_windows=true) — PR CI never runs this job, so a green PR says
+    # nothing about it.
+    runs-on: windows-2022
     defaults:
       run:
         working-directory: banana_split_flutter
