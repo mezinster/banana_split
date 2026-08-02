@@ -114,7 +114,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'
+          flutter-version: '3.44.8'
           channel: stable
           cache: true
 
@@ -146,7 +146,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'
+          flutter-version: '3.44.8'
           channel: stable
           cache: true
 
@@ -182,7 +182,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'
+          flutter-version: '3.44.8'
           channel: stable
           cache: true
 
@@ -207,9 +207,9 @@ jobs:
     name: Build Windows
     needs: analyze-and-test
     if: github.event_name == 'workflow_dispatch' && inputs.build_windows
-    # Pinned for the same reason as release.yml's build-windows job: Flutter
-    # 3.24.5 cannot detect Visual Studio on the current windows-latest image.
-    runs-on: windows-2022
+    # Unpinned again as of Flutter 3.44.8 — see the note in release.yml's
+    # build-windows job.
+    runs-on: windows-latest
     defaults:
       run:
         working-directory: banana_split_flutter
@@ -219,7 +219,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'
+          flutter-version: '3.44.8'
           channel: stable
           cache: true
 
