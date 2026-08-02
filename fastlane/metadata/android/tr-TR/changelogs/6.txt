@@ -1,0 +1,3 @@
+• Flutter 3.44'e güncellendi — daha yeni araç zinciri, güvenlik ve kararlılık düzeltmeleri
+• Daha küçük indirme: derleme sistemi değişikliğinin ardından uygulama paketi yeniden sıkıştırılıyor
+• Uygulama özelliklerinde veya davranışında değişiklik yok
