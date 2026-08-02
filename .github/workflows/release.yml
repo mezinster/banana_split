@@ -246,23 +246,18 @@ jobs:
   build-windows:
     name: Build Windows
     needs: [version, test]
-    # Still pinned, but for a different reason than before.
+    # Unpinned. Two separate problems had to be cleared to get here:
+    #   1. Flutter 3.24.5 could not locate Visual Studio on this image and fell
+    #      back to the VS 2019 CMake generator — fixed by the 3.44.8 upgrade.
+    #   2. MSVC 14.51 hard-errors on <experimental/coroutine>, which
+    #      permission_handler_windows drags in via its legacy /await flag —
+    #      suppressed in banana_split_flutter/windows/CMakeLists.txt, see the
+    #      comment there and Baseflow/flutter-permission-handler#1534.
     #
-    # Originally: Flutter 3.24.5 could not locate Visual Studio on the current
-    # windows-latest image and fell back to the VS 2019 CMake generator. The
-    # 3.44.8 bump fixed that — VS is now found correctly.
-    #
-    # Now: windows-latest ships VS 18 / MSVC 14.51, whose STL hard-errors on
-    # <experimental/coroutine> (STL1011). permission_handler_windows passes the
-    # legacy `/await` flag in its own CMakeLists, so it cannot compile there:
-    #   error C2338: static assertion failed: 'error STL1011: ... /await ...'
-    # This is upstream, not ours, and 0.2.2 (2026-07-31, latest) still does it.
-    #
-    # Unpin once permission_handler_windows drops `/await` for C++20
-    # <coroutine>. Verify with a `flutter-ci` workflow_dispatch on a branch
-    # (build_windows=true) — PR CI never runs this job, so a green PR says
-    # nothing about it.
-    runs-on: windows-2022
+    # PR CI never runs this job, so a green PR proves nothing about it. Verify
+    # any change here with a `flutter-ci` workflow_dispatch (build_windows=true)
+    # on a branch before merging.
+    runs-on: windows-latest
     defaults:
       run:
         working-directory: banana_split_flutter

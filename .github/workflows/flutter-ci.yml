@@ -207,9 +207,8 @@ jobs:
     name: Build Windows
     needs: analyze-and-test
     if: github.event_name == 'workflow_dispatch' && inputs.build_windows
-    # Still pinned — blocked by permission_handler_windows, not by Flutter.
-    # See the note in release.yml's build-windows job.
-    runs-on: windows-2022
+    # Unpinned — see the note in release.yml's build-windows job.
+    runs-on: windows-latest
     defaults:
       run:
         working-directory: banana_split_flutter
