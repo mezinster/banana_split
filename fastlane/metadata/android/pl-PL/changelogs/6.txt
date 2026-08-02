@@ -1,0 +1,3 @@
+• Aktualizacja do Flutter 3.44 — nowsze narzędzia, poprawki bezpieczeństwa i stabilności
+• Mniejszy rozmiar pobierania: pakiet aplikacji jest ponownie kompresowany po zmianie systemu budowania
+• Bez zmian w funkcjach ani działaniu aplikacji

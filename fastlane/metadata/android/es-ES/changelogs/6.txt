@@ -1,0 +1,3 @@
+• Actualizado a Flutter 3.44: cadena de herramientas más reciente, correcciones de seguridad y estabilidad
+• Descarga más pequeña: el paquete de la aplicación vuelve a comprimirse tras un cambio en el sistema de compilación
+• Sin cambios en las funciones ni en el comportamiento de la aplicación
