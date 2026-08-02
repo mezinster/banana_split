@@ -15,6 +15,21 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
+    packaging {
+        jniLibs {
+            // AGP 8+ defaults this to false, which stores .so files uncompressed:
+            // a larger download in exchange for a smaller installed footprint and
+            // faster startup. That trade is right for Play, which re-packages the
+            // AAB into per-device splits so nobody downloads the universal APK.
+            //
+            // Our Android users get the universal APK directly, from GitHub
+            // Releases and F-Droid, so for them the trade is all cost: the
+            // release APK went from 38.5 MB to 78.8 MB on the 3.44.8 bump with
+            // no change in payload. Keep the libraries compressed.
+            useLegacyPackaging = true
+        }
+    }
+
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_1_8
     }

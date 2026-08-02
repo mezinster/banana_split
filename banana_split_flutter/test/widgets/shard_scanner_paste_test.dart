@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:banana_split_flutter/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:banana_split_flutter/state/restore_notifier.dart';
 import 'package:banana_split_flutter/widgets/shard_scanner.dart';

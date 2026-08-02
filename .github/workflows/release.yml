@@ -27,7 +27,7 @@ on:
         default: false
 
 env:
-  FLUTTER_VERSION: '3.24.5'
+  FLUTTER_VERSION: '3.44.8'
 
 jobs:
   version:
@@ -246,13 +246,22 @@ jobs:
   build-windows:
     name: Build Windows
     needs: [version, test]
-    # Pinned, not windows-latest. Flutter 3.24.5 locates Visual Studio with a
-    # vswhere query that finds nothing on the image windows-latest now points
-    # at; it then falls back to the "Visual Studio 16 2019" CMake generator and
-    # fails with "could not find any instance of Visual Studio". v0.8.4 built
-    # here fine on 2026-05-26, so this is runner-image drift, not a code change.
-    # Unpin only together with a FLUTTER_VERSION bump — and note F-Droid greps
-    # FLUTTER_VERSION out of this file, so that bump reaches the F-Droid build.
+    # Still pinned, but for a different reason than before.
+    #
+    # Originally: Flutter 3.24.5 could not locate Visual Studio on the current
+    # windows-latest image and fell back to the VS 2019 CMake generator. The
+    # 3.44.8 bump fixed that — VS is now found correctly.
+    #
+    # Now: windows-latest ships VS 18 / MSVC 14.51, whose STL hard-errors on
+    # <experimental/coroutine> (STL1011). permission_handler_windows passes the
+    # legacy `/await` flag in its own CMakeLists, so it cannot compile there:
+    #   error C2338: static assertion failed: 'error STL1011: ... /await ...'
+    # This is upstream, not ours, and 0.2.2 (2026-07-31, latest) still does it.
+    #
+    # Unpin once permission_handler_windows drops `/await` for C++20
+    # <coroutine>. Verify with a `flutter-ci` workflow_dispatch on a branch
+    # (build_windows=true) — PR CI never runs this job, so a green PR says
+    # nothing about it.
     runs-on: windows-2022
     defaults:
       run:

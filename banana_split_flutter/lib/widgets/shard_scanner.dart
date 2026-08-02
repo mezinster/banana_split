@@ -3,7 +3,7 @@ import 'dart:io' show Directory, File, Platform;
 import 'dart:typed_data';
 import 'package:camera/camera.dart' as cam;
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:banana_split_flutter/l10n/app_localizations.dart';
 import 'package:image/image.dart' as img;
 import 'package:banana_split_flutter/state/restore_notifier.dart';
 import 'package:file_picker/file_picker.dart';
