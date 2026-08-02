@@ -1,0 +1,2 @@
+• Spanish translation added — the app is now available in 8 languages
+• Spanish added to the print language picker in the web app
