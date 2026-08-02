@@ -114,7 +114,10 @@ jobs:
           cache: true
 
       - name: Get dependencies
-        run: flutter pub get
+        # Enforced so a drifted lockfile fails here rather than in F-Droid,
+        # whose Flutter template runs pub get with this flag. Safe before the
+        # version rewrite below: `version:` does not affect resolution.
+        run: flutter pub get --enforce-lockfile
 
       - name: Analyze
         run: flutter analyze
@@ -150,7 +153,10 @@ jobs:
           cache: true
 
       - name: Get dependencies
-        run: flutter pub get
+        # Enforced so a drifted lockfile fails here rather than in F-Droid,
+        # whose Flutter template runs pub get with this flag. Safe before the
+        # version rewrite below: `version:` does not affect resolution.
+        run: flutter pub get --enforce-lockfile
 
       - name: Update version in pubspec.yaml
         env:
@@ -265,7 +271,10 @@ jobs:
           cache: true
 
       - name: Get dependencies
-        run: flutter pub get
+        # Enforced so a drifted lockfile fails here rather than in F-Droid,
+        # whose Flutter template runs pub get with this flag. Safe before the
+        # version rewrite below: `version:` does not affect resolution.
+        run: flutter pub get --enforce-lockfile
 
       - name: Update version in pubspec.yaml
         env:

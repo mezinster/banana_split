@@ -90,6 +90,48 @@ jobs:
       - name: Validate F-Droid recipe and fastlane listings
         run: python3 tools/validate_store_metadata.py
 
+  fdroid-foss-lockfile:
+    name: F-Droid FOSS Lockfile
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.flutter == 'true'
+    defaults:
+      run:
+        working-directory: banana_split_flutter
+
+    # F-Droid builds a FOSS variant: its prebuild deletes mobile_scanner from
+    # pubspec.yaml before running pub get. The committed pubspec.lock still
+    # pins mobile_scanner, so honouring it is impossible by construction —
+    # `pub get --enforce-lockfile` fails with "Would change 1 dependency /
+    # Unable to satisfy `pubspec.yaml` using `pubspec.lock`". One lockfile
+    # cannot describe two different pubspecs, hence a second committed lock.
+    #
+    # Nothing else exercises this: our own CI never strips mobile_scanner, so
+    # F-Droid would be the first place it could fail — and only after a tag,
+    # which pins the failure to a commit that a master-branch fix cannot reach.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          channel: stable
+          cache: true
+
+      - name: Replicate the F-Droid FOSS prebuild
+        run: |
+          set -euo pipefail
+          sed -i -e '/mobile_scanner/d' pubspec.yaml
+          cp pubspec.lock.fdroid pubspec.lock
+          cp lib/widgets/shard_scanner.dart.fdroid lib/widgets/shard_scanner.dart
+          echo "mobile_scanner refs left in pubspec.yaml: $(grep -c mobile_scanner pubspec.yaml || true)"
+
+      - name: Resolve with the FOSS lockfile enforced
+        run: flutter pub get --enforce-lockfile
+
+      - name: Analyze the FOSS variant
+        run: flutter analyze
+
   analyze-and-test:
     name: Analyze & Test
     runs-on: ubuntu-latest
@@ -109,7 +151,11 @@ jobs:
           cache: true
 
       - name: Install dependencies
-        run: flutter pub get
+        # --enforce-lockfile: a plain `pub get` silently re-resolves, so it can
+        # never detect that pubspec.lock has drifted out of agreement with
+        # pubspec.yaml. F-Droid's canonical Flutter template runs pub get with
+        # this flag, so drift that CI tolerates fails there instead.
+        run: flutter pub get --enforce-lockfile
 
       - name: Analyze
         run: flutter analyze
@@ -141,7 +187,11 @@ jobs:
           cache: true
 
       - name: Install dependencies
-        run: flutter pub get
+        # --enforce-lockfile: a plain `pub get` silently re-resolves, so it can
+        # never detect that pubspec.lock has drifted out of agreement with
+        # pubspec.yaml. F-Droid's canonical Flutter template runs pub get with
+        # this flag, so drift that CI tolerates fails there instead.
+        run: flutter pub get --enforce-lockfile
 
       - name: Build debug APK
         run: flutter build apk --debug
@@ -174,7 +224,11 @@ jobs:
           cache: true
 
       - name: Install dependencies
-        run: flutter pub get
+        # --enforce-lockfile: a plain `pub get` silently re-resolves, so it can
+        # never detect that pubspec.lock has drifted out of agreement with
+        # pubspec.yaml. F-Droid's canonical Flutter template runs pub get with
+        # this flag, so drift that CI tolerates fails there instead.
+        run: flutter pub get --enforce-lockfile
 
       - name: Build release Windows
         run: flutter build windows --release
