@@ -41,19 +41,21 @@ void main() {
     expect(find.text('🇺🇸'), findsOneWidget);
   });
 
-  testWidgets('popup shows 6 language options', (tester) async {
+  testWidgets('popup shows all language options', (tester) async {
     await tester.pumpWidget(buildTestApp());
     await tester.pumpAndSettle();
     // Tap the flag button to open popup
     await tester.tap(find.text('🇺🇸'));
     await tester.pumpAndSettle();
-    // Should see all 6 flags with language names
+    // Should see every flag with its language name
     expect(find.text('🇺🇸 English'), findsOneWidget);
     expect(find.text('🇷🇺 Русский'), findsOneWidget);
     expect(find.text('🇹🇷 Türkçe'), findsOneWidget);
     expect(find.text('🇧🇾 Беларуская'), findsOneWidget);
     expect(find.text('🇬🇪 ქართული'), findsOneWidget);
     expect(find.text('🇺🇦 Українська'), findsOneWidget);
+    expect(find.text('🇵🇱 Polski'), findsOneWidget);
+    expect(find.text('🇪🇸 Español'), findsOneWidget);
   });
 
   testWidgets('selecting a locale updates LocaleNotifier', (tester) async {
