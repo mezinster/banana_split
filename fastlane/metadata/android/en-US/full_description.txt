@@ -17,7 +17,7 @@ To reconstruct: scan a majority of QR code shards, enter the passphrase, and you
 • Camera and gallery QR scanning with multi-file import
 • Custom or auto-generated passphrases
 • User-selectable quorum (how many shards needed)
-• 7 languages: English, Russian, Turkish, Belarusian, Georgian, Ukrainian, Polish
+• 8 languages: English, Russian, Turkish, Belarusian, Georgian, Ukrainian, Polish, Spanish
 • Cross-platform shard compatibility with the Banana Split web app
 
 <b>Security</b>

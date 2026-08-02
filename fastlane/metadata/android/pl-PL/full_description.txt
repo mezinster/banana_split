@@ -17,7 +17,7 @@ Aby odtworzyć: zeskanuj większość fragmentów QR, wprowadź hasło — sekre
 • Skanowanie QR kamerą i import z galerii z obsługą wielu plików
 • Własne lub automatycznie generowane hasło
 • Konfigurowalny próg (ile fragmentów potrzeba)
-• 7 języków: angielski, rosyjski, turecki, białoruski, gruziński, ukraiński, polski
+• 8 języków: angielski, rosyjski, turecki, białoruski, gruziński, ukraiński, polski, hiszpański
 • Kompatybilność fragmentów z aplikacją webową Banana Split
 
 <b>Bezpieczeństwo</b>

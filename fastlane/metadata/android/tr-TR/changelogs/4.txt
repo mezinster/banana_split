@@ -1,0 +1,2 @@
+• İspanyolca çeviri eklendi — uygulama artık 8 dilde kullanılabilir
+• Web uygulamasındaki yazdırma dili seçicisine İspanyolca eklendi

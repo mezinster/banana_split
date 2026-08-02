@@ -17,7 +17,7 @@ Yeniden oluşturmak için: QR kod parçalarının çoğunluğunu tarayın, parol
 • Kamera ve galeri QR tarama, çoklu dosya içe aktarma
 • Özel veya otomatik oluşturulan parola
 • Ayarlanabilir çoğunluk (kaç parça gerekli)
-• 7 dil: İngilizce, Rusça, Türkçe, Belarusça, Gürcüce, Ukraynaca, Lehçe
+• 8 dil: İngilizce, Rusça, Türkçe, Belarusça, Gürcüce, Ukraynaca, Lehçe, İspanyolca
 • Banana Split web uygulaması ile parça uyumluluğu
 
 <b>Güvenlik</b>

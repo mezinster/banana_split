@@ -132,6 +132,9 @@
             <option value="pl">
               🇵🇱
             </option>
+            <option value="es">
+              🇪🇸
+            </option>
           </select>
         </div>
         <shard-info
