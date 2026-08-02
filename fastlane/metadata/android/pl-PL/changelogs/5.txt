@@ -1,0 +1,2 @@
+• Poprawka pakowania dla F-Droid: wariant FOSS ma teraz własny plik blokady zależności, dzięki czemu jego kompilacja jest powtarzalna i weryfikowalna
+• Bez zmian w funkcjach ani działaniu aplikacji

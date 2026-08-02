@@ -1,0 +1,2 @@
+• F-Droid derlemesi için paketleme düzeltmesi: FOSS sürümü artık kendi bağımlılık kilit dosyasıyla geliyor, böylece derlemesi yeniden üretilebilir ve doğrulanabilir
+• Uygulama özelliklerinde veya davranışında değişiklik yok

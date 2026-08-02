@@ -1,0 +1,2 @@
+• Packaging fix for the F-Droid build: the FOSS variant now ships its own dependency lockfile, so its build is reproducible and verifiable
+• No changes to app features or behaviour

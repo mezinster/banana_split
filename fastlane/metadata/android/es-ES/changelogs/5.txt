@@ -1,0 +1,2 @@
+• Corrección de empaquetado para la compilación de F-Droid: la variante FOSS ahora incluye su propio archivo de bloqueo de dependencias, por lo que su compilación es reproducible y verificable
+• Sin cambios en las funciones ni en el comportamiento de la aplicación
