@@ -3,3 +3,4 @@
 • Menú de archivo: Abrir, Guardar en el dispositivo, Compartir, Eliminar
 • Mensaje claro cuando ninguna aplicación instalada puede abrir el archivo
 • Nuevo idioma: italiano
+• Menos permisos: ya no se solicita acceso al micrófono ni al almacenamiento

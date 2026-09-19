@@ -3,3 +3,4 @@
 • File menu with Open, Save to device, Share and Delete
 • Clear message when no installed app can open a file
 • New language: Italian
+• Fewer permissions: microphone and storage access are no longer requested

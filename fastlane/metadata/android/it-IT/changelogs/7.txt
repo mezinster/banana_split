@@ -3,3 +3,4 @@
 • Menu del file: Apri, Salva sul dispositivo, Condividi, Elimina
 • Messaggio chiaro quando nessuna app installata può aprire un file
 • Nuova lingua: italiano
+• Meno permessi: l'accesso al microfono e all'archiviazione non viene più richiesto

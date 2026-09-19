@@ -3,3 +3,4 @@
 • Menu pliku: Otwórz, Zapisz na urządzeniu, Udostępnij, Usuń
 • Jasny komunikat, gdy żadna aplikacja nie może otworzyć pliku
 • Nowy język: włoski
+• Mniej uprawnień: aplikacja nie prosi już o dostęp do mikrofonu i pamięci

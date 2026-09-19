@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 - **Desktop save** (Flutter): `file_picker`'s `saveFile` ignores `bytes` on desktop and only returns the chosen path, so the service writes the file itself there (and must not on mobile, where the result is a content URI).
 - **Permissions** (Android): `open_filex` would have merged `READ_EXTERNAL_STORAGE` (through API 32) and `READ_MEDIA_*` into the app, whose only storage permission is camerax's `WRITE_EXTERNAL_STORAGE` capped at API 28. All four are stripped with `tools:node="remove"`; a `VIEW` package-visibility query was added so the Open chooser is populated on Android 11+. Guarded by `test/android_manifest_test.dart`.
+- **Fewer permissions** (Android, #1): `RECORD_AUDIO` and `WRITE_EXTERNAL_STORAGE` (≤ API 28), both declared by `camera_android_camerax`, are stripped — the app never records audio (`enableAudio: false` on every `CameraController`, now asserted by a test for both scanner variants) and captures go to the cache directory. The F-Droid build now requests `CAMERA` only. `INTERNET`/`ACCESS_NETWORK_STATE` (ML Kit's `datatransport`, GitHub build only) are untouched pending a device test.
 - Both `pubspec.lock` and `pubspec.lock.fdroid` gain `open_filex` (BSD-3, FOSS) and nothing else.
 
 ## [0.9.0] - 2026-08-02
