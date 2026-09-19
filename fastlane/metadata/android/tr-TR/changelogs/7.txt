@@ -3,4 +3,4 @@
 • Dosya menüsü: Aç, Cihaza kaydet, Paylaş, Sil
 • Dosyayı açabilecek uygulama yoksa açık bir mesaj
 • Yeni dil: İtalyanca
-• Daha az izin: mikrofon ve depolama erişimi artık istenmiyor
+• Artık yalnızca kamera izni isteniyor — mikrofon, depolama veya internet erişimi yok
