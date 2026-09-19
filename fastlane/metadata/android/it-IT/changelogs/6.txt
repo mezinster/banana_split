@@ -1,0 +1,3 @@
+• Aggiornamento a Flutter 3.44 — toolchain più recente, correzioni di sicurezza e stabilità dall'upstream
+• Download più leggero: il pacchetto dell'app è di nuovo compresso dopo una modifica al sistema di build
+• Nessuna modifica alle funzionalità o al comportamento dell'app

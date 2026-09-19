@@ -1,0 +1,37 @@
+Banana Split usa la condivisione segreta di Shamir per dividere i segreti in frammenti sotto forma di codici QR. Una qualsiasi maggioranza dei frammenti può ricostruire il segreto — un numero inferiore non rivela nulla.
+
+<b>Come funziona</b>
+
+1. Inserisci il tuo segreto (ad es. una frase seme, una chiave privata, una password).
+2. Scegli quanti frammenti creare e quanti ne servono per la ricostruzione.
+3. Usa la passphrase generata automaticamente o inseriscine una tua.
+4. Banana Split crittografa il segreto con la passphrase, poi divide il testo cifrato in N codici QR con lo schema di Shamir.
+5. Stampa o salva i codici QR. Scrivi la passphrase a mano su ogni foglio.
+
+Per ricostruire: scansiona la maggioranza dei frammenti QR, inserisci la passphrase e il tuo segreto viene ripristinato.
+
+<b>Funzionalità</b>
+
+• Offline — tutta la crittografia avviene sul dispositivo, nessuna comunicazione con server
+• Salva i frammenti come PNG o PDF con pieno supporto dei caratteri Unicode
+• Scansione QR da fotocamera e galleria con importazione di più file
+• Passphrase personalizzate o generate automaticamente
+• Quorum selezionabile dall'utente (quanti frammenti servono)
+• 9 lingue: inglese, russo, turco, bielorusso, georgiano, ucraino, polacco, spagnolo, italiano
+• Frammenti compatibili tra piattaforme con l'app web Banana Split
+
+<b>Sicurezza</b>
+
+Crittografia: derivazione della chiave con scrypt + NaCl secretbox (XSalsa20-Poly1305).
+Divisione: condivisione segreta di Shamir su GF(256).
+Nessuna raccolta di dati, nessuna analisi, nessun tracciamento.
+
+<b>App web</b>
+
+Disponibile anche come app web — nessuna installazione necessaria: https://nfcarchiver.com/banana/
+I frammenti creati nell'app e nella versione web sono pienamente compatibili.
+
+<b>Open source</b>
+
+Questa app è un fork di banana_split di Parity Technologies, distribuito con licenza GPLv3.
+Codice sorgente: https://github.com/mezinster/banana_split
