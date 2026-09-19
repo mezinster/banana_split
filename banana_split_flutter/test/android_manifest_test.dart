@@ -39,6 +39,21 @@ void main() {
     });
   }
 
+  // Google datatransport (ML Kit's telemetry, via mobile_scanner) declares
+  // these to upload usage events. The app makes no network calls of its own,
+  // and without them the listing's "no server communication" is enforced by
+  // the OS rather than promised. Verified on a Pixel 8 Pro (Android 16):
+  // scanning works, and datatransport logs a warning per event and gives up.
+  for (final permission in ['INTERNET', 'ACCESS_NETWORK_STATE']) {
+    test('strips $permission merged in by ML Kit', () {
+      final removal = RegExp(
+        '<uses-permission\\s+android:name="android.permission.$permission"'
+        '\\s+tools:node="remove"\\s*/>',
+      );
+      expect(removal.hasMatch(manifest), isTrue);
+    });
+  }
+
   // camera_android_camerax declares these for video recording and for saving
   // captures to shared storage. The app does neither: it grabs still frames
   // into its cache directory to decode QR codes (issue #1).
