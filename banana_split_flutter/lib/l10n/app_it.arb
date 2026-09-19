@@ -1,0 +1,295 @@
+{
+  "@@locale": "it",
+  "appTitle": "Banana Split",
+  "tabCreate": "Crea",
+  "tabRestore": "Ripristina",
+  "tabAbout": "Informazioni",
+  "createEncrypting": "Crittografia in corso...",
+  "createTitleLabel": "Titolo",
+  "createTitleHint": "es. La mia frase seme del wallet",
+  "createSecretLabel": "Segreto",
+  "createSecretHint": "Inserisci il segreto da frammentare",
+  "createSecretTooLong": "Il segreto supera i 1024 caratteri",
+  "createSecretCharCount": "{count} / 1024 caratteri rimanenti",
+  "@createSecretCharCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "createTotalShardsLabel": "Frammenti totali",
+  "createTotalShardsHint": "3–255",
+  "createRequiredLabel": "Necessari per il ripristino",
+  "createRequiredHint": "2–{max}",
+  "@createRequiredHint": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "createQuorumHelper": "Servono {required} frammenti su {total} per il ripristino",
+  "@createQuorumHelper": {
+    "placeholders": {
+      "required": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "createGenerateButton": "Genera frammenti QR",
+  "createSavePassphrase": "Salva la tua passphrase!",
+  "createPassphraseNeeded": "Questa passphrase ti servirà per ripristinare il segreto.",
+  "createBack": "Indietro",
+  "createSaveAllTooltip": "Salva tutti i frammenti",
+  "createSaveAsPdf": "Salva come PDF",
+  "createSaveAsPngs": "Salva come PNG",
+  "createShareAllTooltip": "Condividi tutti i frammenti",
+  "createSavedTo": "Salvato in {path}",
+  "@createSavedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreCombineTitle": "Unisci i frammenti per \"{title}\"",
+  "@restoreCombineTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreCombineTitleDefault": "Unisci i frammenti",
+  "restoreStartOver": "Ricomincia",
+  "restoreAllCollected": "Tutti i frammenti raccolti!",
+  "restorePassphraseLabel": "Passphrase",
+  "restorePassphraseHint": "Inserisci la passphrase per decifrare",
+  "restoreReconstructButton": "Ricostruisci il segreto",
+  "restoreDecrypting": "Decifratura in corso...",
+  "restoreRecoveredSecret": "Segreto recuperato",
+  "restoreShardScanned": "Frammento {count} di {total} scansionato",
+  "@restoreShardScanned": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "scannerScanFirst": "Scansiona il primo frammento...",
+  "scannerProgress": "{count} di {total} scansionati",
+  "@scannerProgress": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "scannerNoQrFound": "Nessun codice QR trovato nell'immagine",
+  "scannerBulkResult": "{decoded} importati, {failed} non riusciti",
+  "@scannerBulkResult": {
+    "placeholders": {
+      "decoded": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "scannerCameraDenied": "Permesso della fotocamera negato.\nConcedi l'accesso alla fotocamera nelle Impostazioni, oppure importa le immagini QR qui sotto.",
+  "scannerOpenSettings": "Apri Impostazioni",
+  "scannerCameraUnavailable": "Fotocamera non disponibile.\nUsa il pulsante di importazione qui sotto per caricare le immagini dei codici QR.",
+  "scannerRetryCamera": "Riprova con la fotocamera",
+  "scannerImportGallery": "Importa dalla galleria",
+  "scannerPasteText": "Incolla testo",
+  "scannerBackToCamera": "Torna alla fotocamera",
+  "scannerPasteHint": "Incolla uno o più JSON di frammenti, uno per riga",
+  "scannerPasteSubmit": "Invia",
+  "scannerPasteEmpty": "Nessun testo da elaborare",
+  "scannerPasteAdded": "{count} frammento/i aggiunto/i",
+  "@scannerPasteAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scannerPasteFailed": "{count} riga/righe non riuscita/e",
+  "@scannerPasteFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scannerPasteDuplicate": "{count} duplicato/i",
+  "@scannerPasteDuplicate": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "passphraseTitle": "Passphrase",
+  "passphraseAutoGenerate": "Genera automaticamente",
+  "passphraseEnterManually": "Inserisci manualmente",
+  "passphraseManualHint": "Inserisci la passphrase (minimo 8 caratteri)",
+  "passphraseRegenerateTooltip": "Genera una nuova passphrase",
+  "shardLabel": "Frammento {index} di {total}",
+  "@shardLabel": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "shardSaveTooltip": "Salva questo frammento",
+  "shardShareTooltip": "Condividi questo frammento",
+  "shardSaved": "Frammento salvato",
+  "errorSaving": "Errore durante il salvataggio: {error}",
+  "@errorSaving": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSharing": "Errore durante la condivisione: {error}",
+  "@errorSharing": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorEmptyQr": "Il codice QR è vuoto.",
+  "errorDuplicateShard": "Questo frammento è già stato scansionato.",
+  "errorParseFailed": "Impossibile analizzare il frammento: {detail}",
+  "@errorParseFailed": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTitleMismatch": "Titolo non corrispondente: atteso \"{expected}\", ricevuto \"{actual}\".",
+  "@errorTitleMismatch": {
+    "placeholders": {
+      "expected": {
+        "type": "String"
+      },
+      "actual": {
+        "type": "String"
+      }
+    }
+  },
+  "errorNonceMismatch": "Nonce non corrispondente: questo frammento appartiene a un altro segreto.",
+  "errorRequiredMismatch": "Numero di frammenti richiesti non corrispondente: questo frammento appartiene a un altro insieme.",
+  "errorVersionMismatch": "Versione non corrispondente: questo frammento appartiene a un altro insieme.",
+  "errorNotEnoughShards": "Frammenti insufficienti: ne servono {required}, ne hai {got}.",
+  "@errorNotEnoughShards": {
+    "placeholders": {
+      "required": {
+        "type": "int"
+      },
+      "got": {
+        "type": "int"
+      }
+    }
+  },
+  "errorDecryptionFailed": "Impossibile decifrare il segreto. Passphrase errata o dati corrotti.",
+  "pdfShardLabel": "Frammento {index} di {total}",
+  "@pdfShardLabel": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "pdfRequiresShards": "Servono {count} frammenti per la ricostruzione",
+  "@pdfRequiresShards": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pdfPassphrasePlaceholder": "Scrivi qui la tua passphrase: ___________________________",
+  "aboutHeading": "Informazioni su Banana Split",
+  "aboutDescription": "Banana Split ti permette di dividere in modo sicuro un segreto — come una password, una frase seme o una chiave privata — in più frammenti usando lo schema di condivisione segreta di Shamir.",
+  "aboutWhatIsSss": "Cos'è la condivisione segreta di Shamir?",
+  "aboutSssExplanation": "La condivisione segreta di Shamir (SSS) è un algoritmo crittografico inventato da Adi Shamir nel 1979. Divide un segreto in N parti (frammenti) in modo che K qualsiasi di esse (la soglia) bastino a ricostruire il segreto originale, mentre K–1 frammenti o meno non rivelano nulla sul segreto.",
+  "aboutHowItWorks": "Come funziona Banana Split",
+  "aboutHowItWorksBody": "1. Inserisci un segreto e una passphrase.\n2. Il segreto viene crittografato con la tua passphrase tramite NaCl secretbox (XSalsa20-Poly1305).\n3. I dati crittografati vengono divisi in N frammenti con la condivisione segreta di Shamir su GF(256).\n4. Ogni frammento viene codificato come codice QR che puoi stampare o distribuire a custodi fidati.\n5. Per recuperare il segreto, scansioni almeno K frammenti e inserisci la passphrase. I frammenti vengono ricombinati e i dati decifrati.",
+  "aboutSecurityNotes": "Note sulla sicurezza",
+  "aboutSecurityNotesBody": "• Tutte le operazioni crittografiche avvengono sul dispositivo. Nessun dato viene mai trasmesso a un server.\n• La passphrase aggiunge un ulteriore livello di protezione: anche se un numero sufficiente di frammenti venisse compromesso, all'attaccante servirebbe comunque la passphrase per decifrare il segreto.\n• Conserva i frammenti separatamente e in luoghi fisicamente sicuri.",
+  "aboutVersion": "Versione {version} (Build {build})",
+  "@aboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutPrivacyPolicy": "Informativa sulla privacy",
+  "aboutLicenses": "Licenze open source",
+  "privacyPolicyTitle": "Informativa sulla privacy",
+  "privacyPolicyViewOnline": "Visualizza online",
+  "privacyPolicyBody": "Informativa sulla privacy di Banana Split\n\nUltimo aggiornamento: marzo 2026\n\n1. Raccolta dei dati\nBanana Split non raccoglie, conserva né trasmette alcun dato personale. Tutte le operazioni crittografiche vengono eseguite interamente sul tuo dispositivo.\n\n2. Accesso alla rete\nBanana Split non si connette ad alcun server. I tuoi segreti, le passphrase e i frammenti non lasciano mai il dispositivo, a meno che tu non li esporti o condivida esplicitamente con le funzioni di esportazione integrate.\n\n3. Accesso alla fotocamera\nBanana Split richiede l'accesso alla fotocamera esclusivamente per scansionare i codici QR che contengono i frammenti. I dati della fotocamera vengono elaborati sul dispositivo e non vengono mai registrati né trasmessi.\n\n4. Archiviazione\nI file esportati (immagini PNG, documenti PDF) vengono salvati nella memoria locale del dispositivo. Sei responsabile della gestione e della protezione di questi file.\n\n5. Servizi di terze parti\nBanana Split non integra alcun servizio di analisi, pubblicità o tracciamento di terze parti.\n\n6. Open source\nBanana Split è un software open source distribuito con licenza GNU General Public License v3.0. Il codice sorgente è disponibile su https://github.com/mezinster/banana_split.\n\n7. Contatti\nPer domande su questa informativa sulla privacy, apri una segnalazione nel repository GitHub.",
+  "tabFiles": "File",
+  "filesEmpty": "Nessun file salvato.\nCrea dei frammenti e salvali per vederli qui.",
+  "filesDeleteConfirmTitle": "Eliminare il file?",
+  "filesDeleteConfirmBody": "{filename} verrà eliminato definitivamente.",
+  "@filesDeleteConfirmBody": {
+    "placeholders": {
+      "filename": {
+        "type": "String"
+      }
+    }
+  },
+  "filesDeleteButton": "Elimina",
+  "filesCancelButton": "Annulla",
+  "filesDeleted": "File eliminato",
+  "filesOpen": "Apri",
+  "filesSaveToDevice": "Salva sul dispositivo",
+  "filesShare": "Condividi",
+  "filesSavedToDevice": "Salvato sul dispositivo",
+  "filesNoAppToOpen": "Nessuna app installata per aprire questo file",
+  "filesOpenError": "Impossibile aprire il file",
+  "filesShareError": "Errore durante la condivisione del file",
+  "filesDeleteError": "Errore durante l'eliminazione del file",
+  "aboutForkNotice": "Questa app è un fork di {repoName} di {author}.",
+  "@aboutForkNotice": {
+    "placeholders": {
+      "repoName": {
+        "type": "String"
+      },
+      "author": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutForkCopyright": "Opera originale © 2019–2020 Parity Technologies.\nQuesto fork © 2026 Evgeny Mezin.",
+  "aboutSourceCode": "Codice sorgente",
+  "aboutWebApp": "App web"
+}

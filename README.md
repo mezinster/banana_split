@@ -59,7 +59,7 @@ Native app for Android and Windows (also builds for macOS/Linux). Pure Dart impl
 **Additional features:**
 - Save shards as PNGs or PDF with full Unicode font support (Roboto + Noto Sans Georgian)
 - Files tab for browsing, sharing, and deleting saved exports
-- Language selector with 7 locales (EN, RU, TR, BE, KA, UK, PL) persisted across sessions
+- Language selector with 9 locales (EN, RU, TR, BE, KA, UK, PL, ES, IT) persisted across sessions
 - Camera and gallery QR scanning with two-stage decode
 - Custom Banana Split app icon
 

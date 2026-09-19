@@ -56,6 +56,7 @@ void main() {
     expect(find.text('🇺🇦 Українська'), findsOneWidget);
     expect(find.text('🇵🇱 Polski'), findsOneWidget);
     expect(find.text('🇪🇸 Español'), findsOneWidget);
+    expect(find.text('🇮🇹 Italiano'), findsOneWidget);
   });
 
   testWidgets('selecting a locale updates LocaleNotifier', (tester) async {

@@ -17,7 +17,7 @@ Para reconstruir: escanee una mayoría de fragmentos QR, introduzca la frase de 
 • Escaneo de QR con cámara y galería, con importación de varios archivos
 • Frases de contraseña personalizadas o generadas automáticamente
 • Quórum configurable por el usuario (cuántos fragmentos se necesitan)
-• 8 idiomas: inglés, ruso, turco, bielorruso, georgiano, ucraniano, polaco y español
+• 9 idiomas: inglés, ruso, turco, bielorruso, georgiano, ucraniano, polaco, español e italiano
 • Compatibilidad multiplataforma de fragmentos con la aplicación web de Banana Split
 
 <b>Seguridad</b>
