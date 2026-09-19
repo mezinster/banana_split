@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:banana_split_flutter/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
+
+import '../services/file_actions_service.dart';
 
 class FilesScreen extends StatefulWidget {
-  const FilesScreen({super.key});
+  const FilesScreen({super.key, this.actions});
+
+  /// Injected by tests; the real service talks to platform channels.
+  final FileActionsService? actions;
 
   @override
   State<FilesScreen> createState() => FilesScreenState();
@@ -15,6 +19,8 @@ class FilesScreen extends StatefulWidget {
 class FilesScreenState extends State<FilesScreen> with WidgetsBindingObserver {
   List<File> _files = [];
   bool _loading = true;
+  late final FileActionsService _actions =
+      widget.actions ?? FileActionsService();
 
   @override
   void initState() {
@@ -91,11 +97,43 @@ class FilesScreenState extends State<FilesScreen> with WidgetsBindingObserver {
     return '';
   }
 
+  Future<void> _openFile(File file) async {
+    final l10n = AppLocalizations.of(context)!;
+    final outcome = await _actions.openFile(file.path);
+    // A successful open says nothing: the viewer coming up is the feedback.
+    if (!mounted || outcome == OpenOutcome.opened) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          outcome == OpenOutcome.noApp
+              ? l10n.filesNoAppToOpen
+              : l10n.filesOpenError,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _exportFile(File file) async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      final saved = await _actions.exportFile(file.path);
+      // A dismissed picker says nothing; only a real save is confirmed.
+      if (!mounted || !saved) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.filesSavedToDevice)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.filesOpenError)),
+      );
+    }
+  }
+
   Future<void> _shareFile(File file) async {
     final l10n = AppLocalizations.of(context)!;
     try {
-      final mime = file.path.endsWith('.pdf') ? 'application/pdf' : 'image/png';
-      await Share.shareXFiles([XFile(file.path, mimeType: mime)]);
+      await _actions.shareFile(file.path);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -145,6 +183,19 @@ class FilesScreenState extends State<FilesScreen> with WidgetsBindingObserver {
     }
   }
 
+  PopupMenuItem<String> _menuItem(String value, IconData icon, String label) {
+    return PopupMenuItem(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 20),
+          const SizedBox(width: 12),
+          Text(label),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -188,17 +239,26 @@ class FilesScreenState extends State<FilesScreen> with WidgetsBindingObserver {
                   ? '$sizeStr · $dateStr'
                   : '$subtitle · $sizeStr · $dateStr',
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.share),
-                  onPressed: () => _shareFile(file),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline),
-                  onPressed: () => _deleteFile(file),
-                ),
+            onTap: () => _openFile(file),
+            trailing: PopupMenuButton<String>(
+              onSelected: (action) {
+                switch (action) {
+                  case 'open':
+                    _openFile(file);
+                  case 'export':
+                    _exportFile(file);
+                  case 'share':
+                    _shareFile(file);
+                  case 'delete':
+                    _deleteFile(file);
+                }
+              },
+              itemBuilder: (context) => [
+                _menuItem('open', Icons.open_in_new, l10n.filesOpen),
+                _menuItem('export', Icons.download, l10n.filesSaveToDevice),
+                _menuItem('share', Icons.share, l10n.filesShare),
+                _menuItem(
+                    'delete', Icons.delete_outline, l10n.filesDeleteButton),
               ],
             ),
           );
