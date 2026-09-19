@@ -11,6 +11,17 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" tools:node="remove" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:node="remove" />
 
+    <!-- Google datatransport (ML Kit's usage telemetry, via mobile_scanner)
+         declares INTERNET and ACCESS_NETWORK_STATE to upload events. The app
+         makes no network calls of its own (links open in the browser), so the
+         OS enforces "no server communication" instead of us promising it.
+         Verified on a Pixel 8 Pro, Android 16: ML Kit scans normally and
+         datatransport logs "Error scheduling event ConnectivityService" as a
+         warning, then gives up. The F-Droid build never had either - it
+         strips mobile_scanner. -->
+    <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
+
     <!-- open_filex merges READ_EXTERNAL_STORAGE and READ_MEDIA_* so it can open
          arbitrary shared-storage media. We only ever open our own exported
          shards through its FileProvider, which needs no permission. The only
