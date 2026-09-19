@@ -1,0 +1,5 @@
+• Kaydedilen parça dosyalarını doğrudan Dosyalar sekmesinden açın — dokunarak veya yeni menüden
+• Cihaza kaydet: PDF veya PNG dosyasını İndirilenler'e ya da istediğiniz klasöre kopyalayın, depolama izni gerekmez
+• Dosya menüsü: Aç, Cihaza kaydet, Paylaş, Sil
+• Dosyayı açabilecek uygulama yoksa açık bir mesaj
+• Yeni dil: İtalyanca

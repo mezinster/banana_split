@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.0] - 2026-09-19
+
+### Added
+
+- **Open and Save to device** (Flutter): the Files tab can now open a saved PDF/PNG in another app (tap the row) and copy it out of the app through the system save-as picker — Downloads by default on Android, **no storage permission**. On Android the exported shards live in app-private storage, so Share used to be the only way out. New `FileActionsService` with seams over `open_filex`, `file_picker` and `share_plus`; "no app installed for this type" is reported separately from other failures. 6 new strings in all 9 locales.
+- **Italian language** (Web + Flutter): web translation contributed by @albanobattistella (#20); completed with the language pickers, all 108 Flutter strings, the `it-IT` store listing and a guard test (`tests/unit/locales.spec.ts`) that fails the build when a locale is missing from any of the four places it must be wired (#22). 9 languages.
+- **File menu** (Flutter): the Files tab's two icon buttons became a menu — Open, Save to device, Share, Delete.
+
+### Changed
+
+- **Desktop save** (Flutter): `file_picker`'s `saveFile` ignores `bytes` on desktop and only returns the chosen path, so the service writes the file itself there (and must not on mobile, where the result is a content URI).
+- **Permissions** (Android): `open_filex` would have merged `READ_EXTERNAL_STORAGE` (through API 32) and `READ_MEDIA_*` into the app, whose only storage permission is camerax's `WRITE_EXTERNAL_STORAGE` capped at API 28. All four are stripped with `tools:node="remove"`; a `VIEW` package-visibility query was added so the Open chooser is populated on Android 11+. Guarded by `test/android_manifest_test.dart`.
+- Both `pubspec.lock` and `pubspec.lock.fdroid` gain `open_filex` (BSD-3, FOSS) and nothing else.
+
+## [0.9.0] - 2026-08-02
+
+### Changed
+
+- Updated to Flutter 3.44; the APK is compressed again after a build-system change. No changes to app features or behaviour.
+
 ## [0.8.2] - 2026-04-04
 
 ### Added

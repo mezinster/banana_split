@@ -14,6 +14,7 @@ Per ricostruire: scansiona la maggioranza dei frammenti QR, inserisci la passphr
 
 • Offline — tutta la crittografia avviene sul dispositivo, nessuna comunicazione con server
 • Salva i frammenti come PNG o PDF con pieno supporto dei caratteri Unicode
+• Apri i frammenti salvati in un'altra app, salvali in Download o in qualsiasi cartella, oppure condividili
 • Scansione QR da fotocamera e galleria con importazione di più file
 • Passphrase personalizzate o generate automaticamente
 • Quorum selezionabile dall'utente (quanti frammenti servono)
