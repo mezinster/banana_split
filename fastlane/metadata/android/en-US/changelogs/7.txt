@@ -1,0 +1,6 @@
+• Open a saved shard file straight from the Files tab — tap it, or use the new menu
+• Save to device: copy a PDF or PNG to Downloads or any folder, no storage permission needed
+• File menu with Open, Save to device, Share and Delete
+• Clear message when no installed app can open a file
+• New language: Italian
+• Only the camera permission is requested now — no microphone, storage or internet access

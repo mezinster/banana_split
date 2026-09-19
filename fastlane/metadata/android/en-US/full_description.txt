@@ -14,6 +14,7 @@ To reconstruct: scan a majority of QR code shards, enter the passphrase, and you
 
 • Offline — all cryptography happens on-device, no server communication
 • Save shards as PNGs or PDF with full Unicode font support
+• Open saved shards in another app, save them to Downloads or any folder, or share them
 • Camera and gallery QR scanning with multi-file import
 • Custom or auto-generated passphrases
 • User-selectable quorum (how many shards needed)

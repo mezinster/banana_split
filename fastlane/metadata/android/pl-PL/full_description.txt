@@ -14,6 +14,7 @@ Aby odtworzyć: zeskanuj większość fragmentów QR, wprowadź hasło — sekre
 
 • Offline — cała kryptografia odbywa się na urządzeniu, bez połączenia z serwerem
 • Zapisywanie fragmentów jako PNG lub PDF z obsługą czcionek Unicode
+• Otwieraj zapisane fragmenty w innej aplikacji, zapisuj je w Pobranych lub dowolnym folderze albo udostępniaj
 • Skanowanie QR kamerą i import z galerii z obsługą wielu plików
 • Własne lub automatycznie generowane hasło
 • Konfigurowalny próg (ile fragmentów potrzeba)

@@ -1,0 +1,6 @@
+• Apri un file di frammenti salvato direttamente dalla scheda File: toccalo o usa il nuovo menu
+• Salva sul dispositivo: copia un PDF o PNG in Download o in qualsiasi cartella, senza permesso di archiviazione
+• Menu del file: Apri, Salva sul dispositivo, Condividi, Elimina
+• Messaggio chiaro quando nessuna app installata può aprire un file
+• Nuova lingua: italiano
+• Ora viene richiesto solo il permesso della fotocamera: nessun accesso a microfono, archiviazione o internet

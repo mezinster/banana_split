@@ -14,6 +14,7 @@ Para reconstruir: escanee una mayoría de fragmentos QR, introduzca la frase de 
 
 • Sin conexión: toda la criptografía ocurre en el dispositivo, sin comunicación con servidores
 • Guarde los fragmentos como PNG o PDF con compatibilidad total con fuentes Unicode
+• Abra los fragmentos guardados en otra aplicación, guárdelos en Descargas o en cualquier carpeta, o compártalos
 • Escaneo de QR con cámara y galería, con importación de varios archivos
 • Frases de contraseña personalizadas o generadas automáticamente
 • Quórum configurable por el usuario (cuántos fragmentos se necesitan)

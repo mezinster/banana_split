@@ -14,6 +14,7 @@ Yeniden oluşturmak için: QR kod parçalarının çoğunluğunu tarayın, parol
 
 • Çevrimdışı — tüm kriptografi cihazda gerçekleşir, sunucu bağlantısı yok
 • Parçaları PNG veya PDF olarak kaydetme, Unicode yazı tipi desteği
+• Kaydedilen parçaları başka bir uygulamada açın, İndirilenler'e veya istediğiniz klasöre kaydedin ya da paylaşın
 • Kamera ve galeri QR tarama, çoklu dosya içe aktarma
 • Özel veya otomatik oluşturulan parola
 • Ayarlanabilir çoğunluk (kaç parça gerekli)

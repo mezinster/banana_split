@@ -1,0 +1,6 @@
+• Abra un archivo de fragmentos guardado directamente desde la pestaña Archivos: tóquelo o use el nuevo menú
+• Guardar en el dispositivo: copie un PDF o PNG a Descargas o a cualquier carpeta, sin permiso de almacenamiento
+• Menú de archivo: Abrir, Guardar en el dispositivo, Compartir, Eliminar
+• Mensaje claro cuando ninguna aplicación instalada puede abrir el archivo
+• Nuevo idioma: italiano
+• Solo se solicita el permiso de cámara: sin micrófono, almacenamiento ni internet

@@ -1,0 +1,6 @@
+• Otwieraj zapisane pliki z fragmentami prosto z karty Pliki — dotknięciem lub przez nowe menu
+• Zapis na urządzeniu: skopiuj PDF lub PNG do Pobranych albo dowolnego folderu, bez uprawnień do pamięci
+• Menu pliku: Otwórz, Zapisz na urządzeniu, Udostępnij, Usuń
+• Jasny komunikat, gdy żadna aplikacja nie może otworzyć pliku
+• Nowy język: włoski
+• Aplikacja prosi tylko o dostęp do aparatu — bez mikrofonu, pamięci i internetu
