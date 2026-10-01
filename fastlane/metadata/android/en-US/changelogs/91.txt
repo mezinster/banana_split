@@ -1,0 +1,2 @@
+• No changes on Android — this release fixes sharing in the iOS build
+• Smaller download from F-Droid since 0.10.1: one APK per processor type

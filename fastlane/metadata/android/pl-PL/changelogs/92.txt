@@ -1,0 +1,2 @@
+• Bez zmian na Androidzie — to wydanie naprawia udostępnianie w wersji na iOS
+• Od wersji 0.10.1 mniejsze pobieranie z F-Droid: osobny APK dla każdego typu procesora
