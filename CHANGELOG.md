@@ -2,7 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.10.1] - Unreleased
+## [0.10.1] - 2026-10-01
+
+### Added
+
+- **iOS** (Flutter): the app now builds for iOS from source — there is no App Store or TestFlight build. A free Apple ID is enough to install it on your own iPhone (`banana_split_flutter/README.md`); camera and photo-library prompts are localized in all 9 languages. CI compile-checks it on every Flutter change (*Build iOS (unsigned)*). The F-Droid build removes the iOS project (`rm: banana_split_flutter/ios`).
 
 ### Changed
 
