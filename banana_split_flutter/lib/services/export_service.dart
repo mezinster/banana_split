@@ -151,23 +151,30 @@ class ExportService {
     return filePath;
   }
 
+  /// [origin] anchors the iOS share sheet — see `shareOriginOf`.
   static Future<void> shareShards({
     required List<String> shardJsons,
     required String title,
+    Rect? origin,
   }) async {
     final dirPath = await saveAsPngs(shardJsons: shardJsons, title: title);
     final dir = Directory(dirPath);
     final files = await dir.list().where((f) => f.path.endsWith('.png')).toList();
     final xFiles = files.map((f) => XFile(f.path, mimeType: 'image/png')).toList();
-    await Share.shareXFiles(xFiles, subject: 'Banana Split: $title');
+    await Share.shareXFiles(xFiles,
+        subject: 'Banana Split: $title', sharePositionOrigin: origin);
   }
 
+  /// [origin] anchors the iOS share sheet — see `shareOriginOf`.
   static Future<void> shareSingleShard({
     required String shardJson,
     required String title,
     required int shardIndex,
+    Rect? origin,
   }) async {
     final path = await saveSinglePng(shardJson: shardJson, title: title, shardIndex: shardIndex);
-    await Share.shareXFiles([XFile(path, mimeType: 'image/png')], subject: 'Banana Split: $title - Shard $shardIndex');
+    await Share.shareXFiles([XFile(path, mimeType: 'image/png')],
+        subject: 'Banana Split: $title - Shard $shardIndex',
+        sharePositionOrigin: origin);
   }
 }

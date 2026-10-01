@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' show Rect;
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
@@ -19,8 +20,9 @@ typedef FileSaver = Future<String?> Function({
   Uint8List? bytes,
 });
 
-/// Seam over `Share.shareXFiles`.
-typedef FileSharer = Future<void> Function(List<XFile> files);
+/// Seam over `Share.shareXFiles`. [origin] is the share sheet's anchor, see
+/// `shareOriginOf`.
+typedef FileSharer = Future<void> Function(List<XFile> files, {Rect? origin});
 
 /// Gets exported shards out of the app's own `banana_split/` directory — on
 /// Android that is app-private storage no other app can see: open them in
@@ -58,8 +60,8 @@ class FileActionsService {
   static Future<String?> _platformSave({String? fileName, Uint8List? bytes}) =>
       FilePicker.platform.saveFile(fileName: fileName, bytes: bytes);
 
-  static Future<void> _platformShare(List<XFile> files) =>
-      Share.shareXFiles(files);
+  static Future<void> _platformShare(List<XFile> files, {Rect? origin}) =>
+      Share.shareXFiles(files, sharePositionOrigin: origin);
 
   /// The app writes PDFs and PNGs only, so the table is closed on purpose —
   /// no `mime` dependency for two extensions.
@@ -99,6 +101,10 @@ class FileActionsService {
   }
 
   /// Hand [filePath] to the system share sheet, typed.
-  Future<void> shareFile(String filePath) =>
-      _sharer([XFile(filePath, mimeType: mimeTypeFor(filePath))]);
+  ///
+  /// [origin] anchors the iOS share sheet — required on iPad and, since
+  /// iOS 26, on iPhone; see `shareOriginOf`.
+  Future<void> shareFile(String filePath, {Rect? origin}) =>
+      _sharer([XFile(filePath, mimeType: mimeTypeFor(filePath))],
+          origin: origin);
 }
