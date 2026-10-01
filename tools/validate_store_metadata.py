@@ -13,6 +13,7 @@ first one — a release checklist is more useful complete than early.
 
 import os
 import re
+import subprocess
 import sys
 
 import yaml
@@ -45,6 +46,29 @@ def read_pubspec_version():
     return None, None
 
 
+def expected_version_codes(meta, base_code):
+    """The versionCodes one release of `base_code` publishes.
+
+    Without VercodeOperation that is just the upstream code. With it — the ABI
+    split F-Droid asks Flutter apps for — each expression is applied to the
+    upstream code ('%c * 10 + 1' and friends), giving one APK, and one
+    versionCode, per ABI.
+    """
+    ops = meta.get("VercodeOperation")
+    if base_code is None:
+        return []
+    if not ops:
+        return [base_code]
+    codes = []
+    for op in ops:
+        expr = str(op).replace("%c", str(base_code))
+        if not re.fullmatch(r"[\d\s()+*-]+", expr):
+            fail("fdroid VercodeOperation '%s' is not a plain arithmetic expression" % op)
+            continue
+        codes.append(int(eval(expr, {"__builtins__": {}}, {})))  # noqa: S307 - regex-gated arithmetic
+    return codes
+
+
 def check_fdroid(version_name, version_code):
     with open(FDROID, encoding="utf-8") as fh:
         meta = yaml.safe_load(fh)
@@ -52,7 +76,7 @@ def check_fdroid(version_name, version_code):
     builds = meta.get("Builds") or []
     if not builds:
         fail("fdroid metadata has no Builds entries")
-        return
+        return []
 
     codes = [b.get("versionCode") for b in builds]
     dupes = {c for c in codes if codes.count(c) > 1}
@@ -64,23 +88,50 @@ def check_fdroid(version_name, version_code):
             if not b.get(key):
                 fail("fdroid build %s is missing '%s'" % (b.get("versionName", "?"), key))
         commit = str(b.get("commit", ""))
-        if commit and not re.fullmatch(r"[0-9a-f]{40}", commit):
+        # The release tag is accepted while the release is being prepared (the
+        # tag does not exist before it); pin the full sha once it does.
+        if (
+            commit
+            and not re.fullmatch(r"[0-9a-f]{40}", commit)
+            and commit != "v%s" % b.get("versionName")
+        ):
             fail(
-                "fdroid build %s pins commit '%s' — expected a full 40-char sha"
-                % (b.get("versionName"), commit)
+                "fdroid build %s pins commit '%s' — expected a full 40-char sha or the tag 'v%s'"
+                % (b.get("versionName"), commit, b.get("versionName"))
             )
 
     cur_code = meta.get("CurrentVersionCode")
     cur_name = str(meta.get("CurrentVersion"))
 
+    expected = expected_version_codes(meta, version_code)
+
     # F-Droid's UpdateCheckData reads the versionCode out of the committed
-    # pubspec. If CurrentVersionCode runs ahead of it, F-Droid believes it has
-    # already shipped a build that does not exist in the tree.
-    if cur_code is not None and version_code is not None and cur_code > version_code:
+    # pubspec and runs VercodeOperation over it. If CurrentVersionCode runs
+    # ahead of the highest code that yields, F-Droid believes it has already
+    # shipped a build that does not exist in the tree.
+    if cur_code is not None and expected and cur_code > max(expected):
         fail(
-            "fdroid CurrentVersionCode (%s) is ahead of pubspec versionCode (%s)"
-            % (cur_code, version_code)
+            "fdroid CurrentVersionCode (%s) is ahead of what pubspec versionCode %s yields (%s)"
+            % (cur_code, version_code, sorted(expected))
         )
+
+    # With VercodeOperation every release must carry one build entry per ABI.
+    # checkupdates copies the whole group forward at the next tag, so a group
+    # that is short one entry silently drops that ABI from the next release too.
+    if meta.get("VercodeOperation") and cur_name == version_name:
+        group = sorted(
+            b.get("versionCode") for b in builds if str(b.get("versionName")) == cur_name
+        )
+        if group != sorted(expected):
+            fail(
+                "fdroid has versionCodes %s for %s, but VercodeOperation over pubspec %s yields %s"
+                % (group, cur_name, version_code, sorted(expected))
+            )
+        if cur_code != max(expected):
+            fail(
+                "fdroid CurrentVersionCode is %s; with an ABI split it must be the highest of %s"
+                % (cur_code, sorted(expected))
+            )
 
     if cur_code is not None and cur_code not in codes:
         fail(
@@ -96,8 +147,59 @@ def check_fdroid(version_name, version_code):
                 % (cur_name, cur_code, match[0].get("versionName"))
             )
 
+    check_rm(builds, version_name)
+    return expected
 
-def check_listings(version_code):
+
+# Directories in the tree the APK never needs, which F-Droid's scanner must not
+# see. The iOS project is one: its Podfile.lock pins Google ML Kit pods.
+RM_WHEN_PRESENT = ("banana_split_flutter/ios",)
+
+
+def tracked(path):
+    """Whether git tracks anything at `path`. F-Droid builds a fresh checkout
+    (`git clean -dffx`), so ignored leftovers on disk don't count."""
+    out = subprocess.run(
+        ["git", "-C", REPO, "ls-files", "--", path],
+        capture_output=True, text=True, check=True,
+    ).stdout
+    return bool(out.strip())
+
+
+def check_rm(builds, version_name):
+    """`rm:` of the release being prepared must match the tree it will build.
+
+    fdroidserver fails the build on an `rm` path that doesn't exist ("Some glob
+    paths did not match any files/dirs") — which is how adding `rm: ios` to the
+    0.10.0 entry, whose commit has no ios/, broke fdroiddata!50810. Only the
+    entries being prepared (pubspec version, still pinned to the tag name) can
+    be checked against this tree; pinned entries build commits that may differ.
+    """
+    # Only entries not yet pinned to a sha (commit: v<version>) build this tree;
+    # a pinned entry builds its own commit, which may predate a directory.
+    current = [
+        b
+        for b in builds
+        if str(b.get("versionName")) == version_name
+        and str(b.get("commit")) == "v%s" % version_name
+    ]
+    for b in current:
+        rm = b.get("rm") or []
+        for path in rm:
+            if not tracked(path):
+                fail(
+                    "fdroid build %s (%s) removes '%s', which does not exist — fdroid build would fail"
+                    % (version_name, b.get("versionCode"), path)
+                )
+        for path in RM_WHEN_PRESENT:
+            if tracked(path) and path not in rm:
+                fail(
+                    "fdroid build %s (%s) must rm '%s', which exists in the tree"
+                    % (version_name, b.get("versionCode"), path)
+                )
+
+
+def check_listings(version_codes):
     if not os.path.isdir(LISTINGS):
         fail("missing fastlane listings directory: %s" % LISTINGS)
         return
@@ -121,26 +223,27 @@ def check_listings(version_code):
                 if not fh.read().strip():
                     fail("%s: %s is empty" % (loc, name))
 
-        if version_code is None:
-            continue
+        # F-Droid looks the changelog up by the versionCode of the APK it
+        # publishes, so an ABI split needs one file per split code, not one for
+        # the upstream code (which no published APK carries).
+        for version_code in version_codes:
+            changelog = os.path.join(base, "changelogs", "%d.txt" % version_code)
+            if not os.path.isfile(changelog):
+                fail(
+                    "%s: no changelog for versionCode %d (expected changelogs/%d.txt)"
+                    % (loc, version_code, version_code)
+                )
+                continue
 
-        changelog = os.path.join(base, "changelogs", "%d.txt" % version_code)
-        if not os.path.isfile(changelog):
-            fail(
-                "%s: no changelog for versionCode %d (expected changelogs/%d.txt)"
-                % (loc, version_code, version_code)
-            )
-            continue
-
-        with open(changelog, encoding="utf-8") as fh:
-            text = fh.read()
-        if not text.strip():
-            fail("%s: changelogs/%d.txt is empty" % (loc, version_code))
-        elif len(text) > CHANGELOG_MAX_CHARS:
-            fail(
-                "%s: changelogs/%d.txt is %d chars, over F-Droid's %d limit"
-                % (loc, version_code, len(text), CHANGELOG_MAX_CHARS)
-            )
+            with open(changelog, encoding="utf-8") as fh:
+                text = fh.read()
+            if not text.strip():
+                fail("%s: changelogs/%d.txt is empty" % (loc, version_code))
+            elif len(text) > CHANGELOG_MAX_CHARS:
+                fail(
+                    "%s: changelogs/%d.txt is %d chars, over F-Droid's %d limit"
+                    % (loc, version_code, len(text), CHANGELOG_MAX_CHARS)
+                )
 
     return locales
 
@@ -190,8 +293,8 @@ def main():
     version_name, version_code = read_pubspec_version()
     print("pubspec version: %s+%s" % (version_name, version_code))
 
-    check_fdroid(version_name, version_code)
-    locales = check_listings(version_code) or []
+    version_codes = check_fdroid(version_name, version_code) or []
+    locales = check_listings(version_codes) or []
     print("store locales checked: %s" % ", ".join(locales))
     check_app_locales_have_listings(locales)
 
