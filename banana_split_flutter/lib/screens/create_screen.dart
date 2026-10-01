@@ -3,6 +3,7 @@ import 'package:banana_split_flutter/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'package:banana_split_flutter/services/export_service.dart';
+import 'package:banana_split_flutter/widgets/share_origin.dart';
 import 'package:banana_split_flutter/state/create_notifier.dart';
 import 'package:banana_split_flutter/widgets/passphrase_field.dart';
 import 'package:banana_split_flutter/widgets/qr_grid.dart';
@@ -313,7 +314,8 @@ class _ResultsView extends StatelessWidget {
                   ),
                 ],
               ),
-              IconButton(
+              // Builder: the button's own context anchors the iOS share sheet.
+              Builder(builder: (buttonContext) => IconButton(
                 icon: const Icon(Icons.share),
                 tooltip: l10n.createShareAllTooltip,
                 onPressed: () async {
@@ -321,6 +323,7 @@ class _ResultsView extends StatelessWidget {
                     await ExportService.shareShards(
                       shardJsons: notifier.generatedShards,
                       title: notifier.title,
+                      origin: shareOriginOf(buttonContext),
                     );
                   } catch (e) {
                     if (context.mounted) {
@@ -330,7 +333,7 @@ class _ResultsView extends StatelessWidget {
                     }
                   }
                 },
-              ),
+              )),
             ],
           ),
           const SizedBox(height: 16),

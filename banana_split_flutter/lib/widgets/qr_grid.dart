@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:banana_split_flutter/l10n/app_localizations.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:banana_split_flutter/services/export_service.dart';
+import 'package:banana_split_flutter/widgets/share_origin.dart';
 
 class QrGrid extends StatelessWidget {
   final List<String> shardJsons;
@@ -95,7 +96,9 @@ class QrGrid extends StatelessWidget {
                             }
                           },
                         ),
-                        IconButton(
+                        // Builder: the button's own context anchors the
+                        // iOS share sheet.
+                        Builder(builder: (buttonContext) => IconButton(
                           icon: const Icon(Icons.share, size: 18),
                           tooltip: l10n.shardShareTooltip,
                           onPressed: () async {
@@ -104,6 +107,7 @@ class QrGrid extends StatelessWidget {
                                 shardJson: shardJsons[index],
                                 title: title,
                                 shardIndex: index + 1,
+                                origin: shareOriginOf(buttonContext),
                               );
                             } catch (e) {
                               if (context.mounted) {
@@ -116,7 +120,7 @@ class QrGrid extends StatelessWidget {
                               }
                             }
                           },
-                        ),
+                        )),
                       ],
                     ),
                   ],

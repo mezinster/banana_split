@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:banana_split_flutter/services/file_actions_service.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_filex/open_filex.dart';
 
@@ -123,6 +124,30 @@ void main() {
 
       expect(await service.exportFile(source.path), isTrue);
       expect(File(target).existsSync(), isFalse);
+    });
+  });
+
+  group('shareFile', () {
+    // iOS 26 gives the share sheet a popover even on iPhone, and share_plus 9
+    // then refuses to present it without a non-empty sharePositionOrigin.
+    test('hands the sharer the typed file and the origin', () async {
+      List<String>? paths;
+      List<String?>? types;
+      Rect? received;
+      final service = FileActionsService(
+        sharer: (files, {Rect? origin}) async {
+          paths = files.map((f) => f.path).toList();
+          types = files.map((f) => f.mimeType).toList();
+          received = origin;
+        },
+      );
+
+      const rect = Rect.fromLTWH(10, 20, 300, 56);
+      await service.shareFile('/x/shards.pdf', origin: rect);
+
+      expect(paths, ['/x/shards.pdf']);
+      expect(types, ['application/pdf']);
+      expect(received, rect);
     });
   });
 }

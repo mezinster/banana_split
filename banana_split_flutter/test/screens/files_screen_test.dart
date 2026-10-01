@@ -64,6 +64,7 @@ class RecordingActions extends FileActionsService {
   final opened = <String>[];
   final exported = <String>[];
   final shared = <String>[];
+  final shareOrigins = <Rect?>[];
 
   @override
   Future<OpenOutcome> openFile(String filePath) async {
@@ -78,7 +79,10 @@ class RecordingActions extends FileActionsService {
   }
 
   @override
-  Future<void> shareFile(String filePath) async => shared.add(filePath);
+  Future<void> shareFile(String filePath, {Rect? origin}) async {
+    shared.add(filePath);
+    shareOrigins.add(origin);
+  }
 }
 
 void main() {
@@ -252,6 +256,20 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(actions.shared, [pdf]);
+    });
+
+    // Without an origin, share_plus 9 refuses to present on iOS 26 (iPhone
+    // included) and the user sees "Error sharing file".
+    testWidgets('Share anchors the sheet to the row', (tester) async {
+      final actions = RecordingActions();
+      await pumpFilesScreen(tester, actions: actions);
+      final row = tester.getRect(find.byType(ListTile));
+      await openRowMenu(tester);
+
+      await tester.tap(find.text('Share'));
+      await tester.pumpAndSettle();
+
+      expect(actions.shareOrigins, [row]);
     });
   });
 }

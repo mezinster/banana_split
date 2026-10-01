@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../services/file_actions_service.dart';
+import '../widgets/share_origin.dart';
 
 class FilesScreen extends StatefulWidget {
   const FilesScreen({super.key, this.actions});
@@ -130,10 +131,10 @@ class FilesScreenState extends State<FilesScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _shareFile(File file) async {
+  Future<void> _shareFile(File file, {Rect? origin}) async {
     final l10n = AppLocalizations.of(context)!;
     try {
-      await _actions.shareFile(file.path);
+      await _actions.shareFile(file.path, origin: origin);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -227,39 +228,43 @@ class FilesScreenState extends State<FilesScreen> with WidgetsBindingObserver {
           final subtitle = _subtitle(file);
           final dateStr = DateFormat.yMMMd().format(stat.modified);
           final sizeStr = _humanFileSize(stat.size);
-          return ListTile(
-            leading: Icon(
-              file.path.endsWith('.pdf')
-                  ? Icons.picture_as_pdf
-                  : Icons.image_outlined,
-            ),
-            title: Text(file.uri.pathSegments.last),
-            subtitle: Text(
-              subtitle.isEmpty
-                  ? '$sizeStr · $dateStr'
-                  : '$subtitle · $sizeStr · $dateStr',
-            ),
-            onTap: () => _openFile(file),
-            trailing: PopupMenuButton<String>(
-              onSelected: (action) {
-                switch (action) {
-                  case 'open':
-                    _openFile(file);
-                  case 'export':
-                    _exportFile(file);
-                  case 'share':
-                    _shareFile(file);
-                  case 'delete':
-                    _deleteFile(file);
-                }
-              },
-              itemBuilder: (context) => [
-                _menuItem('open', Icons.open_in_new, l10n.filesOpen),
-                _menuItem('export', Icons.download, l10n.filesSaveToDevice),
-                _menuItem('share', Icons.share, l10n.filesShare),
-                _menuItem(
-                    'delete', Icons.delete_outline, l10n.filesDeleteButton),
-              ],
+          // The row's own context, so Share can anchor the iOS share sheet to
+          // the row (shareOriginOf).
+          return Builder(
+            builder: (rowContext) => ListTile(
+              leading: Icon(
+                file.path.endsWith('.pdf')
+                    ? Icons.picture_as_pdf
+                    : Icons.image_outlined,
+              ),
+              title: Text(file.uri.pathSegments.last),
+              subtitle: Text(
+                subtitle.isEmpty
+                    ? '$sizeStr · $dateStr'
+                    : '$subtitle · $sizeStr · $dateStr',
+              ),
+              onTap: () => _openFile(file),
+              trailing: PopupMenuButton<String>(
+                onSelected: (action) {
+                  switch (action) {
+                    case 'open':
+                      _openFile(file);
+                    case 'export':
+                      _exportFile(file);
+                    case 'share':
+                      _shareFile(file, origin: shareOriginOf(rowContext));
+                    case 'delete':
+                      _deleteFile(file);
+                  }
+                },
+                itemBuilder: (context) => [
+                  _menuItem('open', Icons.open_in_new, l10n.filesOpen),
+                  _menuItem('export', Icons.download, l10n.filesSaveToDevice),
+                  _menuItem('share', Icons.share, l10n.filesShare),
+                  _menuItem(
+                      'delete', Icons.delete_outline, l10n.filesDeleteButton),
+                ],
+              ),
             ),
           );
         },
