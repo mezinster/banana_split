@@ -1,0 +1,2 @@
+• Smaller download from F-Droid: one APK per processor type instead of a single APK for all of them
+• No changes to app features or behaviour

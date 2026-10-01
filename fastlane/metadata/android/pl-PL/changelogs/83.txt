@@ -1,0 +1,2 @@
+• Mniejsze pobieranie z F-Droid: osobny APK dla każdego typu procesora zamiast jednego wspólnego
+• Bez zmian w funkcjach i działaniu aplikacji

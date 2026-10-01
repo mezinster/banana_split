@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.1] - Unreleased
+
+### Changed
+
+- **Per-ABI APKs on F-Droid** (Android): F-Droid publishes one APK per processor type (`armeabi-v7a`, `arm64-v8a`, `x86_64`) instead of the universal APK, with version codes `10 × code + ABI` (81/82/83 for this release). `android/app/build.gradle` overrides Flutter's own split numbering (`abi * 1000 + code`), which would have stopped arm64 devices from ever being offered an update. The GitHub universal APK and the AAB keep the plain version code. No changes to app features or behaviour.
+- **F-Droid recipe**: no longer pins JDK 17 from Debian bookworm; the buildserver's JDK 21 is used.
+- `tools/validate_store_metadata.py` understands `VercodeOperation` (one build entry and one changelog per split code) and checks the `rm` paths of an unreleased entry against the tree.
+
 ## [0.10.0] - 2026-09-19
 
 ### Added

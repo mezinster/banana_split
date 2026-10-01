@@ -1,0 +1,2 @@
+• F-Droid'den daha küçük indirme: hepsi için tek APK yerine her işlemci türü için ayrı bir APK
+• Uygulamanın özelliklerinde ve davranışında değişiklik yok
