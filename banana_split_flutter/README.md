@@ -4,7 +4,7 @@
 
 Splits secrets into QR code shards using Shamir's Secret Sharing, and reconstructs them by scanning QR codes.
 
-Platforms: Android, Windows, macOS, Linux (no iOS).
+Platforms: Android, iOS (build it yourself, see below), Windows, macOS, Linux.
 
 Languages: English, Russian, Turkish, Belarusian, Georgian, Ukrainian, Polish.
 
@@ -25,6 +25,7 @@ The crypto pipeline is identical to the web app:
 Prerequisites:
 - Flutter SDK (>= 3.5.4)
 - Android SDK (for Android builds)
+- Xcode and CocoaPods (for iOS builds, macOS only)
 - Python 3 (for test runner script)
 
 ```bash
@@ -114,3 +115,17 @@ tests/
 ## License
 
 [GNU General Public License v3.0](../LICENSE)
+
+## iOS
+
+There is no App Store or TestFlight build; install it on your own iPhone from source. A free Apple ID is enough:
+
+1. In Xcode, sign in with your Apple ID (Settings → Accounts) to get a Personal Team, and enable Developer Mode on the iPhone (Settings → Privacy & Security).
+2. Create `ios/Flutter/LocalOverrides.xcconfig` (gitignored) with your team id:
+   ```
+   DEVELOPMENT_TEAM = <your team id>
+   ```
+   If Xcode reports the bundle id is taken, also set `BSPL_BUNDLE_ID = <any unique id>`.
+3. `flutter build ios --release`, then `xcrun devicectl device install app --device <device id> build/ios/iphoneos/Runner.app` (or simply `flutter run --release`).
+
+Free-team builds expire after 7 days and must be re-installed; a free team can have at most 3 sideloaded apps on a device.

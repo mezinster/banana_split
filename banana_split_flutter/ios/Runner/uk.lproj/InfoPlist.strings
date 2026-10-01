@@ -1,0 +1,2 @@
+"NSCameraUsageDescription" = "Banana Split використовує камеру для сканування QR-кодів фрагментів.";
+"NSPhotoLibraryUsageDescription" = "Banana Split відкриває вибрані вами зображення, щоб зчитати з них QR-коди фрагментів.";

@@ -1,0 +1,2 @@
+"NSCameraUsageDescription" = "Banana Split uses the camera to scan QR-code shards.";
+"NSPhotoLibraryUsageDescription" = "Banana Split opens the images you pick to read QR-code shards from them.";
