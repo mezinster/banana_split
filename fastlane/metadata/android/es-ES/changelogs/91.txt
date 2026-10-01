@@ -1,0 +1,2 @@
+• Sin cambios en Android: esta versión corrige la función de compartir en la versión para iOS
+• Desde la 0.10.1, descarga más pequeña desde F-Droid: un APK por tipo de procesador

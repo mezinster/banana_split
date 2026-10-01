@@ -1,0 +1,2 @@
+• Nessuna modifica su Android: questa versione corregge la condivisione nella versione per iOS
+• Dalla 0.10.1 download più leggero da F-Droid: un APK per ogni tipo di processore

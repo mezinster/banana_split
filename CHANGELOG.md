@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.2] - 2026-10-01
+
+### Fixed
+
+- **Share on iOS 26** (iOS): every Share button — Files tab, Create → Share all, and the per-shard button — showed "Error sharing file" on iPhone. iOS 26 gives the share sheet a popover even on iPhone, and share_plus 9 refuses to present it without a `sharePositionOrigin`; each button now passes its own on-screen rectangle (`shareOriginOf`). No change on Android.
+
 ## [0.10.1] - 2026-10-01
 
 ### Added

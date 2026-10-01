@@ -1,0 +1,2 @@
+• Android'de değişiklik yok — bu sürüm iOS sürümünde paylaşmayı düzeltir
+• 0.10.1'den beri F-Droid'den daha küçük indirme: her işlemci türü için ayrı bir APK
