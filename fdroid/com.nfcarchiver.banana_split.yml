@@ -1,6 +1,6 @@
 Categories:
-  - Security
   - System
+  - Text Encryption
 License: GPL-3.0-only
 AuthorName: mezinster
 SourceCode: https://github.com/mezinster/banana_split
@@ -68,9 +68,9 @@ Builds:
       - $$flutter$$/bin/flutter gen-l10n
       - $$flutter$$/bin/flutter build apk --release
 
-  - versionName: 0.8.6
-    versionCode: 5
-    commit: 2214668e7a55a0c32770abbdf1871ea2757f2947
+  - versionName: 0.9.0
+    versionCode: 6
+    commit: 9eae0aec4af4331c4118d30c36eae13935ff4a76
     subdir: banana_split_flutter
     sudo:
       - echo "deb https://deb.debian.org/debian bookworm main" > /etc/apt/sources.list.d/bookworm.list
@@ -97,9 +97,9 @@ Builds:
       - $$flutter$$/bin/flutter gen-l10n
       - $$flutter$$/bin/flutter build apk --release
 
-  - versionName: 0.9.0
-    versionCode: 6
-    commit: 9eae0aec4af4331c4118d30c36eae13935ff4a76
+  - versionName: 0.10.0
+    versionCode: 7
+    commit: f30ccdf4c10fd0ea81ea0b2379447a4abd46c5fc
     subdir: banana_split_flutter
     sudo:
       - echo "deb https://deb.debian.org/debian bookworm main" > /etc/apt/sources.list.d/bookworm.list
@@ -128,9 +128,8 @@ Builds:
       - $$flutter$$/bin/flutter gen-l10n
       - $$flutter$$/bin/flutter build apk --release
 
-
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 UpdateCheckData: banana_split_flutter/pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
-CurrentVersion: 0.9.0
-CurrentVersionCode: 6
+CurrentVersion: 0.10.0
+CurrentVersionCode: 7
