@@ -58,7 +58,7 @@ export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh" && yarn test:unit
 
 ## Flutter App (`banana_split_flutter/`)
 
-Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux). Same crypto pipeline as the web app, implemented in pure Dart.
+Flutter port of Banana Split targeting Android, iOS (self-built, no store release) and desktop (Windows/macOS/Linux). Same crypto pipeline as the web app, implemented in pure Dart.
 
 ### Commands
 
@@ -113,9 +113,21 @@ Flutter port of Banana Split targeting Android and desktop (Windows/macOS/Linux)
 - App icon: `assets/app_icon.png` (1536x1536, padded from 1024x1536 source). Android adaptive icon with `#FFFFFF` background. Android app label is "Banana Split" (set in `AndroidManifest.xml`). Windows icon: multi-size ICO (16-256px) at `windows/runner/resources/app_icon.ico`. Windows window title, exe name (`banana_split.exe`), and version info set in `main.cpp`, `CMakeLists.txt`, and `Runner.rc`.
 - PDF fonts: `assets/fonts/Roboto-Regular.ttf`, `Roboto-Bold.ttf`, `NotoSansGeorgian-Regular.ttf`. Loaded via `rootBundle.load()` in `export_service.dart`. Font chosen by locale: Georgian (`ka`) uses Noto Sans Georgian, all others use Roboto. The Dart `pdf` package defaults to Helvetica which only supports Latin-1 — any non-Latin text (Cyrillic, Georgian, etc.) requires explicitly loading a TTF via `pw.Font.ttf(ByteData)` and passing it to every `pw.TextStyle`. Remove `const` from TextStyle constructors when adding font parameters since `pw.Font` instances aren't compile-time constants.
 
+### iOS
+
+- **Project:** `ios/` from `flutter create --platforms=ios` (Flutter 3.44.8); bundle id `com.nfcarchiver.bananasplit` (iOS forbids the underscore in Android's `com.nfcarchiver.banana_split`), display name "Banana Split", deployment target **13.0** (kept equal in the Podfile's `platform :ios` and the script below). Plugins resolve through Flutter's hybrid mode: SPM where a plugin supports it, CocoaPods for the rest (`file_picker`, `mobile_scanner`, `open_filex`, `permission_handler_apple`, `share_plus`). `ios/Podfile` and `ios/Podfile.lock` are committed.
+- **Project edits go through `ios/tool/configure_xcode_project.rb`** (xcodeproj gem, idempotent; CocoaPods bundles the gem, so with Homebrew's CocoaPods run it as `GEM_HOME=$(brew --prefix cocoapods)/libexec ruby ios/tool/configure_xcode_project.rb`): the `InfoPlist.strings` variant group and `knownRegions` for the 9 locales, `PRODUCT_BUNDLE_IDENTIFIER = $(BSPL_BUNDLE_ID)`, no `DEVELOPMENT_TEAM`, and the deployment target. Don't hand-edit `project.pbxproj`.
+- **Permission prompts:** `NSCameraUsageDescription` and `NSPhotoLibraryUsageDescription` in `Info.plist` (English) and in `Runner/<lang>.lproj/InfoPlist.strings` for every `app_<lang>.arb`. A missing usage string doesn't degrade — iOS terminates the app on first access. **Adding a locale now also needs its `InfoPlist.strings`** plus a re-run of the script; `test/ios_project_test.dart` fails otherwise.
+- **`permission_handler` trap:** on iOS every permission is compiled out unless its macro is set in the Podfile's `post_install`. Without `PERMISSION_CAMERA=1`, `Permission.camera.request()` returns `permanentlyDenied` *without ever prompting*, and the scanner shows "camera unavailable". The test guards the macro. Gallery import needs no macro: `image_picker`'s PHPicker runs out of process.
+- **Signing on a free Apple ID:** the project carries no team. Put `DEVELOPMENT_TEAM = <id>` (and optionally `BSPL_BUNDLE_ID`) in the gitignored `ios/Flutter/LocalOverrides.xcconfig`, which both `Debug.xcconfig` and `Release.xcconfig` include last. Unlike NFC Archiver, Release may include it: the app has no entitlements a free team cannot sign, so the override can't strip a capability from a shipped build. Prefer **Release** builds for the phone (`flutter build ios --release` + `xcrun devicectl device install app`): a Flutter Debug build can't be relaunched from the Home Screen without the tool attached. Free-team builds expire after 7 days; a free team gets at most 3 sideloaded apps per device.
+- **CI:** *Build iOS (unsigned)* in `flutter-ci.yml` runs `flutter build ios --release --no-codesign` on macOS, checks every locale's permission strings reached the bundle, and fails on `Podfile.lock` drift (the lock is uploaded as `ios-podfile-lock`).
+- **F-Droid:** the latest recipe entry has `rm: banana_split_flutter/ios` so F-Droid's scanner never sees the iOS project. This is a recipe change, so it needs an fdroiddata MR (the bot copies the last *merged* entry).
+- **Privacy caveat:** on Android the ML Kit network permissions (`INTERNET`, `ACCESS_NETWORK_STATE`) are stripped, so "no server communication" is OS-enforced. iOS has no network permission to remove; ML Kit's Google data transport links in through `mobile_scanner` 5.x. Don't claim OS-enforced offline behaviour for the iOS build.
+- **Known traps when running Flutter tooling here:** any `pub get` on macOS adds CocoaPods `#include?` lines to `macos/Flutter/Flutter-*.xcconfig` and generates an untracked `macos/Podfile`. The macOS target isn't part of this work; discard both rather than committing them.
+
 ### CI/CD
 
-- **Flutter CI** (`.github/workflows/flutter-ci.yml`): Analyze + test, plus store-metadata validation. On-demand debug APK and release Windows builds via `workflow_dispatch`.
+- **Flutter CI** (`.github/workflows/flutter-ci.yml`): Analyze + test, an unsigned iOS build, plus store-metadata validation. On-demand debug APK and release Windows builds via `workflow_dispatch`.
 - **Release** (`.github/workflows/release.yml`): Triggered by tag push (`v*.*.*`) or manual dispatch. Builds Android (APK + AAB), Windows (zip), and Web (single HTML file) in parallel. Creates GitHub Release with all artifacts and checksums.
 - **Web App CI** (`.github/workflows/web-ci.yml`): Lint, unit tests, E2E tests, CodeQL, Trivy scan.
 

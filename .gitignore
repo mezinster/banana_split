@@ -29,6 +29,6 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
-*.sw*
+*.sw[a-p]
 
 test-results

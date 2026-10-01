@@ -54,7 +54,7 @@ Vue 2 + TypeScript single-page app. Builds to a **single self-contained HTML fil
 
 ### Flutter App (`banana_split_flutter/`)
 
-Native app for Android and Windows (also builds for macOS/Linux). Pure Dart implementation of the same crypto pipeline using `pinenacl` and a custom Shamir port.
+Native app for Android and Windows (also builds for iOS, macOS and Linux). Pure Dart implementation of the same crypto pipeline using `pinenacl` and a custom Shamir port.
 
 **Additional features:**
 - Save shards as PNGs or PDF with full Unicode font support (Roboto + Noto Sans Georgian)

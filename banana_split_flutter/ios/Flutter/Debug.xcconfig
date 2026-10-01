@@ -1,0 +1,13 @@
+#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
+#include "Generated.xcconfig"
+
+// Bundle id, indirected so a free Apple ID (Personal Team) can override it
+// in LocalOverrides.xcconfig if the default is ever claimed by another team.
+BSPL_BUNDLE_ID = com.nfcarchiver.bananasplit
+
+// Gitignored, per-developer: DEVELOPMENT_TEAM (never commit a personal team
+// id to project.pbxproj) and optionally BSPL_BUNDLE_ID. Included in Release
+// too, unlike NFC Archiver: the app has no entitlements a free team cannot
+// sign, so the override cannot strip a capability from a shipped build.
+// The include is last so the override wins.
+#include? "LocalOverrides.xcconfig"

@@ -163,6 +163,56 @@ jobs:
       - name: Run tests
         run: flutter test
 
+  build-ios:
+    name: Build iOS (unsigned)
+    runs-on: macos-latest
+    needs: changes
+    if: needs.changes.outputs.flutter == 'true'
+    defaults:
+      run:
+        working-directory: banana_split_flutter
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.8'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        # --enforce-lockfile: see analyze-and-test.
+        run: flutter pub get --enforce-lockfile
+
+      # Compile check only: no team id, certificates or profiles in CI. Device
+      # installs are signed locally through ios/Flutter/LocalOverrides.xcconfig.
+      - name: Build iOS app without signing
+        run: flutter build ios --release --no-codesign
+
+      - name: Localized permission prompts are in the bundle
+        run: |
+          set -euo pipefail
+          app=build/ios/iphoneos/Runner.app
+          for arb in lib/l10n/app_*.arb; do
+            lang=$(basename "$arb" .arb); lang=${lang#app_}
+            for key in NSCameraUsageDescription NSPhotoLibraryUsageDescription; do
+              plutil -extract "$key" raw "$app/$lang.lproj/InfoPlist.strings" >/dev/null \
+                || { echo "::error::$key missing for $lang"; exit 1; }
+            done
+          done
+
+      - name: Podfile.lock must match the committed one
+        run: git diff --exit-code ios/Podfile.lock
+
+      - name: Upload Podfile.lock
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-podfile-lock
+          path: banana_split_flutter/ios/Podfile.lock
+          if-no-files-found: warn
+
   build-debug-android:
     name: Build Debug APK
     needs: analyze-and-test
