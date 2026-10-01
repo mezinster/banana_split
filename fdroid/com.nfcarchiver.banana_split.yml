@@ -104,8 +104,6 @@ Builds:
     output: build/app/outputs/flutter-apk/app-release.apk
     srclibs:
       - flutter@stable
-    rm:
-      - banana_split_flutter/ios
     prebuild:
       - sed -i -e '/mobile_scanner/d' pubspec.yaml
       - cp pubspec.lock.fdroid pubspec.lock
