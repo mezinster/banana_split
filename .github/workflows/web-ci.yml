@@ -22,7 +22,7 @@ jobs:
       webapp: ${{ steps.filter.outputs.webapp }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Full history so the base commit of the diff is present locally.
           fetch-depth: 0
@@ -69,7 +69,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.webapp == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -77,7 +77,7 @@ jobs:
         run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_ENV
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NVMRC }}
           cache: 'yarn'
@@ -95,9 +95,12 @@ jobs:
     name: E2E Tests
     needs: [changes, lint-and-test]
     if: needs.changes.outputs.webapp == 'true'
-    runs-on: ubuntu-latest
+    # Pinned, not ubuntu-latest: Playwright 1.16 cannot install OS deps on
+    # any Ubuntu newer than 20.04, so its 2021 Chromium runs only on the
+    # libraries the image happens to ship. Unpin alongside a Playwright upgrade.
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -105,7 +108,7 @@ jobs:
         run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_ENV
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NVMRC }}
           cache: 'yarn'
@@ -113,8 +116,12 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Install Playwright browsers and OS dependencies
-        run: npx playwright install --with-deps chromium
+      # Without --with-deps: on this Playwright that flag stops at "Cannot
+      # install dependencies for this linux distribution!" and exits 0 before
+      # downloading anything. The browser used to arrive only via the package's
+      # postinstall, whose download failures Node 14 swallows.
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
 
       - name: Install ffmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
@@ -133,7 +140,7 @@ jobs:
       security-events: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -154,7 +161,7 @@ jobs:
       security-events: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master

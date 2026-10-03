@@ -37,7 +37,7 @@ jobs:
       revision: ${{ steps.stamp.outputs.revision }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # Tags are REQUIRED. vue.config.js:7-12 stamps the build with
           # `git describe --long --tags` and falls back to a short SHA when it
@@ -49,7 +49,7 @@ jobs:
         run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_ENV
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NVMRC }}
           cache: 'yarn'
@@ -209,7 +209,7 @@ jobs:
           path: healthcheck-dist
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
 
