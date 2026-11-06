@@ -1,155 +1,207 @@
 <template>
   <div>
-    <div class="card" :transparent="!encryptionMode">
-      <h2 class="card-title">
-        {{ $t('createTitle') }}
-      </h2>
-      <p>
-        <label>{{ $t('createNameLabel') }}</label>
-        <input
-          id="secretTitle"
-          v-model="title"
-          type="text"
-          :disabled="encryptionMode"
-          :placeholder="$t('createNameHint')"
-          autofocus
-        />
-      </p>
-      <p>
-        <label>{{ $t('createSecretLabel') }}</label>
-        <textarea
-          id="secret"
-          v-model="secret"
-          :class="{ tooLong: secretTooLong }"
-          :disabled="encryptionMode"
-          :placeholder="$t('createSecretHint')"
-        />
-        <span v-if="secret.length > 0" :class="{ 'error-text': secretTooLong, 'char-counter': !secretTooLong }">
-          {{ $t('createCharCounter', { remaining: 1024 - secret.length }) }}
-        </span>
-      </p>
-      <p>
-        <label>{{ $t('createShardsLabel') }}</label>
-        <br />
-        {{ $t('createShardsRequire') }}
-        <input
-          id="requiredShards"
-          v-model.number="requiredShards"
-          :disabled="encryptionMode"
-          type="number"
-          min="2"
-          :max="totalShards"
-        />
-        {{ $t('createShardsOutOf') }}
-        <input
-          id="totalShards"
-          v-model.number="totalShards"
-          :disabled="encryptionMode"
-          type="number"
-          min="3"
-          max="255"
-        />
-        {{ $t('createShardsReconstruct') }}
-        <span v-if="shardsInvalid" class="error-text">
-          <br />{{ $t('createShardsInvalid') }}
-        </span>
-      </p>
-      <div class="form-group">
-        <label>{{ $t('createPassphraseLabel') }}</label>
-        <div v-if="!useManualPassphrase" class="flex justify-between align-center">
-          <canvas-text :text="recoveryPassphrase" />
-          <button class="button-icon" :disabled="encryptionMode" @click="regenPassphrase">
-            &#x21ba;
-          </button>
-        </div>
-        <div v-else>
+    <section class="card">
+      <header class="card__header">
+        <h2 class="card__title">
+          {{ $t('createTitle') }}
+        </h2>
+      </header>
+
+      <div class="step">
+        <span class="step__num">1</span>
+        <div class="step__body">
+          <label class="field-label" for="secretTitle">{{ $t('createNameLabel') }}</label>
           <input
-            id="manualPassphrase"
-            v-model="recoveryPassphrase"
+            id="secretTitle"
+            v-model="title"
+            class="input"
             type="text"
             :disabled="encryptionMode"
-            :placeholder="$t('createPassphraseHint')"
+            :placeholder="$t('createNameHint')"
+            autofocus
           />
-          <span v-if="passphraseTooShort" class="error-text">
-            {{ $t('createPassphraseTooShort') }}
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step__num">2</span>
+        <div class="step__body">
+          <label class="field-label" for="secret">{{ $t('createSecretLabel') }}</label>
+          <textarea
+            id="secret"
+            v-model="secret"
+            class="input"
+            :class="{ 'is-invalid': secretTooLong }"
+            :disabled="encryptionMode"
+            :placeholder="$t('createSecretHint')"
+          />
+          <span v-if="secret.length > 0" :class="secretTooLong ? 'error-text' : 'caption'">
+            {{ $t('createCharCounter', { remaining: 1024 - secret.length }) }}
           </span>
         </div>
-        <label class="checkbox-label">
-          <input
-            v-model="useManualPassphrase"
-            type="checkbox"
-            :disabled="encryptionMode"
-            @change="onPassphraseToggle"
-          />
-          {{ $t('createPassphraseCustom') }}
-        </label>
       </div>
+
+      <div class="step">
+        <span class="step__num">3</span>
+        <div class="step__body">
+          <span class="field-label">{{ $t('createShardsLabel') }}</span>
+          <div class="shards-row">
+            <span>{{ $t('createShardsRequire') }}</span>
+            <NumberStepper
+              v-model="requiredShards"
+              input-id="requiredShards"
+              :min="2"
+              :max="totalShardsBound"
+              :disabled="encryptionMode"
+            />
+            <span>{{ $t('createShardsOutOf') }}</span>
+            <NumberStepper
+              v-model="totalShards"
+              input-id="totalShards"
+              :min="3"
+              :max="255"
+              :disabled="encryptionMode"
+            />
+            <span>{{ $t('createShardsReconstruct') }}</span>
+          </div>
+          <span v-if="shardsInvalid" class="error-text">
+            {{ $t('createShardsInvalid') }}
+          </span>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step__num">4</span>
+        <div class="step__body">
+          <span class="field-label">{{ $t('createPassphraseLabel') }}</span>
+          <div v-if="!useManualPassphrase" class="passphrase-field">
+            <canvas-text :text="recoveryPassphrase" />
+            <button
+              type="button"
+              class="btn btn--icon"
+              :title="$t('createPassphraseRegenerate')"
+              :aria-label="$t('createPassphraseRegenerate')"
+              :disabled="encryptionMode"
+              @click="regenPassphrase"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-stroke">
+                <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+                <path d="M3 3v5h5" />
+              </svg>
+            </button>
+          </div>
+          <div v-else>
+            <input
+              id="manualPassphrase"
+              v-model="recoveryPassphrase"
+              class="input input--mono"
+              :class="{ 'is-invalid': passphraseTooShort && recoveryPassphrase.length > 0 }"
+              type="text"
+              autocomplete="off"
+              :disabled="encryptionMode"
+              :placeholder="$t('createPassphraseHint')"
+            />
+            <span v-if="passphraseTooShort" class="error-text">
+              {{ $t('createPassphraseTooShort') }}
+            </span>
+          </div>
+          <div class="segmented passphrase-mode" role="group" :aria-label="$t('createPassphraseLabel')">
+            <button
+              type="button"
+              class="segmented__item"
+              :class="{ 'is-active': !useManualPassphrase }"
+              :aria-pressed="String(!useManualPassphrase)"
+              :disabled="encryptionMode"
+              @click="setManualPassphrase(false)"
+            >
+              {{ $t('createPassphraseAuto') }}
+            </button>
+            <button
+              id="customPassphraseToggle"
+              type="button"
+              class="segmented__item"
+              :class="{ 'is-active': useManualPassphrase }"
+              :aria-pressed="String(useManualPassphrase)"
+              :disabled="encryptionMode"
+              @click="setManualPassphrase(true)"
+            >
+              {{ $t('createPassphraseManual') }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <button
+        v-if="!encryptionMode"
         id="generateBtn"
-        class="button-card"
+        type="button"
+        class="btn btn--primary btn--block generate-btn"
         :disabled="secretTooLong || passphraseTooShort || shardsInvalid"
-        :hidden="encryptionMode"
-        v-on:click="toggleMode"
+        @click="toggleMode"
       >
         {{ $t('createGenerateButton') }}
       </button>
+    </section>
+
+    <section v-if="encryptionMode" class="card result-card">
+      <header class="card__header">
+        <h2 class="card__title">
+          {{ $t('createResultTitle') }}
+        </h2>
+      </header>
+      <div class="print-row">
+        <button id="printBtn" type="button" class="btn btn--primary" @click="print">
+          {{ $t('createPrintButton') }}
+        </button>
+        <select v-model="printLocale" class="print-locale-select" :aria-label="$t('tabPrint')">
+          <option value="en">
+            🇬🇧
+          </option>
+          <option value="ru">
+            🇷🇺
+          </option>
+          <option value="tr">
+            🇹🇷
+          </option>
+          <option value="be">
+            🇧🇾
+          </option>
+          <option value="ka">
+            🇬🇪
+          </option>
+          <option value="uk">
+            🇺🇦
+          </option>
+          <option value="pl">
+            🇵🇱
+          </option>
+          <option value="es">
+            🇪🇸
+          </option>
+          <option value="it">
+            🇮🇹
+          </option>
+        </select>
+      </div>
       <button
         id="backToEditBtn"
-        class="button-card"
-        :disabled="secretTooLong"
-        :hidden="!encryptionMode"
-        v-on:click="toggleMode"
+        type="button"
+        class="btn btn--secondary btn--block"
+        @click="toggleMode"
       >
         {{ $t('createBackButton') }}
       </button>
-    </div>
-
-    <div v-if="encryptionMode">
-      <div class="card" transparent="true">
-        <div class="flex align-center" style="gap: 8px; margin-bottom: 8px;">
-          <button id="printBtn" class="button-card" @click="print">
-            {{ $t('createPrintButton') }}
-          </button>
-          <select v-model="printLocale" class="print-locale-select">
-            <option value="en">
-              🇬🇧
-            </option>
-            <option value="ru">
-              🇷🇺
-            </option>
-            <option value="tr">
-              🇹🇷
-            </option>
-            <option value="be">
-              🇧🇾
-            </option>
-            <option value="ka">
-              🇬🇪
-            </option>
-            <option value="uk">
-              🇺🇦
-            </option>
-            <option value="pl">
-              🇵🇱
-            </option>
-            <option value="es">
-              🇪🇸
-            </option>
-            <option value="it">
-              🇮🇹
-            </option>
-          </select>
-        </div>
-        <shard-info
-          v-for="shard in shards"
-          :key="shard"
-          :shard="shard"
-          :required-shards="requiredShards"
-          :title="title"
-          :locale="printLocale"
-        />
-      </div>
-    </div>
+      <shard-info
+        v-for="(shard, i) in shards"
+        :key="shard"
+        :shard="shard"
+        :required-shards="requiredShards"
+        :title="title"
+        :locale="printLocale"
+        :index="i + 1"
+        :total="shards.length"
+      />
+    </section>
   </div>
 </template>
 
@@ -159,6 +211,7 @@ import crypto from "../util/crypto";
 
 import ShardInfo from "../components/ShardInfo.vue";
 import CanvasText from "../components/CanvasText.vue";
+import NumberStepper from "../components/NumberStepper.vue";
 import Vue from "vue";
 
 type ShareData = {
@@ -174,7 +227,7 @@ type ShareData = {
 
 export default Vue.extend({
   name: "Share",
-  components: { ShardInfo, CanvasText },
+  components: { ShardInfo, CanvasText, NumberStepper },
   data(): ShareData {
     return {
       title: "",
@@ -193,6 +246,11 @@ export default Vue.extend({
     },
     passphraseTooShort(): boolean {
       return this.useManualPassphrase && this.recoveryPassphrase.length < 8;
+    },
+    totalShardsBound(): number {
+      return typeof this.totalShards === "number" && this.totalShards >= 2
+        ? Math.min(this.totalShards, 255)
+        : 255;
     },
     shardsInvalid(): boolean {
       return this.totalShards < 3 || this.totalShards > 255 ||
@@ -246,6 +304,13 @@ export default Vue.extend({
     toggleMode: function() {
       this.encryptionMode = !this.encryptionMode;
     },
+    setManualPassphrase: function(manual: boolean) {
+      if (this.useManualPassphrase === manual) {
+        return;
+      }
+      this.useManualPassphrase = manual;
+      this.onPassphraseToggle();
+    },
     onPassphraseToggle: function() {
       if (!this.useManualPassphrase) {
         this.regenPassphrase();
@@ -258,41 +323,62 @@ export default Vue.extend({
 </script>
 
 <style>
-textarea.tooLong {
-  border: 5px solid red;
+.shards-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
 }
-input[type="number"] {
-  width: 64px;
-  text-align: center;
-}
-.error-text {
-  color: red;
-}
-.char-counter {
-  color: gray;
-  font-size: 0.85em;
-}
-.form-group {
-  margin: 1em 0;
-}
-.checkbox-label {
+.passphrase-field {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 4px;
-  cursor: pointer;
-  font-size: 1.6rem;
-  font-weight: 400;
-  color: var(--c_text-secondary);
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 48px;
+  padding: 4px 4px 4px 12px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-ctl);
+  color: var(--text);
+  overflow: hidden;
+}
+.passphrase-field .canvasText {
+  min-width: 0;
+  max-width: 100%;
+}
+.passphrase-mode {
+  margin-top: 12px;
+}
+.icon-stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.generate-btn {
+  margin-top: 28px;
+}
+.result-card {
+  margin-bottom: 12px;
+}
+.print-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.print-row .btn {
+  flex: 1;
 }
 .print-locale-select {
-  width: auto;
-  padding: 0.5rem;
-  font-size: 2rem;
-  border: 1px solid var(--c_border-main);
-  border-radius: 0.5rem;
-  background: var(--c_bg-card);
+  min-height: 48px;
+  min-width: 64px;
+  padding: 0 8px;
+  font-size: 1.25rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-ctl);
   cursor: pointer;
 }
 </style>

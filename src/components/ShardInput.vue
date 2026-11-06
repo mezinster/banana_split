@@ -1,7 +1,28 @@
 <template>
   <div class="shard-input">
+    <div class="segmented shard-input__modes" role="group">
+      <button
+        v-for="m in modes"
+        :key="m.id"
+        type="button"
+        class="segmented__item"
+        :class="{ 'is-active': mode === m.id }"
+        :aria-pressed="String(mode === m.id)"
+        @click="switchMode(m.id)"
+      >
+        {{ $t(m.label) }}
+      </button>
+    </div>
+
     <div v-if="mode === 'camera'" class="shard-input__camera">
-      <qrcode-stream @decode="onCameraDecode" />
+      <qrcode-stream @decode="onCameraDecode">
+        <div class="shard-input__frame" aria-hidden="true">
+          <span /><span /><span /><span />
+        </div>
+        <p class="shard-input__hint">
+          {{ $t('combineScanHint') }}
+        </p>
+      </qrcode-stream>
     </div>
 
     <div v-if="mode === 'upload'" class="shard-input__upload">
@@ -13,7 +34,10 @@
         class="shard-input__file-hidden"
         @change="onFilesSelected"
       />
-      <button class="button-card" @click="triggerFileInput">
+      <button type="button" class="btn btn--secondary shard-input__upload-btn" @click="triggerFileInput">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="shard-input__icon">
+          <path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+        </svg>
         {{ $t('inputUploadImage') }}
       </button>
     </div>
@@ -22,28 +46,16 @@
       <textarea
         v-model="pasteText"
         :placeholder="$t('inputPastePlaceholder')"
-        class="shard-input__textarea"
+        class="input input--mono shard-input__textarea"
       />
-      <button class="button-card" @click="onPasteSubmit">
+      <button type="button" class="btn btn--primary btn--block shard-input__submit" @click="onPasteSubmit">
         {{ $t('inputPasteSubmit') }}
       </button>
     </div>
 
-    <p v-if="feedback" class="shard-input__feedback" :class="feedback.type">
+    <p v-if="feedback" class="shard-input__feedback" :class="feedback.type" role="status">
       {{ feedback.message }}
     </p>
-
-    <div class="shard-input__modes">
-      <button v-if="mode !== 'camera'" class="button-card" @click="switchMode('camera')">
-        {{ $t('inputUseCamera') }}
-      </button>
-      <button v-if="mode !== 'upload'" class="button-card" @click="switchMode('upload')">
-        {{ $t('inputUploadImage') }}
-      </button>
-      <button v-if="mode !== 'paste'" class="button-card" @click="switchMode('paste')">
-        {{ $t('inputPasteText') }}
-      </button>
-    </div>
   </div>
 </template>
 
@@ -51,7 +63,14 @@
 import Vue from "vue";
 import { decodeQrFromImage } from "../util/qrDecode";
 
+const MODES = [
+  { id: "camera", label: "inputModeCamera" },
+  { id: "upload", label: "inputModeUpload" },
+  { id: "paste", label: "inputModePaste" }
+];
+
 type ShardInputData = {
+  modes: typeof MODES;
   mode: string;
   pasteText: string;
   feedback: { type: string; message: string } | null;
@@ -62,6 +81,7 @@ export default Vue.extend({
   name: "ShardInput",
   data(): ShardInputData {
     return {
+      modes: MODES,
       mode: "camera",
       pasteText: "",
       feedback: null,
@@ -219,33 +239,106 @@ export default Vue.extend({
 </script>
 
 <style>
+.shard-input__modes {
+  margin-bottom: 12px;
+}
 .shard-input__file-hidden {
   display: none;
 }
-.shard-input__textarea {
+.shard-input__camera .qrcode-stream {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: #000;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.shard-input__camera .qrcode-stream__inner-wrapper,
+.shard-input__camera .qrcode-stream__camera,
+.shard-input__camera .qrcode-stream__pause-frame {
   width: 100%;
-  min-height: 120px;
+  height: 100%;
+  object-fit: cover;
+}
+.shard-input__frame {
+  position: absolute;
+  inset: 18%;
+  pointer-events: none;
+}
+.shard-input__frame span {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border: 0 solid #fff;
+}
+.shard-input__frame span:nth-child(1) {
+  top: 0;
+  left: 0;
+  border-top-width: 3px;
+  border-left-width: 3px;
+  border-top-left-radius: 8px;
+}
+.shard-input__frame span:nth-child(2) {
+  top: 0;
+  right: 0;
+  border-top-width: 3px;
+  border-right-width: 3px;
+  border-top-right-radius: 8px;
+}
+.shard-input__frame span:nth-child(3) {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 3px;
+  border-left-width: 3px;
+  border-bottom-left-radius: 8px;
+}
+.shard-input__frame span:nth-child(4) {
+  bottom: 0;
+  right: 0;
+  border-bottom-width: 3px;
+  border-right-width: 3px;
+  border-bottom-right-radius: 8px;
+}
+.shard-input__hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12px;
+  padding: 0 16px;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+}
+.shard-input__upload {
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-muted);
+}
+.shard-input__icon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.shard-input__textarea {
+  margin-bottom: 12px;
 }
 .shard-input__feedback {
-  font-size: 1.4rem;
-  margin: 0.5rem 0;
+  margin-top: 12px;
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  border-radius: var(--radius-ctl);
 }
 .shard-input__feedback.success {
-  color: #2e7d32;
+  color: var(--success);
+  background: var(--success-bg);
 }
 .shard-input__feedback.error {
-  color: darkred;
-}
-.shard-input__modes {
-  display: flex;
-  margin-top: 0.5rem;
-}
-.shard-input__modes button + button {
-  margin-left: 1rem;
-}
-/* Camera rounded corners (moved from view-level CSS) */
-.shard-input__camera .qrcode-stream {
-  border-radius: 8px;
-  overflow: hidden;
+  color: var(--danger);
+  background: var(--danger-bg);
 }
 </style>

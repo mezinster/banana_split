@@ -1,64 +1,120 @@
 <template>
   <div>
-    <div class="card measure" :transparent="needMoreShards">
-      <h2 class="card-title">
-        {{ $t('printTitle') }}
-        <div v-if="!numberEntered">
-          <p>
-            <label>{{ $t('printShardsLabel') }}</label>
-            <br />
+    <section class="card">
+      <header class="card__header">
+        <h2 class="card__title">
+          {{ $t('printTitle') }}
+          <span v-if="title" class="card__subtitle">
+            {{ $t('combineFor') }} <em>{{ title }}</em>
+          </span>
+        </h2>
+      </header>
+
+      <div class="step">
+        <span class="step__num">1</span>
+        <div class="step__body">
+          <div class="step__title">
             {{ $t('printShardsQuestion') }}
-            <br>
-            <input
-              id="totalShards"
-              v-model.number="requiredShards"
-              type="number"
-              min="3"
-              max="255"
-            />
-          </p>
-          <button id="generateBtn" class="button-card" @click="handleShardsInput">
+          </div>
+          <label class="field-label" for="totalShards">{{ $t('printShardsLabel') }}</label>
+          <NumberStepper
+            v-model="requiredShards"
+            input-id="totalShards"
+            :min="3"
+            :max="255"
+            :disabled="numberEntered"
+          />
+          <button
+            v-if="!numberEntered"
+            id="generateBtn"
+            type="button"
+            class="btn btn--primary btn--block print-action"
+            @click="handleShardsInput"
+          >
             {{ $t('printImportButton') }}
           </button>
         </div>
-        <span v-if="title">
-          {{ $t('combineFor') }} <em v-if="title"> {{ title }}</em>
-        </span>
-      </h2>
-      <div v-if="numberEntered && needMoreShards">
-        <ShardInput @decode="onDecode" />
       </div>
-      <div v-else-if="numberEntered">
-        <button id="printBtn" class="button-card" @click="print">
-          {{ $t('createPrintButton') }}
-        </button>
-        <shard-info
-          v-for="code in qrCodes"
-          :key="code"
-          :shard="code"
-          :required-shards="parseInt(requiredShards/2)+2"
-          :title="title"
-        />
+
+      <hr class="divider" />
+
+      <div class="step" :class="{ 'is-pending': !numberEntered }">
+        <span class="step__num" :class="{ 'is-pending': !numberEntered }">2</span>
+        <div class="step__body">
+          <div class="step__title">
+            {{ $t('stepScanShards') }}
+          </div>
+          <template v-if="numberEntered">
+            <div class="progress">
+              <div class="progress__text">
+                {{ $t('combineProgress', { scanned: shards.length, required: requiredShards }) }}
+              </div>
+              <div v-if="requiredShards <= 24" class="progress__bar">
+                <span
+                  v-for="n in requiredShards"
+                  :key="n"
+                  class="progress__seg"
+                  :class="{ 'is-filled': n <= shards.length }"
+                />
+              </div>
+            </div>
+            <ShardInput v-if="needMoreShards" @decode="onDecode" />
+            <div v-if="needMoreShards" class="qr-strip">
+              <qriously
+                v-for="code in qrCodes"
+                :key="code"
+                class="qr-thumb"
+                :value="code"
+                :size="200"
+              />
+              <qriously
+                v-for="n in remainingCodes"
+                :key="'remaining-' + n"
+                class="qr-thumb is-remaining"
+                :value="PLACEHOLDER_QR_DATA"
+                :size="200"
+              />
+            </div>
+          </template>
+        </div>
       </div>
-    </div>
-    <div v-if="numberEntered && needMoreShards">
-      <div class="card flex" transparent="true">
-        <qriously
-          v-for="code in qrCodes"
-          :key="code"
-          class="card-qr"
-          :value="code"
-          :size="200"
-        />
-        <qriously
-          v-for="n in remainingCodes"
-          :key="n"
-          class="remaining card-qr"
-          :value="PLACEHOLDER_QR_DATA"
-          :size="200"
-        />
+
+      <hr class="divider" />
+
+      <div class="step" :class="{ 'is-pending': !readyToPrint }">
+        <span class="step__num" :class="{ 'is-pending': !readyToPrint }">3</span>
+        <div class="step__body">
+          <div class="step__title">
+            {{ $t('tabPrint') }}
+          </div>
+          <button
+            v-if="readyToPrint"
+            id="printBtn"
+            type="button"
+            class="btn btn--primary btn--block"
+            @click="print"
+          >
+            {{ $t('createPrintButton') }}
+          </button>
+        </div>
       </div>
-    </div>
+    </section>
+
+    <p class="print-note">
+      {{ $t('printNote') }}
+    </p>
+
+    <template v-if="readyToPrint">
+      <shard-info
+        v-for="(code, i) in Array.from(qrCodes)"
+        :key="code"
+        :shard="code"
+        :required-shards="parseInt(requiredShards/2)+2"
+        :title="title"
+        :index="i + 1"
+        :total="qrCodes.size"
+      />
+    </template>
   </div>
 </template>
 
@@ -66,6 +122,7 @@
 import crypto, { Shard } from "../util/crypto";
 import ShardInfo from "../components/ShardInfo.vue";
 import ShardInput from "../components/ShardInput.vue";
+import NumberStepper from "../components/NumberStepper.vue";
 
 import Vue from "vue";
 
@@ -81,7 +138,7 @@ type PrintData = {
 
 export default Vue.extend({
   name: "Print",
-  components: { ShardInfo, ShardInput },
+  components: { ShardInfo, ShardInput, NumberStepper },
   data(): PrintData {
     return {
       title: "",
@@ -94,6 +151,9 @@ export default Vue.extend({
     };
   },
   computed: {
+    readyToPrint(): boolean {
+      return this.numberEntered && !this.needMoreShards;
+    },
     needMoreShards(): boolean {
       return this.requiredShards !== undefined && this.shards.length !== this.requiredShards;
     },
@@ -159,8 +219,16 @@ export default Vue.extend({
 </script>
 
 <style>
-.remaining {
-  filter: blur(5px);
-  opacity: 0.5;
+.print-action {
+  margin-top: 16px;
+}
+.print-note {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  background: var(--surface-muted);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-card);
 }
 </style>

@@ -6,6 +6,9 @@
     </div>
     <qriously class="qr-code print-only" :value="shard" :size="600" />
     <qriously class="screen-only card-qr" :value="shard" :size="200" />
+    <div v-if="index" class="screen-only qr-tile__label">
+      {{ $t('shardLabel', { index: index, total: total }) }}
+    </div>
     <div class="print-only">
       <div class="recovery-field">
         <div class="recovery-title">
@@ -42,6 +45,14 @@ export default Vue.extend({
     locale: {
       type: String,
       default: ""
+    },
+    index: {
+      type: Number,
+      default: 0
+    },
+    total: {
+      type: Number,
+      default: 0
     }
   },
   computed: {
@@ -64,6 +75,32 @@ export default Vue.extend({
   .print-only {
     display: none;
   }
+  .qr-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+  }
+  .qr-tile .card-qr {
+    width: 100%;
+    padding: 6px;
+    background: #fff;
+    border-radius: 6px;
+  }
+  .qr-tile .card-qr canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .qr-tile__label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
 }
 
 @media print {
@@ -79,6 +116,10 @@ export default Vue.extend({
     height: 100vh;
     text-align: center;
     page-break-after: always;
+  }
+
+  .qr-tile h1 {
+    margin: 0.67em 0 0;
   }
 
   canvas {

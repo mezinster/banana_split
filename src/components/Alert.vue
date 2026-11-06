@@ -1,5 +1,5 @@
 <template>
-  <div v-if="message" class="alert measure" :class="level">
+  <div v-if="message" class="alert" :class="level" role="alert">
     <p class="alert__text">
       {{ message }}
     </p>
@@ -48,25 +48,23 @@ export default Vue.extend({
 
 <style>
 .alert {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  border-radius: 1rem;
-  padding: 1.5rem;
+  margin: 8px 0;
+  padding: 12px 16px;
+  font-size: 0.9375rem;
   border: 1px solid;
+  border-radius: var(--radius-card);
 }
 .alert.warn {
-  border-color: #e8b173;
-  background-color: #ffe7b3;
-  color: #8b6400;
+  color: var(--warn);
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
 }
 .alert.error {
-  border-color: #e87f73;
-  background-color: #ffbbb3;
-  color: darkred;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
 }
 .alert__text {
   margin: 0;
-  width: 100%;
 }
 </style>
