@@ -84,7 +84,6 @@ export default Vue.extend({
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-card);
-    animation: unblur 0.6s ease-out;
   }
   .qr-tile .card-qr {
     width: 100%;

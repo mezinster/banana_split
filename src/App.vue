@@ -495,9 +495,11 @@ input[type="checkbox"] {
   filter: blur(4px);
   opacity: 0.4;
 }
+/* Scan-progress thumbnails only. Never animate the generated .qr-tile: the
+   E2E test screenshots it immediately and any filter frame breaks decoding. */
 @keyframes unblur {
   0% {
-    filter: brightness(150%) blur(4px);
+    filter: brightness(150%);
   }
   100% {
     filter: none;
