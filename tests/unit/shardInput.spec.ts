@@ -50,17 +50,29 @@ describe("ShardInput", () => {
     expect(wrapper.find(".shard-input__paste").exists()).toBe(false);
   });
 
-  test("shows upload and paste buttons in camera mode", () => {
+  test("offers all three modes with camera marked active", () => {
     var wrapper = mountShardInput();
     var buttons = wrapper.findAll(".shard-input__modes button");
-    expect(buttons.length).toBe(2);
-    expect(buttons.at(0).text()).toContain("inputUploadImage");
-    expect(buttons.at(1).text()).toContain("inputPasteText");
+    expect(buttons.length).toBe(3);
+    expect(buttons.at(0).text()).toContain("inputModeCamera");
+    expect(buttons.at(1).text()).toContain("inputModeUpload");
+    expect(buttons.at(2).text()).toContain("inputModePaste");
+    expect(buttons.at(0).classes()).toContain("is-active");
+    expect(buttons.at(0).attributes("aria-pressed")).toBe("true");
+    expect(buttons.at(1).attributes("aria-pressed")).toBe("false");
+  });
+
+  test("marks the selected mode active", async () => {
+    var wrapper = mountShardInput();
+    await wrapper.findAll(".shard-input__modes button").at(2).trigger("click");
+    var buttons = wrapper.findAll(".shard-input__modes button");
+    expect(buttons.at(2).classes()).toContain("is-active");
+    expect(buttons.at(0).classes()).not.toContain("is-active");
   });
 
   test("switches to paste mode", async () => {
     var wrapper = mountShardInput();
-    var pasteBtn = wrapper.findAll(".shard-input__modes button").at(1);
+    var pasteBtn = wrapper.findAll(".shard-input__modes button").at(2);
     await pasteBtn.trigger("click");
     expect(wrapper.find(".shard-input__paste").exists()).toBe(true);
     expect(wrapper.find(".shard-input__camera").exists()).toBe(false);
@@ -68,7 +80,7 @@ describe("ShardInput", () => {
 
   test("switches to upload mode", async () => {
     var wrapper = mountShardInput();
-    var uploadBtn = wrapper.findAll(".shard-input__modes button").at(0);
+    var uploadBtn = wrapper.findAll(".shard-input__modes button").at(1);
     await uploadBtn.trigger("click");
     expect(wrapper.find(".shard-input__upload").exists()).toBe(true);
     expect(wrapper.find(".shard-input__camera").exists()).toBe(false);
@@ -86,7 +98,7 @@ describe("ShardInput", () => {
     var wrapper = mountShardInput();
     wrapper.setData({ mode: "paste", pasteText: '{"v":1,"t":"test","r":3,"d":"abc","n":"xyz"}' });
     await wrapper.vm.$nextTick();
-    var submitBtn = wrapper.find(".shard-input__paste .button-card");
+    var submitBtn = wrapper.find(".shard-input__submit");
     await submitBtn.trigger("click");
     expect(wrapper.emitted("decode")).toBeTruthy();
     expect(wrapper.emitted("decode")!.length).toBe(1);
@@ -97,7 +109,7 @@ describe("ShardInput", () => {
     var multiLine = '{"v":1,"t":"a","r":2,"d":"x","n":"y"}\n{"v":1,"t":"a","r":2,"d":"z","n":"y"}';
     wrapper.setData({ mode: "paste", pasteText: multiLine });
     await wrapper.vm.$nextTick();
-    var submitBtn = wrapper.find(".shard-input__paste .button-card");
+    var submitBtn = wrapper.find(".shard-input__submit");
     await submitBtn.trigger("click");
     expect(wrapper.emitted("decode")!.length).toBe(2);
   });
@@ -106,7 +118,7 @@ describe("ShardInput", () => {
     var wrapper = mountShardInput();
     wrapper.setData({ mode: "paste", pasteText: "   " });
     await wrapper.vm.$nextTick();
-    var submitBtn = wrapper.find(".shard-input__paste .button-card");
+    var submitBtn = wrapper.find(".shard-input__submit");
     await submitBtn.trigger("click");
     expect(wrapper.emitted("decode")).toBeFalsy();
     expect(wrapper.find(".shard-input__feedback.error").exists()).toBe(true);
@@ -116,7 +128,7 @@ describe("ShardInput", () => {
     var wrapper = mountShardInput();
     wrapper.setData({ mode: "paste", pasteText: "not json at all" });
     await wrapper.vm.$nextTick();
-    var submitBtn = wrapper.find(".shard-input__paste .button-card");
+    var submitBtn = wrapper.find(".shard-input__submit");
     await submitBtn.trigger("click");
     expect(wrapper.emitted("decode")).toBeFalsy();
     expect(wrapper.find(".shard-input__feedback.error").exists()).toBe(true);

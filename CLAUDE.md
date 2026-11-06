@@ -51,7 +51,8 @@ export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh" && yarn test:unit
 - Path alias `@/` maps to `src/` (configured in jest and webpack)
 - ESLint security plugin is active — `detect-object-injection` and `detect-non-literal-fs-filename` rules require `eslint-disable` comments for legitimate array indexing and NaCl API usage
 - TypeScript target does not support optional chaining (`?.`) or nullish coalescing (`??`) — use ternary operators instead
-- Passphrase generation uses a large embedded word list (`src/util/passPhrase.ts`). Share view supports auto-generated (4-word) or custom manual passphrase (min 8 chars) via checkbox toggle.
+- Passphrase generation uses a large embedded word list (`src/util/passPhrase.ts`). Share view supports auto-generated (4-word) or custom manual passphrase (min 8 chars) via an Auto | Custom segmented control.
+- UI styling: CSS custom-property tokens (light, `prefers-color-scheme: dark`, and a forced-white `@media print`) plus shared primitives (`.card`, `.step`, `.btn--primary/secondary/icon`, `.segmented`, `.input`, `.progress`, `.qr-thumb`) live in `App.vue`'s global `<style>`; the visual spec is `.superdesign/design-system.md`. Shard counts use `NumberStepper.vue` (v-model; emits the raw string for unparseable input so `Number.isInteger` validation still fires). On screen, Share's QR grid is the `#print` container (ShardInfo mounts tiles there), styled as a grid under `@media screen` — keep the `.qr-tile .card-qr canvas` structure, the E2E test selects it.
 - Share view quorum (`requiredShards`) is user-editable (range 2 to totalShards), defaults to majority via watcher on `totalShards`. Stored as data property, not computed. In Vue 2, converting computed to data+watcher is the standard pattern for reactive defaults the user can override.
 
 ---

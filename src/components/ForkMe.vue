@@ -1,7 +1,7 @@
 <template>
-  <span id="forkongithub">
-    <a :href="url">🥄&nbsp;{{ $t('forkMe') }}</a>
-  </span>
+  <a id="forkongithub" class="fork-link" :href="url" target="_blank" rel="noopener noreferrer">
+    🥄&nbsp;{{ $t('forkMe') }}
+  </a>
 </template>
 
 <script lang="ts">
@@ -15,53 +15,15 @@ export default {
   }
 };
 </script>
->
 
 <style>
-#forkongithub {
-  position: fixed;
-  bottom: 0;
-  right: 0;
-  z-index: 9999;
-}
-#forkongithub a {
-  background-color: var(--c_bg-emphasis-main);
-  color: var(--c_text-onEmphasis);
+.fork-link {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
   text-decoration: none;
-  text-align: center;
-  font-weight: bold;
-  padding: 0.5rem 0 1rem;
-  font-size: 1.5rem;
-  width: 240px;
-  position: absolute;
-  bottom: 40px;
-  right: -50px;
-  transform: rotate(-45deg);
-  -webkit-transform: rotate(-45deg);
-  -ms-transform: rotate(-45deg);
-  -moz-transform: rotate(-45deg);
-  -o-transform: rotate(-45deg);
-  -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
-  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
-  transition: background-color 0.3s;
 }
-#forkongithub a:hover {
-  background: var(--c_bg-emphasis-dark);
-}
-
-#forkongithub a::before,
-#forkongithub a::after {
-  content: "";
-  width: 100%;
-  display: block;
-  position: absolute;
-  top: 1px;
-  left: 0;
-  height: 1px;
-  background: #fff;
-}
-#forkongithub a::after {
-  bottom: 1px;
-  top: auto;
+.fork-link:hover {
+  color: var(--text);
+  text-decoration: underline;
 }
 </style>

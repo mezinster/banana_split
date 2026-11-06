@@ -22,6 +22,14 @@ export default Vue.extend({
     locale: {
       type: String,
       default: ""
+    },
+    index: {
+      type: Number,
+      default: 0
+    },
+    total: {
+      type: Number,
+      default: 0
     }
   },
   beforeDestroy: function() {
