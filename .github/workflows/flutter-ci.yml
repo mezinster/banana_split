@@ -29,7 +29,7 @@ jobs:
       metadata: ${{ steps.filter.outputs.metadata }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -78,7 +78,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.metadata == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-python@v5
         with:
@@ -110,7 +110,7 @@ jobs:
     # F-Droid would be the first place it could fail — and only after a tag,
     # which pins the failure to a commit that a master-branch fix cannot reach.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
@@ -142,7 +142,7 @@ jobs:
         working-directory: banana_split_flutter
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
@@ -173,7 +173,7 @@ jobs:
         working-directory: banana_split_flutter
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
@@ -223,7 +223,7 @@ jobs:
         working-directory: banana_split_flutter
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-java@v4
         with:
@@ -264,7 +264,7 @@ jobs:
         working-directory: banana_split_flutter
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
